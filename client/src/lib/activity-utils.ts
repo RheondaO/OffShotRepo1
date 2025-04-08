@@ -85,7 +85,7 @@ export const formatXp = (xp: number): string => {
 };
 
 // Group activities by date
-export function groupActivitiesByDate(activities: any[]) {
+export function groupActivitiesByDate<T extends { performedAt: string | Date }>(activities: T[]): Record<string, T[]> {
   return activities.reduce((groups, activity) => {
     const date = new Date(activity.performedAt).toLocaleDateString();
     if (!groups[date]) {
@@ -93,11 +93,11 @@ export function groupActivitiesByDate(activities: any[]) {
     }
     groups[date].push(activity);
     return groups;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, T[]>);
 }
 
 // Sort dates in descending order (most recent first)
-export function getSortedDates(dateGroups: Record<string, any[]>): string[] {
+export function getSortedDates<T>(dateGroups: Record<string, T[]>): string[] {
   return Object.keys(dateGroups).sort((a, b) => {
     return new Date(b).getTime() - new Date(a).getTime();
   });

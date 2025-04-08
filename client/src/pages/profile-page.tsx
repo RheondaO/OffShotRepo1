@@ -545,9 +545,11 @@ export default function ProfilePage() {
                     <div key={groupIndex} className="mb-8">
                       <h3 className="text-sm font-medium mb-4 text-[hsl(var(--foreground)/70)]">{date}</h3>
                       
-                      {activities
-                        .sort((a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime())
-                        .map((activity, index) => {
+                      {(activities as UserActivity[])
+                        .sort((a: UserActivity, b: UserActivity) => 
+                          new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime()
+                        )
+                        .map((activity: UserActivity, index: number) => {
                           // Get the appropriate icon component based on activity type
                           const IconComponent = (() => {
                             const iconName = getActivityIcon(activity.activityId);
@@ -580,7 +582,7 @@ export default function ProfilePage() {
                           
                           return (
                             <div key={index} className="relative pl-8 pb-6">
-                              {index !== activities.length - 1 && (
+                              {index !== (activities as UserActivity[]).length - 1 && (
                                 <div className="absolute left-3 top-3 bottom-0 w-px bg-[hsl(var(--border))]"></div>
                               )}
                               <div className={`absolute left-0 top-0 ${bgColorClass} p-1.5 rounded-full`}>
