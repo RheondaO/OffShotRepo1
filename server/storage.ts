@@ -1123,6 +1123,101 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    // Check if issues exist
+    const existingIssues = await this.getAllIssues();
+    
+    if (existingIssues.length === 0) {
+      // Create a default user if needed
+      const defaultUser = await this.getUserByUsername("demo_user");
+      
+      if (!defaultUser) {
+        await this.createUser({
+          username: "demo_user",
+          name: "Demo User",
+          email: "demo@example.com",
+          password: "hashed_password", // This would be hashed in a real app
+          xp: 100,
+          level: 1,
+          createdAt: new Date().toISOString()
+        });
+      }
+      
+      const userId = 1; // Default user ID
+      
+      // Sample issues
+      const sampleIssues = [
+        {
+          title: "Park Cleanup Initiative",
+          description: "Our local park has accumulated litter and needs community volunteers for a cleanup day. Let's organize a weekend event.",
+          categoryId: 1, // Environment
+          userId: userId,
+          status: "open",
+          location: "Central Park, Downtown",
+          votes: 28,
+          featured: true,
+          latitude: 40.7812,
+          longitude: -73.9665,
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
+        },
+        {
+          title: "Street Pothole Repair Needed",
+          description: "Large pothole on Main Street near the intersection with Oak Avenue. It's causing traffic problems and damage to vehicles.",
+          categoryId: 2, // Infrastructure
+          userId: userId,
+          status: "in_progress",
+          location: "Main Street & Oak Avenue",
+          votes: 42,
+          featured: true,
+          latitude: 40.7128,
+          longitude: -74.0060,
+          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() // 14 days ago
+        },
+        {
+          title: "Community Library Book Drive",
+          description: "Our community library needs more books, especially children's literature and educational resources. Let's organize a book donation drive.",
+          categoryId: 3, // Education
+          userId: userId,
+          status: "open",
+          location: "Central Library",
+          votes: 15,
+          featured: false,
+          latitude: 40.7310,
+          longitude: -73.9978,
+          createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString() // 21 days ago
+        },
+        {
+          title: "Street Light Outage",
+          description: "Several street lights are out on Cedar Lane, creating a safety hazard for pedestrians and drivers at night.",
+          categoryId: 4, // Public Safety
+          userId: userId,
+          status: "open",
+          location: "Cedar Lane",
+          votes: 35,
+          featured: false,
+          latitude: 40.7580,
+          longitude: -73.9855,
+          createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() // 5 days ago
+        },
+        {
+          title: "Community Garden Proposal",
+          description: "Proposal to convert the vacant lot on Elm Street into a community garden where residents can grow vegetables and flowers.",
+          categoryId: 1, // Environment
+          userId: userId,
+          status: "open",
+          location: "Elm Street Vacant Lot",
+          votes: 19,
+          featured: true,
+          latitude: 40.7412,
+          longitude: -74.0101,
+          createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() // 10 days ago
+        }
+      ];
+      
+      for (const issue of sampleIssues) {
+        await this.createIssue(issue);
+      }
+    }
+    
     // Initialize XP activities if they don't exist
     const existingActivities = await this.getAllXpActivities();
     if (existingActivities.length === 0) {

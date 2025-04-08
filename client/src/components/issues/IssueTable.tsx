@@ -113,11 +113,9 @@ const IssueTable = ({ issues }: IssueTableProps) => {
                 </td>
                 <td className="py-4 px-6">
                   <Link href={`/issues/${issue.id}`}>
-                    <a>
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
-                    </a>
+                    <Button variant="outline" size="sm">
+                      View Details
+                    </Button>
                   </Link>
                 </td>
               </tr>
