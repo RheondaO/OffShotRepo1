@@ -457,6 +457,10 @@ const AnalyticsPage = () => {
                       Reset Filters
                     </Button>
                   </div>
+                  
+                  <p className="text-xs mt-4 text-[hsl(var(--foreground)/60)]">
+                    This detailed table view allows you to sort and filter issues by time range and category. Use these filters to focus on specific types of issues or recent submissions, helping you identify patterns and priorities in community needs.
+                  </p>
                 </>
               )}
             </CardContent>
@@ -501,13 +505,18 @@ const AnalyticsPage = () => {
                   <p>Loading map data...</p>
                 </div>
               ) : (
-                <div className="h-[600px]">
-                  <IssueMap 
-                    issues={issues || []} 
-                    categories={categories || []} 
-                    selectedCategoryId={categoryFilter} 
-                  />
-                </div>
+                <>
+                  <div className="h-[600px]">
+                    <IssueMap 
+                      issues={issues || []} 
+                      categories={categories || []} 
+                      selectedCategoryId={categoryFilter} 
+                    />
+                  </div>
+                  <p className="text-xs mt-4 text-[hsl(var(--foreground)/60)]">
+                    This interactive map shows the geographic distribution of community issues. Markers represent issue locations, and you can click on them to see details. Filter by category to focus on specific types of issues. The map automatically centers on the relevant issues.
+                  </p>
+                </>
               )}
             </CardContent>
           </Card>
