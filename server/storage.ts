@@ -88,6 +88,7 @@ export class MemStorage implements IStorage {
   private userNfts: Map<number, UserNft>;
   private xpActivities: Map<number, XpActivity>;
   private userActivities: Map<number, UserActivity>;
+  private newsletterSubscribers: Map<number, NewsletterSubscriber>;
   
   private userId: number;
   private categoryId: number;
@@ -99,6 +100,7 @@ export class MemStorage implements IStorage {
   private userNftId: number;
   private xpActivityId: number;
   private userActivityId: number;
+  private newsletterSubscriberId: number;
 
   constructor() {
     this.users = new Map();
@@ -111,6 +113,7 @@ export class MemStorage implements IStorage {
     this.userNfts = new Map();
     this.xpActivities = new Map();
     this.userActivities = new Map();
+    this.newsletterSubscribers = new Map();
     
     this.userId = 1;
     this.categoryId = 1;
@@ -122,6 +125,7 @@ export class MemStorage implements IStorage {
     this.userNftId = 1;
     this.xpActivityId = 1;
     this.userActivityId = 1;
+    this.newsletterSubscriberId = 1;
     
     // Add some initial categories
     this.initializeData();
@@ -532,6 +536,39 @@ export class MemStorage implements IStorage {
     const timeSinceLastActivity = now.getTime() - mostRecent.performedAt.getTime();
     
     return timeSinceLastActivity >= cooldownMs;
+  }
+  
+  // Newsletter subscriber methods
+  async getAllNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return Array.from(this.newsletterSubscribers.values());
+  }
+  
+  async getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined> {
+    return Array.from(this.newsletterSubscribers.values()).find(
+      (subscriber) => subscriber.email.toLowerCase() === email.toLowerCase()
+    );
+  }
+  
+  async createNewsletterSubscriber(insertSubscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
+    const id = this.newsletterSubscriberId++;
+    const now = new Date();
+    const subscriber: NewsletterSubscriber = {
+      ...insertSubscriber,
+      id,
+      subscribedAt: now,
+      isActive: true
+    };
+    this.newsletterSubscribers.set(id, subscriber);
+    return subscriber;
+  }
+  
+  async unsubscribeFromNewsletter(email: string): Promise<boolean> {
+    const subscriber = await this.getNewsletterSubscriberByEmail(email);
+    if (!subscriber) return false;
+    
+    const updatedSubscriber = { ...subscriber, isActive: false };
+    this.newsletterSubscribers.set(subscriber.id, updatedSubscriber);
+    return true;
   }
 }
 
@@ -1004,6 +1041,46 @@ export class DatabaseStorage implements IStorage {
     const timeSinceLastActivity = now.getTime() - lastActivity.performedAt.getTime();
     
     return timeSinceLastActivity >= cooldownMs;
+  }
+  
+  // Newsletter subscriber methods
+  async getAllNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return await db.select().from(newsletterSubscribers);
+  }
+  
+  async getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined> {
+    const [subscriber] = await db
+      .select()
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, email));
+    return subscriber;
+  }
+  
+  async createNewsletterSubscriber(insertSubscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
+    const [subscriber] = await db
+      .insert(newsletterSubscribers)
+      .values({
+        ...insertSubscriber,
+        isActive: true
+      })
+      .returning();
+    return subscriber;
+  }
+  
+  async unsubscribeFromNewsletter(email: string): Promise<boolean> {
+    const [subscriber] = await db
+      .select()
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, email));
+    
+    if (!subscriber) return false;
+    
+    await db
+      .update(newsletterSubscribers)
+      .set({ isActive: false })
+      .where(eq(newsletterSubscribers.id, subscriber.id));
+    
+    return true;
   }
   
   // Helper to initialize sample data if needed

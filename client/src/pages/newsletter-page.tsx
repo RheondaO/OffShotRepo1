@@ -56,11 +56,22 @@ const NewsletterPage = () => {
     setIsSubmitting(true);
     
     try {
-      // In a real application, we would make an API call here
-      // For now, we'll simulate a successful submission after a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          interests: data.interests
+        }),
+      });
       
-      console.log("Newsletter subscription data:", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to subscribe');
+      }
       
       setIsSuccess(true);
       toast({
@@ -68,11 +79,19 @@ const NewsletterPage = () => {
         description: "You've been subscribed to our newsletter.",
       });
     } catch (error) {
+      let errorMessage = "Something went wrong. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      console.error("Newsletter subscription error:", error);
     } finally {
       setIsSubmitting(false);
     }

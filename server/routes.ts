@@ -12,7 +12,8 @@ import {
   insertNftSchema,
   insertUserNftSchema,
   insertXpActivitySchema,
-  insertUserActivitySchema
+  insertUserActivitySchema,
+  insertNewsletterSubscriberSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -471,6 +472,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json({ eligible: isEligible });
     } catch (error) {
       return res.status(500).json({ message: "Failed to check eligibility" });
+    }
+  });
+  
+  // Newsletter Subscriber endpoints
+  
+  // Get all newsletter subscribers
+  app.get("/api/newsletter/subscribers", async (_req: Request, res: Response) => {
+    try {
+      const subscribers = await storage.getAllNewsletterSubscribers();
+      return res.json(subscribers);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch newsletter subscribers" });
+    }
+  });
+  
+  // Subscribe to newsletter
+  app.post("/api/newsletter/subscribe", async (req: Request, res: Response) => {
+    try {
+      const { email, name, interests } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      // Default interests if not provided
+      const subscriberInterests = interests || ['general'];
+      
+      // Validate the data
+      const subscriberData = insertNewsletterSubscriberSchema.parse({
+        email,
+        name: name || "Subscriber", // Default name if not provided
+        interests: subscriberInterests
+      });
+      
+      // Check if already subscribed
+      const existingSubscriber = await storage.getNewsletterSubscriberByEmail(email);
+      if (existingSubscriber) {
+        if (existingSubscriber.isActive) {
+          return res.status(409).json({ message: "Email is already subscribed" });
+        } else {
+          // Reactivate subscription
+          await storage.createNewsletterSubscriber(subscriberData);
+          return res.status(200).json({ message: "Subscription reactivated" });
+        }
+      }
+      
+      // Create new subscription
+      const subscriber = await storage.createNewsletterSubscriber(subscriberData);
+      return res.status(201).json(subscriber);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to subscribe to newsletter" });
+    }
+  });
+  
+  // Unsubscribe from newsletter
+  app.post("/api/newsletter/unsubscribe", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      const success = await storage.unsubscribeFromNewsletter(email);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Email not found in subscriber list" });
+      }
+      
+      return res.status(200).json({ message: "Successfully unsubscribed" });
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to unsubscribe from newsletter" });
     }
   });
 
