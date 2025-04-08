@@ -169,7 +169,11 @@ const IssueForm = () => {
                 <Input 
                   placeholder="E.g., Main Street Park" 
                   className="bg-[hsl(var(--space-gray)/50)] border-[hsl(var(--space-purple)/30)]"
-                  {...field} 
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />

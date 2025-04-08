@@ -49,33 +49,30 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         <nav className="flex-1">
           <ul className="space-y-6 text-xl">
             <li>
-              <Link href="/">
-                <a 
-                  className="text-[hsl(var(--foreground)/90)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
-                  onClick={onClose}
-                >
-                  Home
-                </a>
+              <Link 
+                href="/" 
+                className="text-[hsl(var(--foreground)/90)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                onClick={onClose}
+              >
+                Home
               </Link>
             </li>
             <li>
-              <Link href="/browse">
-                <a 
-                  className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
-                  onClick={onClose}
-                >
-                  Browse Issues
-                </a>
+              <Link 
+                href="/browse" 
+                className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                onClick={onClose}
+              >
+                Browse Issues
               </Link>
             </li>
             <li>
-              <Link href="/submit">
-                <a 
-                  className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
-                  onClick={onClose}
-                >
-                  Submit Issue
-                </a>
+              <Link 
+                href="/submit" 
+                className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                onClick={onClose}
+              >
+                Submit Issue
               </Link>
             </li>
             <li>

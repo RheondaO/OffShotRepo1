@@ -26,20 +26,14 @@ const Header = () => {
         </Link>
         
         <nav className="hidden md:flex space-x-6">
-          <Link href="/">
-            <a className={`${isActivePath("/") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-              Home
-            </a>
+          <Link href="/" className={`${isActivePath("/") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Home
           </Link>
-          <Link href="/browse">
-            <a className={`${isActivePath("/browse") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-              Browse Issues
-            </a>
+          <Link href="/browse" className={`${isActivePath("/browse") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Browse Issues
           </Link>
-          <Link href="/submit">
-            <a className={`${isActivePath("/submit") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-              Submit Issue
-            </a>
+          <Link href="/submit" className={`${isActivePath("/submit") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Submit Issue
           </Link>
         </nav>
         
