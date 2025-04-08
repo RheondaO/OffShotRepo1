@@ -979,6 +979,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Client connected to WebSocket');
     
     // Handle messages from clients
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+
     ws.on('message', (message: string) => {
       try {
         const data = JSON.parse(message.toString());
