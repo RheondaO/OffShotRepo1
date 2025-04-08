@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Comment as CommentType } from "@shared/schema";
 import { useComments } from "@/hooks/use-comments";
 import { useAuth } from "@/hooks/use-auth";
+import useXp from "@/hooks/use-xp";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import CommentItem from "./CommentItem";
 import NewCommentForm from "./NewCommentForm";
@@ -14,6 +14,7 @@ interface CommentListProps {
 
 export default function CommentList({ issueId }: CommentListProps) {
   const { user } = useAuth();
+  const { rewards, performAction } = useXp();
   const {
     comments,
     isLoadingComments,
@@ -29,6 +30,9 @@ export default function CommentList({ issueId }: CommentListProps) {
       userId: user.id,
       content: newComment,
     });
+
+    // Award XP for adding a comment
+    await performAction(3, rewards.COMMENT); // Assuming activity ID 3 is for comments
 
     // Clear the input field after submission
     setNewComment("");

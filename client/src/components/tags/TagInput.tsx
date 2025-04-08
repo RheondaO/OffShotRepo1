@@ -4,12 +4,14 @@ import { Tag, InsertTag } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { XpButton } from '@/components/ui/xp-button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Loader2, Plus, Search, Tag as TagIcon } from 'lucide-react';
 import { TagBadge } from './TagBadge';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DEFAULT_USER_ID } from '@/lib/utils';
+import useXp from '@/hooks/use-xp';
 
 interface TagInputProps {
   issueTags: Tag[];
@@ -30,6 +32,7 @@ export function TagInput({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { rewards, performAction } = useXp();
   
   useEffect(() => {
     if (open && inputRef.current) {
@@ -129,12 +132,17 @@ export function TagInput({
     }
   }, [issueTags, onTagsChange]);
   
-  const handleAddTag = (tagId: number) => {
+  const handleAddTag = async (tagId: number) => {
     addTagToIssueMutation.mutate({ tagId });
+    
+    // Try to earn XP for adding a tag
+    await performAction(5, rewards.ADD_TAG); // Activity ID 5 is for adding tags
+    
     setSearch('');
+    setOpen(false); // Close the popover after adding
   };
   
-  const handleCreateNewTag = () => {
+  const handleCreateNewTag = async () => {
     if (newTagName.trim().length < 2) {
       toast({
         title: 'Invalid tag name',
@@ -149,6 +157,9 @@ export function TagInput({
       description: null,
       createdBy: userId
     });
+    
+    // Try to earn XP for adding a tag
+    await performAction(5, rewards.ADD_TAG); // Activity ID 5 is for adding tags
   };
   
   return (
@@ -164,14 +175,15 @@ export function TagInput({
         
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button 
+            <XpButton 
               variant="outline" 
               size="sm" 
               className="h-8 gap-1 rounded-full"
+              xpAmount={rewards.ADD_TAG}
             >
               <Plus size={16} />
               <span>Add Tag</span>
-            </Button>
+            </XpButton>
           </PopoverTrigger>
           <PopoverContent className="w-[300px] p-3">
             <div className="space-y-3">
@@ -225,11 +237,12 @@ export function TagInput({
                           <p className="text-sm text-muted-foreground text-center py-2">
                             No tags found
                           </p>
-                          <Button 
+                          <XpButton 
                             size="sm"
                             className="w-full gap-1"
                             disabled={createTagMutation.isPending}
                             onClick={handleCreateNewTag}
+                            xpAmount={rewards.ADD_TAG}
                           >
                             {createTagMutation.isPending ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -237,7 +250,7 @@ export function TagInput({
                               <Plus size={16} />
                             )}
                             <span>Create "{newTagName}"</span>
-                          </Button>
+                          </XpButton>
                         </div>
                       )
                     )}

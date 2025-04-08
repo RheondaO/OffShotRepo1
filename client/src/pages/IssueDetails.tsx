@@ -5,6 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate, DEFAULT_USER_ID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { XpButton } from "@/components/ui/xp-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +14,7 @@ import { TagInput } from "@/components/tags";
 import { CommentList } from "@/components/comments";
 import { type Issue, type Category, type Tag } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
+import useXp from "@/hooks/use-xp";
 
 const IssueDetails = () => {
   const [match, params] = useRoute("/issues/:id");
@@ -20,6 +22,7 @@ const IssueDetails = () => {
   const { toast } = useToast();
   const [isVoting, setIsVoting] = useState(false);
   const [issueTags, setIssueTags] = useState<Tag[]>([]);
+  const { rewards, performAction } = useXp();
   
   const issueId = match ? parseInt(params.id) : null;
   
@@ -52,10 +55,14 @@ const IssueDetails = () => {
     
     setIsVoting(true);
     try {
+      // Submit the vote
       await apiRequest("POST", "/api/votes", { 
         issueId: issue.id, 
         userId: DEFAULT_USER_ID 
       });
+      
+      // Try to earn XP for the vote action
+      await performAction(4, rewards.VOTE); // Activity ID 4 is for voting
       
       // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: [`/api/issues/${issue.id}`] });
@@ -166,15 +173,16 @@ const IssueDetails = () => {
             
             <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
               <div className="flex items-center gap-4">
-                <Button 
+                <XpButton 
                   variant="secondary"
                   onClick={handleVote}
                   disabled={isVoting}
                   className="flex items-center gap-2"
+                  xpAmount={rewards.VOTE}
                 >
                   <i className="ri-heart-line"></i>
                   Support ({issue.votes})
-                </Button>
+                </XpButton>
                 
                 <Button variant="outline" className="flex items-center gap-2">
                   <i className="ri-share-line"></i>
