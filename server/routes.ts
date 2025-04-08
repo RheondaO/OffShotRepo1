@@ -17,6 +17,7 @@ import {
   assignIssueSchema,
   stealIssueSchema,
   insertIssueAssignmentHistorySchema,
+  insertCommentSchema,
   ISSUE_STATUS,
   issues
 } from "@shared/schema";
@@ -800,6 +801,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching assignment history:", error);
       return res.status(500).json({ message: "Failed to fetch assignment history" });
+    }
+  });
+  
+  // Comments API endpoints
+  
+  // Get comments for an issue
+  app.get("/api/issues/:issueId/comments", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      if (isNaN(issueId)) return res.status(400).json({ message: "Invalid issue ID" });
+      
+      const comments = await storage.getCommentsByIssue(issueId);
+      return res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      return res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+  
+  // Get replies for a comment
+  app.get("/api/comments/:commentId/replies", async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) return res.status(400).json({ message: "Invalid comment ID" });
+      
+      const replies = await storage.getRepliesByComment(commentId);
+      return res.json(replies);
+    } catch (error) {
+      console.error("Error fetching replies:", error);
+      return res.status(500).json({ message: "Failed to fetch replies" });
+    }
+  });
+  
+  // Add a comment to an issue
+  app.post("/api/issues/:issueId/comments", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      if (isNaN(issueId)) return res.status(400).json({ message: "Invalid issue ID" });
+      
+      // Verify that the issue exists
+      const issue = await storage.getIssueById(issueId);
+      if (!issue) return res.status(404).json({ message: "Issue not found" });
+      
+      const commentData = insertCommentSchema.parse({
+        ...req.body,
+        issueId
+      });
+      
+      const comment = await storage.createComment(commentData);
+      
+      // Record XP for commenting if it's a top-level comment (not a reply)
+      if (!commentData.parentId) {
+        // Get the activity ID for commenting
+        const activities = await storage.getAllXpActivities();
+        const commentActivity = activities.find(a => a.name === "Comment");
+        
+        if (commentActivity && commentData.userId) {
+          const isEligible = await storage.checkActivityEligibility(
+            commentData.userId, 
+            commentActivity.id
+          );
+          
+          if (isEligible) {
+            await storage.recordUserActivity({
+              userId: commentData.userId,
+              activityId: commentActivity.id,
+              xpEarned: commentActivity.xpReward,
+              performedAt: new Date()
+            });
+          }
+        }
+      }
+      
+      return res.status(201).json(comment);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      console.error("Error creating comment:", error);
+      return res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+  
+  // Add a reply to a comment
+  app.post("/api/comments/:commentId/replies", async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) return res.status(400).json({ message: "Invalid comment ID" });
+      
+      // Verify that the parent comment exists
+      const parentComment = await storage.getCommentById(commentId);
+      if (!parentComment) return res.status(404).json({ message: "Parent comment not found" });
+      
+      const replyData = insertCommentSchema.parse({
+        ...req.body,
+        issueId: parentComment.issueId,
+        parentId: commentId
+      });
+      
+      const reply = await storage.createComment(replyData);
+      return res.status(201).json(reply);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      console.error("Error creating reply:", error);
+      return res.status(500).json({ message: "Failed to create reply" });
+    }
+  });
+  
+  // Update a comment
+  app.patch("/api/comments/:commentId", async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) return res.status(400).json({ message: "Invalid comment ID" });
+      
+      // Verify the comment exists
+      const existingComment = await storage.getCommentById(commentId);
+      if (!existingComment) return res.status(404).json({ message: "Comment not found" });
+      
+      // Ensure the user is the owner of the comment
+      if (existingComment.userId !== req.body.userId) {
+        return res.status(403).json({ message: "You can only edit your own comments" });
+      }
+      
+      const { content } = req.body;
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ message: "Content is required" });
+      }
+      
+      const updatedComment = await storage.updateComment(commentId, content);
+      return res.json(updatedComment);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      return res.status(500).json({ message: "Failed to update comment" });
+    }
+  });
+  
+  // Delete a comment
+  app.delete("/api/comments/:commentId", async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) return res.status(400).json({ message: "Invalid comment ID" });
+      
+      // Verify the comment exists
+      const existingComment = await storage.getCommentById(commentId);
+      if (!existingComment) return res.status(404).json({ message: "Comment not found" });
+      
+      // Ensure the user is the owner of the comment
+      const userId = parseInt(req.query.userId as string);
+      if (isNaN(userId) || existingComment.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own comments" });
+      }
+      
+      const success = await storage.deleteComment(commentId);
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete comment" });
+      }
+      
+      return res.status(200).json({ message: "Comment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      return res.status(500).json({ message: "Failed to delete comment" });
     }
   });
   

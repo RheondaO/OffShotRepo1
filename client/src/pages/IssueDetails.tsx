@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { IssueDetailsSkeleton } from "@/components/issues/IssueDetailsSkeleton";
 import { TagInput } from "@/components/tags";
+import { CommentList } from "@/components/comments";
 import { type Issue, type Category, type Tag } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 
 const IssueDetails = () => {
   const [match, params] = useRoute("/issues/:id");
@@ -195,6 +197,15 @@ const IssueDetails = () => {
               No related issues found at this time.
             </p>
           </div>
+        </div>
+        
+        {/* Comments section */}
+        <div className="mt-12">
+          <Card className="border border-[hsl(var(--space-purple)/20)]">
+            <CardContent className="pt-6">
+              <CommentList issueId={issue.id} />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

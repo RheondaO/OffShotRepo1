@@ -143,6 +143,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdTags: many(tags, { relationName: "userCreatedTags" }),
   userNfts: many(userNfts),
   userActivities: many(userActivities),
+  comments: many(comments), // Comments made by the user
   // Issue assignment history relations
   assignedHistories: many(issueAssignmentHistory, { relationName: "assignedHistories" }),
   assignerHistories: many(issueAssignmentHistory, { relationName: "assignerHistories" }),
@@ -170,6 +171,7 @@ export const issuesRelations = relations(issues, ({ one, many }) => ({
   votes: many(votes),
   issueTags: many(issueTags),
   assignmentHistory: many(issueAssignmentHistory),
+  comments: many(comments),
 }));
 
 export const votesRelations = relations(votes, ({ one }) => ({
@@ -373,6 +375,7 @@ export const insertUserActivitySchema = createInsertSchema(userActivities).pick(
   userId: true,
   activityId: true,
   xpEarned: true,
+  performedAt: true,
 });
 
 export type InsertIssueTag = z.infer<typeof insertIssueTagSchema>;
@@ -432,3 +435,46 @@ export const insertIssueAssignmentHistorySchema = createInsertSchema(issueAssign
 
 export type InsertIssueAssignmentHistory = z.infer<typeof insertIssueAssignmentHistorySchema>;
 export type IssueAssignmentHistory = typeof issueAssignmentHistory.$inferSelect;
+
+// Comment system
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
+  userId: integer("user_id").notNull(),
+  content: text("content").notNull(),
+  parentId: integer("parent_id"), // For threaded comments/replies
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  isEdited: boolean("is_edited").notNull().default(false)
+});
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  issue: one(issues, {
+    fields: [comments.issueId],
+    references: [issues.id]
+  }),
+  user: one(users, {
+    fields: [comments.userId],
+    references: [users.id]
+  }),
+  parent: one(comments, {
+    fields: [comments.parentId],
+    references: [comments.id]
+  }),
+  replies: many(comments, { relationName: "replies" })
+}));
+
+// Update issue relations to include comments
+export const insertCommentSchema = createInsertSchema(comments)
+  .pick({
+    issueId: true,
+    userId: true,
+    content: true,
+    parentId: true,
+  })
+  .extend({
+    content: z.string().min(1).max(2000),
+  });
+
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Comment = typeof comments.$inferSelect;

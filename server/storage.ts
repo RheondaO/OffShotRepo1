@@ -11,6 +11,7 @@ import {
   userActivities, type UserActivity, type InsertUserActivity,
   newsletterSubscribers, type NewsletterSubscriber, type InsertNewsletterSubscriber,
   issueAssignmentHistory, type IssueAssignmentHistory, type InsertIssueAssignmentHistory,
+  comments, type Comment, type InsertComment,
   ISSUE_STATUS
 } from "@shared/schema";
 import { db } from "./db";
@@ -84,6 +85,14 @@ export interface IStorage {
   createIssueAssignmentHistory(history: InsertIssueAssignmentHistory): Promise<IssueAssignmentHistory>;
   getIssueAssignmentHistory(issueId: number): Promise<IssueAssignmentHistory[]>;
   getUserAssignedIssues(userId: number): Promise<Issue[]>;
+  
+  // Comments
+  getCommentsByIssue(issueId: number): Promise<Comment[]>;
+  getCommentById(id: number): Promise<Comment | undefined>;
+  createComment(comment: InsertComment): Promise<Comment>;
+  updateComment(id: number, content: string): Promise<Comment | undefined>;
+  deleteComment(id: number): Promise<boolean>;
+  getRepliesByComment(commentId: number): Promise<Comment[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -621,6 +630,81 @@ export class MemStorage implements IStorage {
   async getUserAssignedIssues(userId: number): Promise<Issue[]> {
     return Array.from(this.issues.values())
       .filter(issue => issue.assignedTo === userId && issue.status !== 'closed' && issue.status !== 'resolved');
+  }
+
+  // Comments methods
+  private comments: Map<number, Comment> = new Map();
+  private commentId: number = 1;
+
+  async getCommentsByIssue(issueId: number): Promise<Comment[]> {
+    return Array.from(this.comments.values())
+      .filter(comment => comment.issueId === issueId && comment.parentId === null)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async getCommentById(id: number): Promise<Comment | undefined> {
+    return this.comments.get(id);
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    const id = this.commentId++;
+    const now = new Date();
+    const comment: Comment = {
+      ...insertComment,
+      id,
+      createdAt: now,
+      updatedAt: null,
+      parentId: insertComment.parentId ?? null,
+      isEdited: false
+    };
+    this.comments.set(id, comment);
+
+    // Increment comment count on the issue
+    const issue = this.issues.get(insertComment.issueId);
+    if (issue) {
+      issue.comments += 1;
+      issue.lastActivityAt = now;
+      this.issues.set(issue.id, issue);
+    }
+
+    return comment;
+  }
+
+  async updateComment(id: number, content: string): Promise<Comment | undefined> {
+    const comment = this.comments.get(id);
+    if (!comment) return undefined;
+
+    const now = new Date();
+    const updatedComment: Comment = {
+      ...comment,
+      content,
+      updatedAt: now,
+      isEdited: true
+    };
+    this.comments.set(id, updatedComment);
+    return updatedComment;
+  }
+
+  async deleteComment(id: number): Promise<boolean> {
+    const comment = this.comments.get(id);
+    if (!comment) return false;
+
+    this.comments.delete(id);
+
+    // Decrease comment count on the issue
+    const issue = this.issues.get(comment.issueId);
+    if (issue) {
+      issue.comments = Math.max(0, issue.comments - 1);
+      this.issues.set(issue.id, issue);
+    }
+
+    return true;
+  }
+
+  async getRepliesByComment(commentId: number): Promise<Comment[]> {
+    return Array.from(this.comments.values())
+      .filter(comment => comment.parentId === commentId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 }
 
@@ -1186,6 +1270,111 @@ export class DatabaseStorage implements IStorage {
         eq(issues.assignedTo, userId),
         sql`${issues.status} NOT IN ('closed', 'resolved')`
       ));
+  }
+  
+  // Comment methods
+  async getCommentsByIssue(issueId: number): Promise<Comment[]> {
+    return await db
+      .select()
+      .from(comments)
+      .where(and(
+        eq(comments.issueId, issueId),
+        sql`${comments.parentId} IS NULL`
+      ))
+      .orderBy(comments.createdAt);
+  }
+
+  async getCommentById(id: number): Promise<Comment | undefined> {
+    const [comment] = await db
+      .select()
+      .from(comments)
+      .where(eq(comments.id, id));
+    return comment;
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    // Start transaction to create comment and update issue comments count
+    return await db.transaction(async (tx) => {
+      const [comment] = await tx
+        .insert(comments)
+        .values(insertComment)
+        .returning();
+      
+      // Update issue's comment count and lastActivityAt
+      const now = new Date();
+      const [issue] = await tx
+        .select()
+        .from(issues)
+        .where(eq(issues.id, insertComment.issueId));
+      
+      if (issue) {
+        await tx
+          .update(issues)
+          .set({ 
+            comments: issue.comments + 1,
+            lastActivityAt: now
+          })
+          .where(eq(issues.id, issue.id));
+      }
+      
+      return comment;
+    });
+  }
+
+  async updateComment(id: number, content: string): Promise<Comment | undefined> {
+    const now = new Date();
+    const [comment] = await db
+      .update(comments)
+      .set({ 
+        content,
+        updatedAt: now,
+        isEdited: true
+      })
+      .where(eq(comments.id, id))
+      .returning();
+    
+    return comment;
+  }
+
+  async deleteComment(id: number): Promise<boolean> {
+    // Get comment first to know its issueId
+    const [comment] = await db
+      .select()
+      .from(comments)
+      .where(eq(comments.id, id));
+    
+    if (!comment) return false;
+    
+    // Start transaction to delete comment and update issue comments count
+    await db.transaction(async (tx) => {
+      // Delete the comment
+      await tx
+        .delete(comments)
+        .where(eq(comments.id, id));
+      
+      // Update issue's comment count
+      const [issue] = await tx
+        .select()
+        .from(issues)
+        .where(eq(issues.id, comment.issueId));
+      
+      if (issue) {
+        await tx
+          .update(issues)
+          .set({ comments: Math.max(0, issue.comments - 1) })
+          .where(eq(issues.id, issue.id));
+      }
+    });
+    
+    return true;
+  }
+
+  async getRepliesByComment(commentId: number): Promise<Comment[]> {
+    return await db
+      .select()
+      .from(comments)
+      .where(eq(comments.parentId, commentId))
+      .orderBy(comments.createdAt);
   }
   
   // Helper to initialize sample data if needed
