@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DEFAULT_USER_ID } from "@/lib/utils";
+import { DEFAULT_USER_ID, calculatePriority, getPriorityColorClass, getPriorityIcon } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { type Issue, type Category } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
@@ -64,13 +64,14 @@ const IssueTable = ({ issues }: IssueTableProps) => {
             <th className="py-4 px-6 text-left text-[hsl(var(--foreground)/80)] font-semibold hidden md:table-cell">Category</th>
             <th className="py-4 px-6 text-left text-[hsl(var(--foreground)/80)] font-semibold hidden md:table-cell">Submitted by</th>
             <th className="py-4 px-6 text-left text-[hsl(var(--foreground)/80)] font-semibold">Support</th>
+            <th className="py-4 px-6 text-left text-[hsl(var(--foreground)/80)] font-semibold hidden md:table-cell">Priority</th>
             <th className="py-4 px-6 text-left text-[hsl(var(--foreground)/80)] font-semibold">Action</th>
           </tr>
         </thead>
         <tbody>
           {issues.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-12 text-center text-[hsl(var(--foreground)/60)]">
+              <td colSpan={6} className="py-12 text-center text-[hsl(var(--foreground)/60)]">
                 No issues found. Be the first to submit an issue!
               </td>
             </tr>
@@ -82,7 +83,18 @@ const IssueTable = ({ issues }: IssueTableProps) => {
               >
                 <td className="py-4 px-6">
                   <div>
-                    <h3 className="font-medium text-[hsl(var(--foreground)/90)]">{issue.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-[hsl(var(--foreground)/90)]">{issue.title}</h3>
+                      {/* Priority badge - visible on mobile */}
+                      <span 
+                        className={`px-2 py-1 text-xs font-medium rounded-full border inline-flex items-center gap-1 ml-2 md:hidden ${
+                          getPriorityColorClass(issue.priority ? issue.priority as any : calculatePriority(issue.votes))
+                        }`}
+                      >
+                        <i className={getPriorityIcon(issue.priority ? issue.priority as any : calculatePriority(issue.votes))}></i>
+                        {issue.priority || calculatePriority(issue.votes)}
+                      </span>
+                    </div>
                     <p className="text-sm text-[hsl(var(--foreground)/60)] line-clamp-1">
                       {issue.description}
                     </p>
@@ -110,6 +122,17 @@ const IssueTable = ({ issues }: IssueTableProps) => {
                     <i className="ri-heart-fill text-[hsl(var(--space-pink))]"></i>
                     <span>{issue.votes}</span>
                   </button>
+                </td>
+                {/* Priority column - desktop only */}
+                <td className="py-4 px-6 hidden md:table-cell">
+                  <span 
+                    className={`px-2 py-1 text-xs font-medium rounded-full border inline-flex items-center gap-1 ${
+                      getPriorityColorClass(issue.priority ? (issue.priority as any) : calculatePriority(issue.votes))
+                    }`}
+                  >
+                    <i className={getPriorityIcon(issue.priority ? (issue.priority as any) : calculatePriority(issue.votes))}></i>
+                    {issue.priority || calculatePriority(issue.votes)}
+                  </span>
                 </td>
                 <td className="py-4 px-6">
                   <Link href={`/issues/${issue.id}`}>

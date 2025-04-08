@@ -17,6 +17,7 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { calculateIssuePriority } from "./utils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Users routes
@@ -134,6 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/issues", async (req: Request, res: Response) => {
     try {
+      // The schema already has default 'low' for priority
       const issueData = insertIssueSchema.parse(req.body);
       const issue = await storage.createIssue(issueData);
       return res.status(201).json(issue);
@@ -152,14 +154,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if user has already voted
       const hasVoted = await storage.hasUserVoted(voteData.issueId, voteData.userId);
+      let issue;
       
       if (hasVoted) {
         // Remove vote if already voted
         await storage.removeVote(voteData.issueId, voteData.userId);
+        
+        // Get updated issue to recalculate priority
+        issue = await storage.getIssueById(voteData.issueId);
+        if (issue) {
+          // Update issue priority based on vote count
+          const priority = calculateIssuePriority(issue.votes);
+          await storage.updateIssue(voteData.issueId, { priority });
+        }
+        
         return res.json({ voted: false });
       } else {
         // Add vote
         await storage.createVote(voteData);
+        
+        // Get updated issue to recalculate priority
+        issue = await storage.getIssueById(voteData.issueId);
+        if (issue) {
+          // Update issue priority based on vote count
+          const priority = calculateIssuePriority(issue.votes);
+          await storage.updateIssue(voteData.issueId, { priority });
+        }
+        
         return res.status(201).json({ voted: true });
       }
     } catch (error) {

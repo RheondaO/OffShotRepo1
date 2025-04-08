@@ -33,6 +33,7 @@ export const issues = pgTable("issues", {
   votes: integer("votes").notNull().default(0),
   comments: integer("comments").notNull().default(0),
   isFeatured: boolean("is_featured").notNull().default(false),
+  priority: text("priority").notNull().default("low"),
 });
 
 export const votes = pgTable("votes", {
@@ -57,6 +58,10 @@ export const issueTags = pgTable("issue_tags", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   createdBy: integer("created_by").notNull(),
 });
+
+// Define priority levels for issues based on vote counts
+export const ISSUE_PRIORITY = ['low', 'medium', 'high', 'critical'] as const;
+export type IssuePriority = typeof ISSUE_PRIORITY[number];
 
 // Define rarity type enum for NFTs
 export const NFT_RARITY = ['common', 'rare', 'epic', 'legendary'] as const;
@@ -219,10 +224,12 @@ export const insertIssueSchema = createInsertSchema(issues)
     categoryId: true,
     userId: true,
     location: true,
+    priority: true,
   })
   .extend({
     title: z.string().min(5).max(100),
     description: z.string().min(20).max(2000),
+    priority: z.enum(ISSUE_PRIORITY).default('low'),
   });
 
 export const insertVoteSchema = createInsertSchema(votes).pick({
