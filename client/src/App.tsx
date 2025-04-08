@@ -16,6 +16,7 @@ import NewsletterPage from "@/pages/newsletter-page";
 import ChatPage from "@/pages/chat-page";
 import MissionPage from "@/pages/mission-page";
 import GamesPage from "@/pages/games-page";
+import AnalyticsPage from "@/pages/analytics-page";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -36,6 +37,7 @@ function Router() {
           <Route path="/chat" component={ChatPage} />
           <Route path="/mission" component={MissionPage} />
           <Route path="/games" component={GamesPage} />
+          <Route path="/analytics" component={AnalyticsPage} />
           {/* Fallback to 404 */}
           <Route component={NotFound} />
         </Switch>
