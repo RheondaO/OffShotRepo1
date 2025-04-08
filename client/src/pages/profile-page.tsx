@@ -19,6 +19,12 @@ export default function ProfilePage() {
     queryKey: ["/api/users", user?.id, "issues"],
     enabled: !!user,
   });
+  
+  // Fetch issues assigned to the user
+  const { data: assignedIssues, isLoading: assignedIssuesLoading } = useQuery<Issue[]>({
+    queryKey: ["/api/users", user?.id, "assigned-issues"],
+    enabled: !!user,
+  });
 
   // Fetch user's votes
   const { data: userVotes, isLoading: votesLoading } = useQuery<Vote[]>({
@@ -63,6 +69,12 @@ export default function ProfilePage() {
     return [...userActivities].sort((a, b) => 
       new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime()
     ).slice(0, 5); // Get the 5 most recent activities
+  };
+  
+  // Helper function to safely format dates
+  const formatDate = (dateString: string | Date | null | undefined) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString();
   };
 
   if (!user) {
@@ -127,6 +139,7 @@ export default function ProfilePage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
           <TabsTrigger value="issues">My Issues</TabsTrigger>
+          <TabsTrigger value="assigned-issues">Assigned Issues</TabsTrigger>
           <TabsTrigger value="activity">Activity History</TabsTrigger>
           <TabsTrigger value="nfts">NFT Collection</TabsTrigger>
         </TabsList>
@@ -179,6 +192,14 @@ export default function ProfilePage() {
                     </div>
                     <span className="font-medium">0</span> {/* Add once implemented */}
                   </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-[hsl(var(--space-orange))]" />
+                      <span>Assigned Issues</span>
+                    </div>
+                    <span className="font-medium">{assignedIssues?.length || 0}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -201,7 +222,7 @@ export default function ProfilePage() {
                         <div>
                           <p className="font-medium">{activity.activityId} {/* Replace with activity name when available */}</p>
                           <p className="text-sm text-[hsl(var(--foreground)/70)]">
-                            Earned {activity.xpEarned} XP on {new Date(activity.performedAt).toLocaleDateString()}
+                            Earned {activity.xpEarned} XP on {formatDate(activity.performedAt)}
                           </p>
                         </div>
                       </div>
@@ -363,7 +384,7 @@ export default function ProfilePage() {
                             <Badge variant="outline">{issue.status}</Badge>
                             <span className="text-xs text-[hsl(var(--foreground)/70)]">
                               <Calendar className="h-3 w-3 inline-block mr-1" />
-                              {new Date(issue.createdAt).toLocaleDateString()}
+                              {formatDate(issue.createdAt)}
                             </span>
                             <span className="text-xs flex items-center">
                               <Heart className="h-3 w-3 text-[hsl(var(--space-pink))] mr-1" />
@@ -378,6 +399,56 @@ export default function ProfilePage() {
               ) : (
                 <p className="text-center text-sm text-[hsl(var(--foreground)/70)] py-6">
                   You haven't created any issues yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="assigned-issues">
+          <Card>
+            <CardHeader>
+              <CardTitle>Assigned Issues</CardTitle>
+              <CardDescription>Issues that have been assigned to you to work on</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {assignedIssuesLoading ? (
+                <p>Loading assigned issues...</p>
+              ) : assignedIssues && assignedIssues.length > 0 ? (
+                <div className="space-y-4">
+                  {assignedIssues.map((issue) => (
+                    <Card key={issue.id}>
+                      <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+                          <div>
+                            <h3 className="font-medium">{issue.title}</h3>
+                            <p className="text-sm text-[hsl(var(--foreground)/70)] line-clamp-2">
+                              {issue.description}
+                            </p>
+                          </div>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 md:mt-0">
+                            <Badge variant="outline" className={
+                              issue.priority === 'low' ? 'bg-[hsl(var(--space-green)/20)]' :
+                              issue.priority === 'medium' ? 'bg-[hsl(var(--space-blue)/20)]' :
+                              issue.priority === 'high' ? 'bg-[hsl(var(--space-orange)/20)]' :
+                              'bg-[hsl(var(--space-red)/20)]'
+                            }>
+                              {issue.priority}
+                            </Badge>
+                            <Badge variant="outline">{issue.status}</Badge>
+                            <span className="text-xs text-[hsl(var(--foreground)/70)]">
+                              <Calendar className="h-3 w-3 inline-block mr-1" />
+                              Due: {formatDate(issue.expectedCompletionAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-sm text-[hsl(var(--foreground)/70)] py-6">
+                  You don't have any issues assigned to you.
                 </p>
               )}
             </CardContent>
@@ -411,7 +482,7 @@ export default function ProfilePage() {
                             Earned {activity.xpEarned} XP
                           </p>
                           <p className="text-xs text-[hsl(var(--foreground)/60)]">
-                            {new Date(activity.performedAt).toLocaleString()}
+                            {formatDate(activity.performedAt)}
                           </p>
                         </div>
                       </div>
@@ -449,7 +520,7 @@ export default function ProfilePage() {
                           Token ID: {userNft.tokenId}
                         </p>
                         <p className="text-xs text-[hsl(var(--foreground)/70)]">
-                          Acquired: {new Date(userNft.acquiredAt).toLocaleDateString()}
+                          Acquired: {formatDate(userNft.acquiredAt)}
                         </p>
                       </CardContent>
                     </Card>

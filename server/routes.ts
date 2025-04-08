@@ -391,6 +391,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get issues assigned to a user
+  app.get("/api/users/:userId/assigned-issues", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const assignedIssues = await storage.getUserAssignedIssues(userId);
+      return res.json(assignedIssues);
+    } catch (error) {
+      console.error("Error getting assigned issues:", error);
+      return res.status(500).json({ message: "Failed to fetch assigned issues" });
+    }
+  });
+  
   // Get user's votes
   app.get("/api/users/:userId/votes", async (req: Request, res: Response) => {
     try {
