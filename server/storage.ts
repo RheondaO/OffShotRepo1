@@ -4,7 +4,11 @@ import {
   issues, type Issue, type InsertIssue,
   votes, type Vote, type InsertVote,
   tags, type Tag, type InsertTag,
-  issueTags, type IssueTag, type InsertIssueTag
+  issueTags, type IssueTag, type InsertIssueTag,
+  nfts, type Nft, type InsertNft,
+  userNfts, type UserNft, type InsertUserNft,
+  xpActivities, type XpActivity, type InsertXpActivity,
+  userActivities, type UserActivity, type InsertUserActivity
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, or, sql } from "drizzle-orm";
@@ -14,6 +18,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserXp(userId: number, xpAmount: number): Promise<User | undefined>;
+  getUserLevel(userId: number): Promise<number>;
 
   // Categories
   getAllCategories(): Promise<Category[]>;
@@ -47,6 +53,27 @@ export interface IStorage {
   addTagToIssue(issueTag: InsertIssueTag): Promise<IssueTag>;
   removeTagFromIssue(issueId: number, tagId: number): Promise<boolean>;
   getIssuesByTag(tagId: number): Promise<Issue[]>;
+  
+  // NFT methods
+  getAllNfts(): Promise<Nft[]>;
+  getNftById(id: number): Promise<Nft | undefined>;
+  createNft(nft: InsertNft): Promise<Nft>;
+  getUserNfts(userId: number): Promise<UserNft[]>;
+  purchaseNft(userNft: InsertUserNft): Promise<UserNft | undefined>;
+  
+  // XP Activity methods
+  getAllXpActivities(): Promise<XpActivity[]>;
+  getXpActivityById(id: number): Promise<XpActivity | undefined>;
+  createXpActivity(activity: InsertXpActivity): Promise<XpActivity>;
+  recordUserActivity(userActivity: InsertUserActivity): Promise<UserActivity>;
+  getUserActivities(userId: number): Promise<UserActivity[]>;
+  checkActivityEligibility(userId: number, activityId: number): Promise<boolean>;
+  
+  // Newsletter subscribers
+  getAllNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
+  getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined>;
+  createNewsletterSubscriber(subscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
+  unsubscribeFromNewsletter(email: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -56,6 +83,10 @@ export class MemStorage implements IStorage {
   private votes: Map<number, Vote>;
   private tags: Map<number, Tag>;
   private issueTags: Map<number, IssueTag>;
+  private nfts: Map<number, Nft>;
+  private userNfts: Map<number, UserNft>;
+  private xpActivities: Map<number, XpActivity>;
+  private userActivities: Map<number, UserActivity>;
   
   private userId: number;
   private categoryId: number;
@@ -63,6 +94,10 @@ export class MemStorage implements IStorage {
   private voteId: number;
   private tagId: number;
   private issueTagId: number;
+  private nftId: number;
+  private userNftId: number;
+  private xpActivityId: number;
+  private userActivityId: number;
 
   constructor() {
     this.users = new Map();
@@ -71,6 +106,10 @@ export class MemStorage implements IStorage {
     this.votes = new Map();
     this.tags = new Map();
     this.issueTags = new Map();
+    this.nfts = new Map();
+    this.userNfts = new Map();
+    this.xpActivities = new Map();
+    this.userActivities = new Map();
     
     this.userId = 1;
     this.categoryId = 1;
@@ -78,6 +117,10 @@ export class MemStorage implements IStorage {
     this.voteId = 1;
     this.tagId = 1;
     this.issueTagId = 1;
+    this.nftId = 1;
+    this.userNftId = 1;
+    this.xpActivityId = 1;
+    this.userActivityId = 1;
     
     // Add some initial categories
     this.initializeData();
@@ -117,9 +160,42 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
-    const user: User = { ...insertUser, id };
+    const now = new Date();
+    const user: User = { 
+      ...insertUser, 
+      id,
+      xp: 0,
+      level: 1,
+      createdAt: now
+    };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUserXp(userId: number, xpAmount: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    // Add XP to user
+    const updatedXp = user.xp + xpAmount;
+    
+    // Calculate level (every 1000 XP is a level up)
+    const updatedLevel = Math.max(1, Math.floor(updatedXp / 1000) + 1);
+    
+    const updatedUser = { 
+      ...user, 
+      xp: updatedXp,
+      level: updatedLevel
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async getUserLevel(userId: number): Promise<number> {
+    const user = this.users.get(userId);
+    if (!user) return 1; // Default level
+    return user.level;
   }
 
   // Category methods
@@ -321,6 +397,141 @@ export class MemStorage implements IStorage {
     return Array.from(this.issues.values())
       .filter(issue => issueIds.includes(issue.id));
   }
+  
+  // NFT methods
+  async getAllNfts(): Promise<Nft[]> {
+    return Array.from(this.nfts.values());
+  }
+  
+  async getNftById(id: number): Promise<Nft | undefined> {
+    return this.nfts.get(id);
+  }
+  
+  async createNft(insertNft: InsertNft): Promise<Nft> {
+    const id = this.nftId++;
+    const now = new Date();
+    const nft: Nft = {
+      ...insertNft,
+      id,
+      createdAt: now,
+      supply: insertNft.supply ?? 1,
+      remainingSupply: insertNft.remainingSupply ?? insertNft.supply ?? 1
+    };
+    this.nfts.set(id, nft);
+    return nft;
+  }
+  
+  async getUserNfts(userId: number): Promise<UserNft[]> {
+    return Array.from(this.userNfts.values())
+      .filter(userNft => userNft.userId === userId);
+  }
+  
+  async purchaseNft(insertUserNft: InsertUserNft): Promise<UserNft | undefined> {
+    // Check if NFT exists
+    const nft = this.nfts.get(insertUserNft.nftId);
+    if (!nft) return undefined;
+    
+    // Check if user exists
+    const user = this.users.get(insertUserNft.userId);
+    if (!user) return undefined;
+    
+    // Check if NFT is still available
+    if (nft.remainingSupply <= 0) return undefined;
+    
+    // Check if user has enough XP
+    if (user.xp < nft.price) return undefined;
+    
+    // Process the purchase
+    const id = this.userNftId++;
+    const now = new Date();
+    const userNft: UserNft = {
+      ...insertUserNft,
+      id,
+      acquiredAt: now
+    };
+    
+    // Update user's XP
+    this.updateUserXp(user.id, -nft.price);
+    
+    // Decrease NFT supply
+    const updatedNft = { ...nft, remainingSupply: nft.remainingSupply - 1 };
+    this.nfts.set(nft.id, updatedNft);
+    
+    // Record ownership
+    this.userNfts.set(id, userNft);
+    
+    return userNft;
+  }
+  
+  // XP Activity methods
+  async getAllXpActivities(): Promise<XpActivity[]> {
+    return Array.from(this.xpActivities.values());
+  }
+  
+  async getXpActivityById(id: number): Promise<XpActivity | undefined> {
+    return this.xpActivities.get(id);
+  }
+  
+  async createXpActivity(insertXpActivity: InsertXpActivity): Promise<XpActivity> {
+    const id = this.xpActivityId++;
+    const activity: XpActivity = { 
+      ...insertXpActivity, 
+      id,
+      cooldownMinutes: insertXpActivity.cooldownMinutes ?? 0
+    };
+    this.xpActivities.set(id, activity);
+    return activity;
+  }
+  
+  async recordUserActivity(insertUserActivity: InsertUserActivity): Promise<UserActivity> {
+    const id = this.userActivityId++;
+    const now = new Date();
+    const userActivity: UserActivity = {
+      ...insertUserActivity,
+      id,
+      performedAt: now
+    };
+    this.userActivities.set(id, userActivity);
+    
+    // Also update the user's XP
+    this.updateUserXp(insertUserActivity.userId, insertUserActivity.xpEarned);
+    
+    return userActivity;
+  }
+  
+  async getUserActivities(userId: number): Promise<UserActivity[]> {
+    return Array.from(this.userActivities.values())
+      .filter(activity => activity.userId === userId);
+  }
+  
+  async checkActivityEligibility(userId: number, activityId: number): Promise<boolean> {
+    // Get the activity to check its cooldown period
+    const activity = this.xpActivities.get(activityId);
+    if (!activity) return false;
+    
+    // If there's no cooldown, always eligible
+    if (activity.cooldownMinutes === 0) return true;
+    
+    // Find the user's most recent activity of this type
+    const userActivities = await this.getUserActivities(userId);
+    const matchingActivities = userActivities.filter(
+      ua => ua.activityId === activityId
+    );
+    
+    if (matchingActivities.length === 0) return true; // No previous activity, eligible
+    
+    // Find the most recent activity of this type
+    const mostRecent = matchingActivities.reduce((latest, current) => {
+      return current.performedAt > latest.performedAt ? current : latest;
+    }, matchingActivities[0]);
+    
+    // Check if cooldown period has passed
+    const cooldownMs = activity.cooldownMinutes * 60 * 1000;
+    const now = new Date();
+    const timeSinceLastActivity = now.getTime() - mostRecent.performedAt.getTime();
+    
+    return timeSinceLastActivity >= cooldownMs;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -336,8 +547,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    // When creating a new user, ensure the XP fields are properly initialized
+    const [user] = await db.insert(users).values({
+      ...insertUser,
+      xp: 0,
+      level: 1
+    }).returning();
     return user;
+  }
+  
+  async updateUserXp(userId: number, xpAmount: number): Promise<User | undefined> {
+    // Get current user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    if (!user) return undefined;
+    
+    // Calculate new XP and level
+    const updatedXp = user.xp + xpAmount;
+    const updatedLevel = Math.max(1, Math.floor(updatedXp / 1000) + 1);
+    
+    // Update user
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        xp: updatedXp,
+        level: updatedLevel
+      })
+      .where(eq(users.id, userId))
+      .returning();
+      
+    return updatedUser;
+  }
+  
+  async getUserLevel(userId: number): Promise<number> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+      
+    return user?.level || 1; // Default to level 1 if user not found
   }
 
   // Category methods
@@ -593,6 +844,167 @@ export class DatabaseStorage implements IStorage {
       .where(eq(issueTags.tagId, tagId));
   }
   
+  // NFT methods
+  async getAllNfts(): Promise<Nft[]> {
+    return await db.select().from(nfts);
+  }
+  
+  async getNftById(id: number): Promise<Nft | undefined> {
+    const [nft] = await db.select().from(nfts).where(eq(nfts.id, id));
+    return nft;
+  }
+  
+  async createNft(insertNft: InsertNft): Promise<Nft> {
+    // Ensure rarity is one of the allowed values
+    let rarity = insertNft.rarity;
+    
+    // Validate the rarity if needed
+    if (rarity !== 'common' && rarity !== 'rare' && rarity !== 'epic' && rarity !== 'legendary') {
+      rarity = 'common'; // Default to common if invalid
+    }
+    
+    const [nft] = await db.insert(nfts).values({
+      ...insertNft,
+      rarity,
+      supply: insertNft.supply ?? 1,
+      remainingSupply: insertNft.remainingSupply ?? insertNft.supply ?? 1
+    }).returning();
+    return nft;
+  }
+  
+  async getUserNfts(userId: number): Promise<UserNft[]> {
+    return await db
+      .select()
+      .from(userNfts)
+      .where(eq(userNfts.userId, userId));
+  }
+  
+  async purchaseNft(insertUserNft: InsertUserNft): Promise<UserNft | undefined> {
+    // Get the NFT and user
+    const [nft] = await db.select().from(nfts).where(eq(nfts.id, insertUserNft.nftId));
+    const [user] = await db.select().from(users).where(eq(users.id, insertUserNft.userId));
+    
+    // Validations
+    if (!nft || !user) return undefined;
+    if (nft.remainingSupply <= 0) return undefined;
+    if (user.xp < nft.price) return undefined;
+    
+    // Start transaction
+    return await db.transaction(async (tx) => {
+      // Deduct XP from user
+      await tx
+        .update(users)
+        .set({ xp: user.xp - nft.price })
+        .where(eq(users.id, user.id));
+      
+      // Reduce NFT supply
+      await tx
+        .update(nfts)
+        .set({ remainingSupply: nft.remainingSupply - 1 })
+        .where(eq(nfts.id, nft.id));
+      
+      // Record purchase
+      const [userNft] = await tx
+        .insert(userNfts)
+        .values(insertUserNft)
+        .returning();
+        
+      return userNft;
+    });
+  }
+  
+  // XP Activity methods
+  async getAllXpActivities(): Promise<XpActivity[]> {
+    return await db.select().from(xpActivities);
+  }
+  
+  async getXpActivityById(id: number): Promise<XpActivity | undefined> {
+    const [activity] = await db.select().from(xpActivities).where(eq(xpActivities.id, id));
+    return activity;
+  }
+  
+  async createXpActivity(insertXpActivity: InsertXpActivity): Promise<XpActivity> {
+    const [activity] = await db.insert(xpActivities).values({
+      ...insertXpActivity,
+      cooldownMinutes: insertXpActivity.cooldownMinutes ?? 0
+    }).returning();
+    return activity;
+  }
+  
+  async recordUserActivity(insertUserActivity: InsertUserActivity): Promise<UserActivity> {
+    // Start transaction to record activity and update XP
+    return await db.transaction(async (tx) => {
+      // Record the activity
+      const [userActivity] = await tx
+        .insert(userActivities)
+        .values(insertUserActivity)
+        .returning();
+      
+      // Update user's XP
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, insertUserActivity.userId));
+      
+      if (user) {
+        const updatedXp = user.xp + insertUserActivity.xpEarned;
+        const updatedLevel = Math.max(1, Math.floor(updatedXp / 1000) + 1);
+        
+        await tx
+          .update(users)
+          .set({
+            xp: updatedXp,
+            level: updatedLevel
+          })
+          .where(eq(users.id, user.id));
+      }
+      
+      return userActivity;
+    });
+  }
+  
+  async getUserActivities(userId: number): Promise<UserActivity[]> {
+    return await db
+      .select()
+      .from(userActivities)
+      .where(eq(userActivities.userId, userId));
+  }
+  
+  async checkActivityEligibility(userId: number, activityId: number): Promise<boolean> {
+    // Get the activity
+    const [activity] = await db
+      .select()
+      .from(xpActivities)
+      .where(eq(xpActivities.id, activityId));
+    
+    if (!activity) return false;
+    
+    // If no cooldown, always eligible
+    if (activity.cooldownMinutes === 0) return true;
+    
+    // Get most recent activity of this type by this user
+    const mostRecent = await db
+      .select()
+      .from(userActivities)
+      .where(and(
+        eq(userActivities.userId, userId),
+        eq(userActivities.activityId, activityId)
+      ))
+      .orderBy(desc(userActivities.performedAt))
+      .limit(1);
+    
+    // If no previous activity, user is eligible
+    if (mostRecent.length === 0) return true;
+    
+    // Calculate if cooldown period has passed
+    const lastActivity = mostRecent[0];
+    const cooldownMs = activity.cooldownMinutes * 60 * 1000;
+    const now = new Date();
+    const timeSinceLastActivity = now.getTime() - lastActivity.performedAt.getTime();
+    
+    return timeSinceLastActivity >= cooldownMs;
+  }
+  
   // Helper to initialize sample data if needed
   async initializeData() {
     // Check if categories exist
@@ -616,6 +1028,130 @@ export class DatabaseStorage implements IStorage {
           icon: cat.icon,
           description: cat.description
         });
+      }
+    }
+    
+    // Initialize XP activities if they don't exist
+    const existingActivities = await this.getAllXpActivities();
+    if (existingActivities.length === 0) {
+      const activities = [
+        { 
+          name: "Daily Login", 
+          description: "Log in to the platform daily", 
+          xpReward: 10, 
+          cooldownMinutes: 1440 // 24 hours
+        },
+        { 
+          name: "Submit Issue", 
+          description: "Submit a new community issue", 
+          xpReward: 50, 
+          cooldownMinutes: 0 // No cooldown
+        },
+        { 
+          name: "Comment", 
+          description: "Comment on an issue", 
+          xpReward: 5, 
+          cooldownMinutes: 5 // 5 minutes
+        },
+        { 
+          name: "Vote", 
+          description: "Vote on an issue", 
+          xpReward: 2, 
+          cooldownMinutes: 1 // 1 minute
+        },
+        { 
+          name: "Add Tag", 
+          description: "Add a tag to an issue", 
+          xpReward: 5, 
+          cooldownMinutes: 10 // 10 minutes
+        },
+        { 
+          name: "Game Win", 
+          description: "Win a mini-game", 
+          xpReward: 25, 
+          cooldownMinutes: 60 // 1 hour
+        },
+        { 
+          name: "Game Play", 
+          description: "Play a mini-game", 
+          xpReward: 5, 
+          cooldownMinutes: 15 // 15 minutes
+        },
+        { 
+          name: "Send Chat Message", 
+          description: "Participate in community chat", 
+          xpReward: 1, 
+          cooldownMinutes: 1 // 1 minute
+        }
+      ];
+      
+      for (const activity of activities) {
+        await this.createXpActivity(activity);
+      }
+    }
+    
+    // Initialize NFTs if they don't exist
+    const existingNfts = await this.getAllNfts();
+    if (existingNfts.length === 0) {
+      // Ensure we create NFTs with proper rarity values
+      const nfts: Array<{
+        name: string;
+        description: string;
+        imageUrl: string;
+        price: number;
+        rarity: "common" | "rare" | "epic" | "legendary";
+        supply: number;
+        remainingSupply: number;
+      }> = [
+        {
+          name: "Cosmic Explorer Badge",
+          description: "A basic badge for new community members",
+          imageUrl: "/badges/cosmic-explorer.svg",
+          price: 100,
+          rarity: "common",
+          supply: 1000,
+          remainingSupply: 1000
+        },
+        {
+          name: "Issue Hunter",
+          description: "Badge for active issue reporters",
+          imageUrl: "/badges/issue-hunter.svg",
+          price: 500,
+          rarity: "common",
+          supply: 500,
+          remainingSupply: 500
+        },
+        {
+          name: "Community Champion",
+          description: "Badge for exceptional community contributors",
+          imageUrl: "/badges/community-champion.svg",
+          price: 1000,
+          rarity: "rare",
+          supply: 100,
+          remainingSupply: 100
+        },
+        {
+          name: "Game Master",
+          description: "Badge for winning all mini-games",
+          imageUrl: "/badges/game-master.svg",
+          price: 2000,
+          rarity: "epic",
+          supply: 50,
+          remainingSupply: 50
+        },
+        {
+          name: "Cosmic Legend",
+          description: "The highest honor in the community",
+          imageUrl: "/badges/cosmic-legend.svg",
+          price: 5000,
+          rarity: "legendary",
+          supply: 10,
+          remainingSupply: 10
+        }
+      ];
+      
+      for (const nft of nfts) {
+        await this.createNft(nft as InsertNft);
       }
     }
   }

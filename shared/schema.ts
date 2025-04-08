@@ -9,6 +9,9 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  xp: integer("xp").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const categories = pgTable("categories", {
@@ -55,11 +58,62 @@ export const issueTags = pgTable("issue_tags", {
   createdBy: integer("created_by").notNull(),
 });
 
+// Define rarity type enum for NFTs
+export const NFT_RARITY = ['common', 'rare', 'epic', 'legendary'] as const;
+export type NftRarity = typeof NFT_RARITY[number];
+
+export const nfts = pgTable("nfts", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  imageUrl: text("image_url").notNull(),
+  supply: integer("supply").notNull().default(1),
+  remainingSupply: integer("remaining_supply").notNull().default(1),
+  price: integer("price").notNull(), // Price in XP
+  rarity: text("rarity").notNull(), // common, rare, epic, legendary
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userNfts = pgTable("user_nfts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  nftId: integer("nft_id").notNull(),
+  acquiredAt: timestamp("acquired_at").notNull().defaultNow(),
+  tokenId: text("token_id").notNull(), // Unique identifier for this instance of the NFT
+});
+
+export const xpActivities = pgTable("xp_activities", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description").notNull(),
+  xpReward: integer("xp_reward").notNull(),
+  cooldownMinutes: integer("cooldown_minutes").notNull().default(0), // 0 means no cooldown
+});
+
+export const userActivities = pgTable("user_activities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  activityId: integer("activity_id").notNull(),
+  performedAt: timestamp("performed_at").notNull().defaultNow(),
+  xpEarned: integer("xp_earned").notNull(),
+});
+
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  interests: text("interests").array(),
+  subscribedAt: timestamp("subscribed_at").notNull().defaultNow(),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   issues: many(issues),
   votes: many(votes),
   createdTags: many(tags, { relationName: "userCreatedTags" }),
+  userNfts: many(userNfts),
+  userActivities: many(userActivities),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -111,6 +165,36 @@ export const issueTagsRelations = relations(issueTags, ({ one }) => ({
   createdByUser: one(users, {
     fields: [issueTags.createdBy],
     references: [users.id]
+  }),
+}));
+
+export const nftsRelations = relations(nfts, ({ many }) => ({
+  userNfts: many(userNfts),
+}));
+
+export const userNftsRelations = relations(userNfts, ({ one }) => ({
+  user: one(users, {
+    fields: [userNfts.userId],
+    references: [users.id]
+  }),
+  nft: one(nfts, {
+    fields: [userNfts.nftId],
+    references: [nfts.id]
+  }),
+}));
+
+export const xpActivitiesRelations = relations(xpActivities, ({ many }) => ({
+  userActivities: many(userActivities),
+}));
+
+export const userActivitiesRelations = relations(userActivities, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivities.userId],
+    references: [users.id]
+  }),
+  activity: one(xpActivities, {
+    fields: [userActivities.activityId],
+    references: [xpActivities.id]
   }),
 }));
 
@@ -176,5 +260,66 @@ export type Vote = typeof votes.$inferSelect;
 export type InsertTag = z.infer<typeof insertTagSchema>;
 export type Tag = typeof tags.$inferSelect;
 
+export const insertNftSchema = createInsertSchema(nfts).pick({
+  name: true,
+  description: true,
+  imageUrl: true,
+  supply: true,
+  remainingSupply: true,
+  price: true,
+  rarity: true,
+}).extend({
+  name: z.string().min(3).max(50),
+  description: z.string().min(10).max(500),
+  rarity: z.enum(["common", "rare", "epic", "legendary"]),
+});
+
+export const insertUserNftSchema = createInsertSchema(userNfts).pick({
+  userId: true,
+  nftId: true,
+  tokenId: true,
+});
+
+export const insertXpActivitySchema = createInsertSchema(xpActivities).pick({
+  name: true,
+  description: true,
+  xpReward: true,
+  cooldownMinutes: true,
+}).extend({
+  name: z.string().min(3).max(50),
+  description: z.string().min(10).max(200),
+});
+
+export const insertUserActivitySchema = createInsertSchema(userActivities).pick({
+  userId: true,
+  activityId: true,
+  xpEarned: true,
+});
+
 export type InsertIssueTag = z.infer<typeof insertIssueTagSchema>;
 export type IssueTag = typeof issueTags.$inferSelect;
+
+export type InsertNft = z.infer<typeof insertNftSchema>;
+export type Nft = typeof nfts.$inferSelect;
+
+export type InsertUserNft = z.infer<typeof insertUserNftSchema>;
+export type UserNft = typeof userNfts.$inferSelect;
+
+export type InsertXpActivity = z.infer<typeof insertXpActivitySchema>;
+export type XpActivity = typeof xpActivities.$inferSelect;
+
+export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
+export type UserActivity = typeof userActivities.$inferSelect;
+
+export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).pick({
+  name: true,
+  email: true,
+  interests: true,
+}).extend({
+  name: z.string().min(2).max(50),
+  email: z.string().email(),
+  interests: z.array(z.string()).min(1),
+});
+
+export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

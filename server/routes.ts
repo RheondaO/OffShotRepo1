@@ -8,7 +8,11 @@ import {
   insertUserSchema,
   insertCategorySchema,
   insertTagSchema,
-  insertIssueTagSchema
+  insertIssueTagSchema,
+  insertNftSchema,
+  insertUserNftSchema,
+  insertXpActivitySchema,
+  insertUserActivitySchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -269,6 +273,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(issues);
     } catch (error) {
       return res.status(500).json({ message: "Failed to fetch issues by tag" });
+    }
+  });
+  
+  // Gamification API routes
+  
+  // Get user XP and level
+  app.get("/api/users/:userId/xp", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      return res.json({ xp: user.xp, level: user.level });
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch user XP" });
+    }
+  });
+  
+  // NFT endpoints
+  
+  // Get all NFTs
+  app.get("/api/nfts", async (_req: Request, res: Response) => {
+    try {
+      const nfts = await storage.getAllNfts();
+      return res.json(nfts);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch NFTs" });
+    }
+  });
+  
+  // Get NFT by ID
+  app.get("/api/nfts/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid NFT ID" });
+      
+      const nft = await storage.getNftById(id);
+      if (!nft) return res.status(404).json({ message: "NFT not found" });
+      
+      return res.json(nft);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch NFT" });
+    }
+  });
+  
+  // Create new NFT
+  app.post("/api/nfts", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertNftSchema.parse(req.body);
+      const nft = await storage.createNft(validatedData);
+      return res.status(201).json(nft);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to create NFT" });
+    }
+  });
+  
+  // Get user's NFTs
+  app.get("/api/users/:userId/nfts", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const userNfts = await storage.getUserNfts(userId);
+      return res.json(userNfts);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch user NFTs" });
+    }
+  });
+  
+  // Purchase an NFT
+  app.post("/api/users/:userId/nfts", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const validatedData = insertUserNftSchema.parse({ 
+        ...req.body, 
+        userId
+      });
+      
+      const userNft = await storage.purchaseNft(validatedData);
+      if (!userNft) {
+        return res.status(400).json({ 
+          message: "Could not purchase NFT. Check XP balance, eligibility, and availability." 
+        });
+      }
+      
+      return res.status(201).json(userNft);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to purchase NFT" });
+    }
+  });
+  
+  // Activity endpoints
+  
+  // Get all XP activities
+  app.get("/api/activities", async (_req: Request, res: Response) => {
+    try {
+      const activities = await storage.getAllXpActivities();
+      return res.json(activities);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch activities" });
+    }
+  });
+  
+  // Get activity by ID
+  app.get("/api/activities/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid activity ID" });
+      
+      const activity = await storage.getXpActivityById(id);
+      if (!activity) return res.status(404).json({ message: "Activity not found" });
+      
+      return res.json(activity);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch activity" });
+    }
+  });
+  
+  // Create new activity type
+  app.post("/api/activities", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertXpActivitySchema.parse(req.body);
+      const activity = await storage.createXpActivity(validatedData);
+      return res.status(201).json(activity);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to create activity" });
+    }
+  });
+  
+  // Record a user activity
+  app.post("/api/users/:userId/activities", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      // Add userId to the request body
+      const data = { ...req.body, userId };
+      
+      // Validate the data
+      const validatedData = insertUserActivitySchema.parse(data);
+      
+      // Check eligibility
+      const isEligible = await storage.checkActivityEligibility(userId, validatedData.activityId);
+      if (!isEligible) {
+        return res.status(400).json({ message: "Activity on cooldown or not eligible" });
+      }
+      
+      // Record the activity
+      const userActivity = await storage.recordUserActivity(validatedData);
+      return res.status(201).json(userActivity);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to record activity" });
+    }
+  });
+  
+  // Get user's activities
+  app.get("/api/users/:userId/activities", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const activities = await storage.getUserActivities(userId);
+      return res.json(activities);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch user activities" });
+    }
+  });
+  
+  // Check if user is eligible for an activity
+  app.get("/api/users/:userId/activities/:activityId/eligible", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const activityId = parseInt(req.params.activityId);
+      
+      if (isNaN(userId) || isNaN(activityId)) {
+        return res.status(400).json({ message: "Invalid user ID or activity ID" });
+      }
+      
+      const isEligible = await storage.checkActivityEligibility(userId, activityId);
+      return res.json({ eligible: isEligible });
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to check eligibility" });
     }
   });
 
