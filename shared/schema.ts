@@ -39,10 +39,27 @@ export const votes = pgTable("votes", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const tags = pgTable("tags", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: integer("created_by").notNull(),
+});
+
+export const issueTags = pgTable("issue_tags", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
+  tagId: integer("tag_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: integer("created_by").notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   issues: many(issues),
   votes: many(votes),
+  createdTags: many(tags, { relationName: "userCreatedTags" }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -59,6 +76,7 @@ export const issuesRelations = relations(issues, ({ one, many }) => ({
     references: [users.id]
   }),
   votes: many(votes),
+  issueTags: many(issueTags),
 }));
 
 export const votesRelations = relations(votes, ({ one }) => ({
@@ -68,6 +86,30 @@ export const votesRelations = relations(votes, ({ one }) => ({
   }),
   user: one(users, {
     fields: [votes.userId],
+    references: [users.id]
+  }),
+}));
+
+export const tagsRelations = relations(tags, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [tags.createdBy],
+    references: [users.id],
+    relationName: "userCreatedTags"
+  }),
+  issueTags: many(issueTags),
+}));
+
+export const issueTagsRelations = relations(issueTags, ({ one }) => ({
+  issue: one(issues, {
+    fields: [issueTags.issueId],
+    references: [issues.id]
+  }),
+  tag: one(tags, {
+    fields: [issueTags.tagId],
+    references: [tags.id]
+  }),
+  createdByUser: one(users, {
+    fields: [issueTags.createdBy],
     references: [users.id]
   }),
 }));
@@ -104,6 +146,20 @@ export const insertVoteSchema = createInsertSchema(votes).pick({
   userId: true,
 });
 
+export const insertTagSchema = createInsertSchema(tags).pick({
+  name: true,
+  description: true,
+  createdBy: true,
+}).extend({
+  name: z.string().min(2).max(30),
+});
+
+export const insertIssueTagSchema = createInsertSchema(issueTags).pick({
+  issueId: true,
+  tagId: true,
+  createdBy: true,
+});
+
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -116,3 +172,9 @@ export type Issue = typeof issues.$inferSelect;
 
 export type InsertVote = z.infer<typeof insertVoteSchema>;
 export type Vote = typeof votes.$inferSelect;
+
+export type InsertTag = z.infer<typeof insertTagSchema>;
+export type Tag = typeof tags.$inferSelect;
+
+export type InsertIssueTag = z.infer<typeof insertIssueTagSchema>;
+export type IssueTag = typeof issueTags.$inferSelect;

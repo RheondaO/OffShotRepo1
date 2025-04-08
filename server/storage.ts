@@ -2,7 +2,9 @@ import {
   users, type User, type InsertUser,
   categories, type Category, type InsertCategory,
   issues, type Issue, type InsertIssue,
-  votes, type Vote, type InsertVote
+  votes, type Vote, type InsertVote,
+  tags, type Tag, type InsertTag,
+  issueTags, type IssueTag, type InsertIssueTag
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, or, sql } from "drizzle-orm";
@@ -33,6 +35,18 @@ export interface IStorage {
   createVote(vote: InsertVote): Promise<Vote>;
   removeVote(issueId: number, userId: number): Promise<boolean>;
   hasUserVoted(issueId: number, userId: number): Promise<boolean>;
+  
+  // Tags
+  getAllTags(): Promise<Tag[]>;
+  getTagById(id: number): Promise<Tag | undefined>;
+  createTag(tag: InsertTag): Promise<Tag>;
+  searchTags(query: string): Promise<Tag[]>;
+  
+  // Issue Tags
+  getTagsByIssue(issueId: number): Promise<Tag[]>;
+  addTagToIssue(issueTag: InsertIssueTag): Promise<IssueTag>;
+  removeTagFromIssue(issueId: number, tagId: number): Promise<boolean>;
+  getIssuesByTag(tagId: number): Promise<Issue[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -40,22 +54,30 @@ export class MemStorage implements IStorage {
   private categories: Map<number, Category>;
   private issues: Map<number, Issue>;
   private votes: Map<number, Vote>;
+  private tags: Map<number, Tag>;
+  private issueTags: Map<number, IssueTag>;
   
   private userId: number;
   private categoryId: number;
   private issueId: number;
   private voteId: number;
+  private tagId: number;
+  private issueTagId: number;
 
   constructor() {
     this.users = new Map();
     this.categories = new Map();
     this.issues = new Map();
     this.votes = new Map();
+    this.tags = new Map();
+    this.issueTags = new Map();
     
     this.userId = 1;
     this.categoryId = 1;
     this.issueId = 1;
     this.voteId = 1;
+    this.tagId = 1;
+    this.issueTagId = 1;
     
     // Add some initial categories
     this.initializeData();
@@ -229,6 +251,75 @@ export class MemStorage implements IStorage {
     return Array.from(this.votes.values()).some(
       (vote) => vote.issueId === issueId && vote.userId === userId
     );
+  }
+
+  // Tag methods
+  async getAllTags(): Promise<Tag[]> {
+    return Array.from(this.tags.values());
+  }
+
+  async getTagById(id: number): Promise<Tag | undefined> {
+    return this.tags.get(id);
+  }
+
+  async createTag(insertTag: InsertTag): Promise<Tag> {
+    const id = this.tagId++;
+    const now = new Date();
+    const tag: Tag = { 
+      ...insertTag, 
+      id, 
+      createdAt: now, 
+      description: insertTag.description || null 
+    };
+    this.tags.set(id, tag);
+    return tag;
+  }
+
+  async searchTags(query: string): Promise<Tag[]> {
+    const lowercaseQuery = query.toLowerCase();
+    return Array.from(this.tags.values()).filter(
+      (tag) => 
+        tag.name.toLowerCase().includes(lowercaseQuery) || 
+        (tag.description && tag.description.toLowerCase().includes(lowercaseQuery))
+    );
+  }
+
+  // Issue Tags methods
+  async getTagsByIssue(issueId: number): Promise<Tag[]> {
+    const issueTagIds = Array.from(this.issueTags.values())
+      .filter(issueTag => issueTag.issueId === issueId)
+      .map(issueTag => issueTag.tagId);
+    
+    return Array.from(this.tags.values())
+      .filter(tag => issueTagIds.includes(tag.id));
+  }
+
+  async addTagToIssue(insertIssueTag: InsertIssueTag): Promise<IssueTag> {
+    const id = this.issueTagId++;
+    const now = new Date();
+    const issueTag: IssueTag = { ...insertIssueTag, id, createdAt: now };
+    this.issueTags.set(id, issueTag);
+    return issueTag;
+  }
+
+  async removeTagFromIssue(issueId: number, tagId: number): Promise<boolean> {
+    const issueTagEntry = Array.from(this.issueTags.values()).find(
+      (issueTag) => issueTag.issueId === issueId && issueTag.tagId === tagId
+    );
+    
+    if (!issueTagEntry) return false;
+    
+    this.issueTags.delete(issueTagEntry.id);
+    return true;
+  }
+
+  async getIssuesByTag(tagId: number): Promise<Issue[]> {
+    const issueIds = Array.from(this.issueTags.values())
+      .filter(issueTag => issueTag.tagId === tagId)
+      .map(issueTag => issueTag.issueId);
+    
+    return Array.from(this.issues.values())
+      .filter(issue => issueIds.includes(issue.id));
   }
 }
 
@@ -407,6 +498,99 @@ export class DatabaseStorage implements IStorage {
       ));
     
     return !!vote;
+  }
+  
+  // Tag methods
+  async getAllTags(): Promise<Tag[]> {
+    return await db.select().from(tags);
+  }
+
+  async getTagById(id: number): Promise<Tag | undefined> {
+    const [tag] = await db.select().from(tags).where(eq(tags.id, id));
+    return tag;
+  }
+
+  async createTag(insertTag: InsertTag): Promise<Tag> {
+    const [tag] = await db.insert(tags).values({
+      ...insertTag,
+      description: insertTag.description || null
+    }).returning();
+    return tag;
+  }
+
+  async searchTags(query: string): Promise<Tag[]> {
+    return await db
+      .select()
+      .from(tags)
+      .where(
+        or(
+          like(tags.name, `%${query}%`),
+          like(tags.description, `%${query}%`)
+        )
+      );
+  }
+
+  // Issue Tags methods
+  async getTagsByIssue(issueId: number): Promise<Tag[]> {
+    return await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        description: tags.description,
+        createdAt: tags.createdAt,
+        createdBy: tags.createdBy
+      })
+      .from(tags)
+      .innerJoin(issueTags, eq(issueTags.tagId, tags.id))
+      .where(eq(issueTags.issueId, issueId));
+  }
+
+  async addTagToIssue(insertIssueTag: InsertIssueTag): Promise<IssueTag> {
+    const [issueTag] = await db
+      .insert(issueTags)
+      .values(insertIssueTag)
+      .returning();
+    return issueTag;
+  }
+
+  async removeTagFromIssue(issueId: number, tagId: number): Promise<boolean> {
+    await db
+      .delete(issueTags)
+      .where(and(
+        eq(issueTags.issueId, issueId),
+        eq(issueTags.tagId, tagId)
+      ));
+    
+    // Since we can't easily check rows affected, just check if the relation still exists
+    const [existingRelation] = await db
+      .select()
+      .from(issueTags)
+      .where(and(
+        eq(issueTags.issueId, issueId),
+        eq(issueTags.tagId, tagId)
+      ));
+    
+    return !existingRelation;
+  }
+
+  async getIssuesByTag(tagId: number): Promise<Issue[]> {
+    return await db
+      .select({
+        id: issues.id,
+        title: issues.title,
+        description: issues.description,
+        categoryId: issues.categoryId,
+        userId: issues.userId,
+        location: issues.location,
+        createdAt: issues.createdAt,
+        votes: issues.votes,
+        comments: issues.comments,
+        status: issues.status,
+        isFeatured: issues.isFeatured
+      })
+      .from(issues)
+      .innerJoin(issueTags, eq(issueTags.issueId, issues.id))
+      .where(eq(issueTags.tagId, tagId));
   }
   
   // Helper to initialize sample data if needed

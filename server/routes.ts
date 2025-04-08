@@ -6,7 +6,9 @@ import {
   insertIssueSchema, 
   insertVoteSchema,
   insertUserSchema,
-  insertCategorySchema
+  insertCategorySchema,
+  insertTagSchema,
+  insertIssueTagSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -160,6 +162,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: fromZodError(error).message });
       }
       return res.status(500).json({ message: "Failed to create vote" });
+    }
+  });
+  
+  // Tags routes
+  app.get("/api/tags", async (req: Request, res: Response) => {
+    try {
+      const { search } = req.query;
+      
+      if (search && typeof search === 'string') {
+        const tags = await storage.searchTags(search);
+        return res.json(tags);
+      }
+      
+      const tags = await storage.getAllTags();
+      return res.json(tags);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch tags" });
+    }
+  });
+  
+  app.get("/api/tags/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tag = await storage.getTagById(id);
+      
+      if (!tag) {
+        return res.status(404).json({ message: "Tag not found" });
+      }
+      
+      return res.json(tag);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch tag" });
+    }
+  });
+  
+  app.post("/api/tags", async (req: Request, res: Response) => {
+    try {
+      const tagData = insertTagSchema.parse(req.body);
+      const tag = await storage.createTag(tagData);
+      return res.status(201).json(tag);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to create tag" });
+    }
+  });
+  
+  app.get("/api/issues/:issueId/tags", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      const tags = await storage.getTagsByIssue(issueId);
+      return res.json(tags);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch tags for issue" });
+    }
+  });
+  
+  app.post("/api/issues/:issueId/tags", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      const { tagId, createdBy } = req.body;
+      
+      if (!tagId || !createdBy) {
+        return res.status(400).json({ message: "TagId and createdBy are required" });
+      }
+      
+      const issueTagData = insertIssueTagSchema.parse({
+        issueId,
+        tagId,
+        createdBy
+      });
+      
+      const issueTag = await storage.addTagToIssue(issueTagData);
+      return res.status(201).json(issueTag);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      return res.status(500).json({ message: "Failed to add tag to issue" });
+    }
+  });
+  
+  app.delete("/api/issues/:issueId/tags/:tagId", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      const tagId = parseInt(req.params.tagId);
+      
+      const success = await storage.removeTagFromIssue(issueId, tagId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Tag is not attached to this issue" });
+      }
+      
+      return res.status(200).json({ message: "Tag removed from issue" });
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to remove tag from issue" });
+    }
+  });
+  
+  app.get("/api/tags/:tagId/issues", async (req: Request, res: Response) => {
+    try {
+      const tagId = parseInt(req.params.tagId);
+      const issues = await storage.getIssuesByTag(tagId);
+      return res.json(issues);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch issues by tag" });
     }
   });
 

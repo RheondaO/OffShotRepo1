@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -9,13 +9,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { IssueDetailsSkeleton } from "@/components/issues/IssueDetailsSkeleton";
-import { type Issue, type Category } from "@shared/schema";
+import { TagInput } from "@/components/tags";
+import { type Issue, type Category, type Tag } from "@shared/schema";
 
 const IssueDetails = () => {
   const [match, params] = useRoute("/issues/:id");
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [isVoting, setIsVoting] = useState(false);
+  const [issueTags, setIssueTags] = useState<Tag[]>([]);
   
   const issueId = match ? parseInt(params.id) : null;
   
@@ -28,6 +30,20 @@ const IssueDetails = () => {
     queryKey: [`/api/categories/${issue?.categoryId}`],
     enabled: !!issue?.categoryId,
   });
+  
+  // Fetch tags for this issue
+  const { data: tags = [], isLoading: isTagsLoading } = useQuery<Tag[]>({
+    queryKey: [`/api/issues/${issueId}/tags`],
+    queryFn: () => apiRequest('GET', `/api/issues/${issueId}/tags`).then(r => r.json()),
+    enabled: !!issueId
+  });
+  
+  // Update local state when tags data changes
+  useEffect(() => {
+    if (tags) {
+      setIssueTags(tags);
+    }
+  }, [tags]);
   
   const handleVote = async () => {
     if (!issue || isVoting) return;
@@ -134,6 +150,16 @@ const IssueDetails = () => {
             
             <div className="prose prose-invert max-w-none mb-8">
               <p className="whitespace-pre-line">{issue.description}</p>
+            </div>
+            
+            <div className="mt-6 mb-8">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Tags</h3>
+              <TagInput 
+                issueTags={issueTags} 
+                issueId={issue.id} 
+                onTagsChange={setIssueTags}
+                userId={DEFAULT_USER_ID}
+              />
             </div>
             
             <div className="flex flex-wrap items-center justify-between gap-4 mt-8">
