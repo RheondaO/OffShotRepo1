@@ -94,6 +94,15 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               </Link>
             </li>
             <li>
+              <Link 
+                href="/games" 
+                className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                onClick={onClose}
+              >
+                Games
+              </Link>
+            </li>
+            <li>
               <a 
                 href="#"
                 className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
