@@ -1,19 +1,26 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { XpButton } from "@/components/ui/xp-button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import useXp from "@/hooks/use-xp";
 
 // Simple memory game
-function MemoryGame() {
+interface GameProps {
+  onStartGame: () => void;
+}
+
+function MemoryGame({ onStartGame }: GameProps) {
   const [cards, setCards] = useState<number[]>([]);
   const [flipped, setFlipped] = useState<boolean[]>([]);
   const [matched, setMatched] = useState<boolean[]>([]);
   const [disabled, setDisabled] = useState(false);
   const [moves, setMoves] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
+  const { rewards } = useXp();
   
   // Initialize game
   const startGame = () => {
@@ -25,6 +32,9 @@ function MemoryGame() {
     setMatched(Array(cardValues.length).fill(false));
     setMoves(0);
     setGameStarted(true);
+    
+    // Award XP for starting the game
+    onStartGame();
   };
   
   // Handle card click
@@ -84,7 +94,7 @@ function MemoryGame() {
       <CardContent>
         {!gameStarted ? (
           <div className="flex justify-center">
-            <Button onClick={startGame}>Start Game</Button>
+            <XpButton onClick={startGame} xpAmount={rewards.START_GAME}>Start Game</XpButton>
           </div>
         ) : (
           <>
@@ -115,7 +125,7 @@ function MemoryGame() {
 }
 
 // Word Scramble Game
-function WordScrambleGame() {
+function WordScrambleGame({ onStartGame }: GameProps) {
   const [currentWord, setCurrentWord] = useState("");
   const [scrambledWord, setScrambledWord] = useState("");
   const [userGuess, setUserGuess] = useState("");
@@ -125,6 +135,7 @@ function WordScrambleGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const { rewards } = useXp();
   
   const words = [
     "community", "environment", "government", "healthcare", "education",
@@ -170,6 +181,9 @@ function WordScrambleGame() {
         return prev - 1;
       });
     }, 1000);
+    
+    // Award XP for starting the game
+    onStartGame();
   };
   
   // Clean up timer on unmount
@@ -203,7 +217,7 @@ function WordScrambleGame() {
       <CardContent className="space-y-4">
         {!gameStarted ? (
           <div className="flex justify-center">
-            <Button onClick={startGame}>Start Game</Button>
+            <XpButton onClick={startGame} xpAmount={rewards.START_GAME}>Start Game</XpButton>
           </div>
         ) : gameOver ? (
           <div className="text-center space-y-4">
@@ -253,7 +267,7 @@ function WordScrambleGame() {
 }
 
 // Reaction Speed Test Game
-function ReactionSpeedGame() {
+function ReactionSpeedGame({ onStartGame }: GameProps) {
   const [status, setStatus] = useState<'waiting' | 'ready' | 'clicked' | 'tooEarly' | 'results'>('waiting');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [endTime, setEndTime] = useState<number | null>(null);
@@ -261,6 +275,7 @@ function ReactionSpeedGame() {
   const [reactionTime, setReactionTime] = useState<number | null>(null);
   const [bestTime, setBestTime] = useState<number | null>(null);
   const [attempts, setAttempts] = useState<number[]>([]);
+  const { rewards } = useXp();
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -278,6 +293,9 @@ function ReactionSpeedGame() {
       setStatus('ready');
       setStartTime(Date.now());
     }, newDelay);
+    
+    // Award XP for starting the game
+    onStartGame();
   };
   
   const handleClick = () => {
@@ -406,11 +424,12 @@ function ReactionSpeedGame() {
   );
 }
 
-function QuizGame() {
+function QuizGame({ onStartGame }: GameProps) {
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const { rewards } = useXp();
   
   const quizQuestions = [
     {
@@ -445,6 +464,9 @@ function QuizGame() {
     setCurrentQuestion(0);
     setScore(0);
     setShowResult(false);
+    
+    // Award XP for starting the game
+    onStartGame();
   };
   
   const handleAnswer = (selectedOption: number) => {
@@ -468,7 +490,7 @@ function QuizGame() {
       <CardContent>
         {!started ? (
           <div className="flex justify-center">
-            <Button onClick={startQuiz}>Start Quiz</Button>
+            <XpButton onClick={startQuiz} xpAmount={rewards.START_GAME}>Start Quiz</XpButton>
           </div>
         ) : showResult ? (
           <div className="text-center space-y-4">
@@ -505,6 +527,14 @@ function QuizGame() {
 }
 
 export default function GamesPage() {
+  const { rewards, performAction } = useXp();
+  
+  // Function for starting games and rewarding XP
+  const handleStartGame = async (gameName: string) => {
+    // Activity ID 12 is for starting a game (as per existing code patterns)
+    await performAction(12, rewards.START_GAME); 
+  };
+  
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-2">Games</h1>
@@ -512,12 +542,12 @@ export default function GamesPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
         <div>
-          <MemoryGame />
-          <ReactionSpeedGame />
+          <MemoryGame onStartGame={() => handleStartGame("Memory Game")} />
+          <ReactionSpeedGame onStartGame={() => handleStartGame("Reaction Speed Game")} />
         </div>
         <div>
-          <WordScrambleGame />
-          <QuizGame />
+          <WordScrambleGame onStartGame={() => handleStartGame("Word Scramble Game")} />
+          <QuizGame onStartGame={() => handleStartGame("Quiz Game")} />
         </div>
       </div>
       
