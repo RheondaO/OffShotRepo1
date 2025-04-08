@@ -20,6 +20,7 @@ import ChatPage from "@/pages/chat-page";
 import MissionPage from "@/pages/mission-page";
 import GamesPage from "@/pages/games-page";
 import AnalyticsPage from "@/pages/analytics-page";
+import DemoUserPage from "@/pages/demo-user-page";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -52,6 +53,7 @@ function Router() {
           <Route path="/mission" component={MissionPage} />
           <Route path="/games" component={GamesPage} />
           <Route path="/analytics" component={AnalyticsPage} />
+          <Route path="/demo" component={DemoUserPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -7,19 +7,46 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return format(dateObj, "MMM dd, yyyy");
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return "Not set";
+  
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) return "Invalid date";
+    return format(dateObj, "MMM dd, yyyy");
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Invalid date";
+  }
 }
 
-export function formatDateTime(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return format(dateObj, "MMM dd, yyyy h:mm a");
+export function formatDateTime(date: Date | string | null | undefined): string {
+  if (!date) return "Not set";
+  
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) return "Invalid date";
+    return format(dateObj, "MMM dd, yyyy h:mm a");
+  } catch (error) {
+    console.error("Error formatting date time:", error);
+    return "Invalid date";
+  }
 }
 
-export function formatRelativeTime(date: Date | string): string {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return formatDistanceToNow(dateObj, { addSuffix: true });
+export function formatRelativeTime(date: Date | string | null | undefined): string {
+  if (!date) return "Not set";
+  
+  try {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) return "Invalid date";
+    return formatDistanceToNow(dateObj, { addSuffix: true });
+  } catch (error) {
+    console.error("Error formatting relative time:", error);
+    return "Invalid date";
+  }
 }
 
 export function truncateText(text: string, maxLength: number): string {
@@ -81,4 +108,4 @@ export function getCategoryIconElement(iconName: string) {
   return `ri-${iconName} text-xl text-amber-400`;
 }
 
-export const DEFAULT_USER_ID = 1;
+export const DEFAULT_USER_ID = 3; // Our demo user ID
