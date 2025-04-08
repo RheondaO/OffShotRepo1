@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { XpButton } from "@/components/ui/xp-button";
+import { XpButton, XpButtonRef } from "@/components/ui/xp-button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -10,7 +10,7 @@ import useXp from "@/hooks/use-xp";
 
 // Simple memory game
 interface GameProps {
-  onStartGame: () => void;
+  onStartGame: (xpButtonRef: React.RefObject<XpButtonRef>) => void;
 }
 
 function MemoryGame({ onStartGame }: GameProps) {
@@ -21,6 +21,10 @@ function MemoryGame({ onStartGame }: GameProps) {
   const [moves, setMoves] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const { rewards } = useXp();
+  
+  // Create refs for XP buttons
+  const startButtonRef = useRef<XpButtonRef>(null);
+  const restartButtonRef = useRef<XpButtonRef>(null);
   
   // Initialize game
   const startGame = () => {
@@ -33,8 +37,12 @@ function MemoryGame({ onStartGame }: GameProps) {
     setMoves(0);
     setGameStarted(true);
     
-    // Award XP for starting the game
-    onStartGame();
+    // Award XP for starting the game - pass the appropriate ref
+    if (gameStarted) {
+      onStartGame(restartButtonRef);
+    } else {
+      onStartGame(startButtonRef);
+    }
   };
   
   // Handle card click
@@ -94,13 +102,30 @@ function MemoryGame({ onStartGame }: GameProps) {
       <CardContent>
         {!gameStarted ? (
           <div className="flex justify-center">
-            <XpButton onClick={startGame} xpAmount={rewards.START_GAME}>Start Game</XpButton>
+            <XpButton 
+              ref={startButtonRef}
+              onClick={startGame} 
+              xpAmount={rewards.START_GAME}
+              triggerMode="manual"
+            >
+              Start Game
+            </XpButton>
           </div>
         ) : (
           <>
             <div className="text-center mb-4">
               <Badge variant="outline" className="mb-2">Moves: {moves}</Badge>
-              <XpButton variant="outline" size="sm" onClick={startGame} className="ml-4" xpAmount={rewards.START_GAME}>Restart</XpButton>
+              <XpButton 
+                ref={restartButtonRef}
+                variant="outline" 
+                size="sm" 
+                onClick={startGame} 
+                className="ml-4" 
+                xpAmount={rewards.START_GAME}
+                triggerMode="manual"
+              >
+                Restart
+              </XpButton>
             </div>
             <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
               {cards.map((card, index) => (
@@ -136,6 +161,9 @@ function WordScrambleGame({ onStartGame }: GameProps) {
   const [gameOver, setGameOver] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { rewards } = useXp();
+  
+  const startButtonRef = useRef<XpButtonRef>(null);
+  const playAgainButtonRef = useRef<XpButtonRef>(null);
   
   const words = [
     "community", "environment", "government", "healthcare", "education",
@@ -182,8 +210,12 @@ function WordScrambleGame({ onStartGame }: GameProps) {
       });
     }, 1000);
     
-    // Award XP for starting the game
-    onStartGame();
+    // Award XP for starting the game, passing the appropriate ref
+    if (gameOver) {
+      onStartGame(playAgainButtonRef);
+    } else if (!gameStarted) {
+      onStartGame(startButtonRef);
+    }
   };
   
   // Clean up timer on unmount
@@ -217,13 +249,27 @@ function WordScrambleGame({ onStartGame }: GameProps) {
       <CardContent className="space-y-4">
         {!gameStarted ? (
           <div className="flex justify-center">
-            <XpButton onClick={startGame} xpAmount={rewards.START_GAME}>Start Game</XpButton>
+            <XpButton 
+              ref={startButtonRef}
+              onClick={startGame} 
+              xpAmount={rewards.START_GAME}
+              triggerMode="manual"
+            >
+              Start Game
+            </XpButton>
           </div>
         ) : gameOver ? (
           <div className="text-center space-y-4">
             <h3 className="text-xl font-bold">Game Over!</h3>
             <p className="text-lg">Your final score: {score}</p>
-            <XpButton onClick={startGame} xpAmount={rewards.START_GAME}>Play Again</XpButton>
+            <XpButton 
+              ref={playAgainButtonRef}
+              onClick={startGame} 
+              xpAmount={rewards.START_GAME}
+              triggerMode="manual"
+            >
+              Play Again
+            </XpButton>
           </div>
         ) : (
           <>
@@ -278,6 +324,7 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
   const { rewards } = useXp();
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const tryAgainButtonRef = useRef<XpButtonRef>(null);
   
   const startGame = () => {
     setStatus('waiting');
@@ -295,7 +342,12 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
     }, newDelay);
     
     // Award XP for starting the game
-    onStartGame();
+    if (status === 'results' || status === 'tooEarly') {
+      onStartGame(tryAgainButtonRef);
+    } else {
+      // First time starting
+      onStartGame(tryAgainButtonRef);
+    }
   };
   
   const handleClick = () => {
@@ -377,7 +429,14 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
             <p className="text-xl mb-2">{getStatusText()}</p>
             {status === 'waiting' && <p className="text-sm">Click when the box turns green</p>}
             {status === 'results' && (
-              <XpButton variant="ghost" className="text-white border border-white mt-2" onClick={startGame} xpAmount={rewards.START_GAME}>
+              <XpButton 
+                ref={tryAgainButtonRef}
+                variant="ghost" 
+                className="text-white border border-white mt-2" 
+                onClick={startGame} 
+                xpAmount={rewards.START_GAME}
+                triggerMode="manual"
+              >
                 Try Again
               </XpButton>
             )}
@@ -431,6 +490,9 @@ function QuizGame({ onStartGame }: GameProps) {
   const [showResult, setShowResult] = useState(false);
   const { rewards } = useXp();
   
+  const startButtonRef = useRef<XpButtonRef>(null);
+  const playAgainButtonRef = useRef<XpButtonRef>(null);
+  
   const quizQuestions = [
     {
       question: "What is the capital of France?",
@@ -466,7 +528,11 @@ function QuizGame({ onStartGame }: GameProps) {
     setShowResult(false);
     
     // Award XP for starting the game
-    onStartGame();
+    if (showResult) {
+      onStartGame(playAgainButtonRef);
+    } else if (!started) {
+      onStartGame(startButtonRef);
+    }
   };
   
   const handleAnswer = (selectedOption: number) => {
@@ -490,13 +556,27 @@ function QuizGame({ onStartGame }: GameProps) {
       <CardContent>
         {!started ? (
           <div className="flex justify-center">
-            <XpButton onClick={startQuiz} xpAmount={rewards.START_GAME}>Start Quiz</XpButton>
+            <XpButton 
+              ref={startButtonRef}
+              onClick={startQuiz} 
+              xpAmount={rewards.START_GAME}
+              triggerMode="manual"
+            >
+              Start Quiz
+            </XpButton>
           </div>
         ) : showResult ? (
           <div className="text-center space-y-4">
             <h3 className="text-xl font-bold">Quiz Complete!</h3>
             <p className="text-lg">Your score: {score} out of {quizQuestions.length}</p>
-            <XpButton onClick={startQuiz} xpAmount={rewards.START_GAME}>Play Again</XpButton>
+            <XpButton 
+              ref={playAgainButtonRef}
+              onClick={startQuiz} 
+              xpAmount={rewards.START_GAME}
+              triggerMode="manual"
+            >
+              Play Again
+            </XpButton>
           </div>
         ) : (
           <div className="space-y-4">
@@ -530,9 +610,14 @@ export default function GamesPage() {
   const { rewards, performAction } = useXp();
   
   // Function for starting games and rewarding XP
-  const handleStartGame = async (gameName: string) => {
+  const handleStartGame = async (gameName: string, xpButtonRef: React.RefObject<XpButtonRef>) => {
     // Activity ID 12 is for starting a game (as per existing code patterns)
-    await performAction(12, rewards.START_GAME); 
+    const result = await performAction(12, rewards.START_GAME);
+    
+    // Only trigger the animation when XP is actually awarded
+    if (result && xpButtonRef.current) {
+      xpButtonRef.current.triggerXpAnimation();
+    }
   };
   
   return (
@@ -542,12 +627,12 @@ export default function GamesPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
         <div>
-          <MemoryGame onStartGame={() => handleStartGame("Memory Game")} />
-          <ReactionSpeedGame onStartGame={() => handleStartGame("Reaction Speed Game")} />
+          <MemoryGame onStartGame={(xpButtonRef) => handleStartGame("Memory Game", xpButtonRef)} />
+          <ReactionSpeedGame onStartGame={(xpButtonRef) => handleStartGame("Reaction Speed Game", xpButtonRef)} />
         </div>
         <div>
-          <WordScrambleGame onStartGame={() => handleStartGame("Word Scramble Game")} />
-          <QuizGame onStartGame={() => handleStartGame("Quiz Game")} />
+          <WordScrambleGame onStartGame={(xpButtonRef) => handleStartGame("Word Scramble Game", xpButtonRef)} />
+          <QuizGame onStartGame={(xpButtonRef) => handleStartGame("Quiz Game", xpButtonRef)} />
         </div>
       </div>
       

@@ -1,21 +1,26 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, useImperativeHandle } from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
 import XpAnimation from '@/components/animations/XpAnimation';
 import useXpAnimation from '@/hooks/use-xp-animation';
+
+export interface XpButtonRef {
+  triggerXpAnimation: () => void;
+}
 
 interface XpButtonProps extends ButtonProps {
   xpAmount: number;
   xpText?: string;
   onXpEarned?: (amount: number) => void;
+  triggerMode?: 'onClick' | 'manual';
 }
 
-const XpButton = forwardRef<HTMLButtonElement, XpButtonProps>(
-  ({ children, xpAmount, xpText, onXpEarned, onClick, className, ...props }, ref) => {
+const XpButton = forwardRef<XpButtonRef, XpButtonProps>(
+  ({ children, xpAmount, xpText, onXpEarned, onClick, className, triggerMode = 'onClick', ...props }, ref) => {
     const { animationState, triggerAnimation, hideAnimation } = useXpAnimation();
     const [buttonRef, setButtonRef] = useState<HTMLButtonElement | null>(null);
 
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-      // Trigger animation when button is clicked
+    // Method to trigger the XP animation
+    const triggerXpAnimation = () => {
       if (buttonRef) {
         const rect = buttonRef.getBoundingClientRect();
         const position = {
@@ -27,24 +32,31 @@ const XpButton = forwardRef<HTMLButtonElement, XpButtonProps>(
         triggerAnimation(xpAmount);
       }
 
-      // Call the original onClick handler
-      if (onClick) {
-        onClick(event);
-      }
-
       // Call the onXpEarned callback
       if (onXpEarned) {
         onXpEarned(xpAmount);
       }
     };
 
+    // Expose the trigger method to parent components
+    useImperativeHandle(ref, () => ({
+      triggerXpAnimation
+    }));
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      // Only trigger animation on click if triggerMode is 'onClick'
+      if (triggerMode === 'onClick') {
+        triggerXpAnimation();
+      }
+
+      // Call the original onClick handler
+      if (onClick) {
+        onClick(event);
+      }
+    };
+
     const handleRefSet = (element: HTMLButtonElement | null) => {
       setButtonRef(element);
-      if (typeof ref === 'function') {
-        ref(element);
-      } else if (ref) {
-        ref.current = element;
-      }
     };
 
     // Create the displayed text for XP
