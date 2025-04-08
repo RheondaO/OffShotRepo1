@@ -1424,10 +1424,19 @@ export class DatabaseStorage implements IStorage {
           await db
             .update(users)
             .set({ 
-              xp: 100,
+              xp: 25, // Start with the sign-up bonus
               level: 1
             })
             .where(eq(users.id, user.id));
+            
+          // Import and run the demo user seeding function
+          try {
+            const { seedDemoUser } = await import('./seed-demo-user');
+            await seedDemoUser();
+            console.log('✅ Demo user activity history seeded successfully!');
+          } catch (error) {
+            console.error('❌ Error seeding demo user activity history:', error);
+          }
         }
       }
       
