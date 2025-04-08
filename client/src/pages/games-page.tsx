@@ -562,6 +562,7 @@ function QuizGame({ onStartGame, onGameWin }: GameProps) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setShowResult(true);
+      
       // Award XP for completing the quiz
       setTimeout(() => {
         onGameWin(winButtonRef);
