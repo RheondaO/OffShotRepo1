@@ -76,9 +76,9 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
+                <Link href="/newsletter" className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
                   Newsletter
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

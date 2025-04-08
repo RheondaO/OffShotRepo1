@@ -10,6 +10,7 @@ import SubmitIssue from "@/pages/SubmitIssue";
 import AuthPage from "@/pages/auth-page";
 import PrivacyPage from "@/pages/privacy-page";
 import TermsPage from "@/pages/terms-page";
+import NewsletterPage from "@/pages/newsletter-page";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -26,6 +27,7 @@ function Router() {
           <Route path="/auth" component={AuthPage} />
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/terms" component={TermsPage} />
+          <Route path="/newsletter" component={NewsletterPage} />
           {/* Fallback to 404 */}
           <Route component={NotFound} />
         </Switch>
