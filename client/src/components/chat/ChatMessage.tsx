@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { ChatMessage as ChatMessageType } from "@/hooks/use-chat";
-import { formatDate } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -27,7 +27,7 @@ const ChatMessage = ({ message, isCurrentUser }: ChatMessageProps) => {
           {isCurrentUser ? 'You' : message.username}
         </span>
         <span className="text-xs text-[hsl(var(--foreground)/50)]">
-          {formatDate(new Date(message.timestamp))}
+          {formatDateTime(new Date(message.timestamp))}
         </span>
       </div>
       <div 
