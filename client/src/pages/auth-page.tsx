@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { insertUserSchema } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -38,6 +39,15 @@ type RegisterValues = z.infer<typeof registerSchema>;
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
+  const { user, loginMutation, registerMutation } = useAuth();
+  
+  // Redirect to home if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
   
   // Check for tab parameter in URL on mount
   useEffect(() => {
@@ -59,18 +69,11 @@ const AuthPage = () => {
 
   const handleLoginSubmit = async (values: LoginValues) => {
     try {
-      toast({
-        title: "Login feature coming soon",
-        description: "This feature is currently under development.",
-      });
-      console.log("Login values:", values);
+      await loginMutation.mutateAsync(values);
+      navigate('/');
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      // Error handling is already done in the mutation
     }
   };
 
@@ -88,18 +91,13 @@ const AuthPage = () => {
 
   const handleRegisterSubmit = async (values: RegisterValues) => {
     try {
-      toast({
-        title: "Registration feature coming soon",
-        description: "This feature is currently under development.",
-      });
-      console.log("Register values:", values);
+      // Remove confirmPassword field as it's not in the schema
+      const { confirmPassword, ...registerData } = values;
+      await registerMutation.mutateAsync(registerData);
+      navigate('/');
     } catch (error) {
       console.error("Registration error:", error);
-      toast({
-        title: "Registration failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      // Error handling is already done in the mutation
     }
   };
 
@@ -156,8 +154,13 @@ const AuthPage = () => {
                     )}
                   />
 
-                  <Button type="submit" className="w-full" size="lg">
-                    Login
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? "Logging in..." : "Login"}
                   </Button>
                 </form>
               </Form>
@@ -248,8 +251,13 @@ const AuthPage = () => {
                     )}
                   />
 
-                  <Button type="submit" className="w-full" size="lg">
-                    Create Account
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={registerMutation.isPending}
+                  >
+                    {registerMutation.isPending ? "Creating Account..." : "Create Account"}
                   </Button>
                 </form>
               </Form>

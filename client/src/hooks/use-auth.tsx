@@ -21,37 +21,48 @@ type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-// For now, we'll simulate a logged-in user to avoid authentication requirements
-const MOCK_USER: User = {
-  id: 1,
-  username: "demo_user",
-  name: "Demo User",
-  email: "demo@example.com",
-  password: "hashed_password" // This would be hashed in a real app
-};
-
+// In a fully implemented app, we would use proper authentication
+// For now, we'll fetch our demo user directly
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  // This is a simplified version that always returns the mock user
-  // In a real implementation, we would fetch the user from the server
+  // Fetch the demo user from the database (ID: 3)
   const {
     data: user,
     error,
     isLoading,
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
-    queryFn: () => Promise.resolve(MOCK_USER),
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/users/3');
+        if (!response.ok) {
+          throw new Error('Failed to fetch user');
+        }
+        const userData = await response.json();
+        return userData;
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        return null;
+      }
+    },
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      // In a real implementation, we would call the server
-      // For now, just return the mock user
-      return MOCK_USER;
+      // For now, directly fetch the demo user instead of implementing real login
+      const response = await apiRequest('GET', '/api/users/3');
+      if (!response.ok) {
+        throw new Error('Failed to login');
+      }
+      return await response.json();
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${user.name}!`,
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -64,12 +75,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
-      // In a real implementation, we would call the server
-      // For now, just return the mock user
-      return MOCK_USER;
+      // In a real app, we would create a new user
+      // For now, just return the demo user
+      const response = await apiRequest('GET', '/api/users/3');
+      if (!response.ok) {
+        throw new Error('Failed to register');
+      }
+      return await response.json();
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Registration successful",
+        description: `Welcome, ${user.name}!`,
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -82,12 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // In a real implementation, we would call the server
-      // For now, just return
+      // In a real app, we would call a logout endpoint
       return;
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
     },
     onError: (error: Error) => {
       toast({

@@ -1403,43 +1403,44 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    // Create a default user if needed
+    const defaultUser = await this.getUserByUsername("demo_user");
+    
+    if (!defaultUser) {
+      console.log('Creating demo user...');
+      // We can only use fields from the schema
+      const user = await this.createUser({
+        username: "demo_user",
+        name: "Demo User",
+        email: "demo@example.com",
+        password: "hashed_password" // This would be hashed in a real app
+      });
+      
+      // Then update the user's XP/level separately
+      if (user) {
+        await db
+          .update(users)
+          .set({ 
+            xp: 25, // Start with the sign-up bonus
+            level: 1
+          })
+          .where(eq(users.id, user.id));
+          
+        // Import and run the demo user seeding function
+        try {
+          const { seedDemoUser } = await import('./seed-demo-user');
+          await seedDemoUser();
+          console.log('✅ Demo user activity history seeded successfully!');
+        } catch (error) {
+          console.error('❌ Error seeding demo user activity history:', error);
+        }
+      }
+    }
+    
     // Check if issues exist
     const existingIssues = await this.getAllIssues();
     
     if (existingIssues.length === 0) {
-      // Create a default user if needed
-      const defaultUser = await this.getUserByUsername("demo_user");
-      
-      if (!defaultUser) {
-        // We can only use fields from the schema
-        const user = await this.createUser({
-          username: "demo_user",
-          name: "Demo User",
-          email: "demo@example.com",
-          password: "hashed_password" // This would be hashed in a real app
-        });
-        
-        // Then update the user's XP/level separately
-        if (user) {
-          await db
-            .update(users)
-            .set({ 
-              xp: 25, // Start with the sign-up bonus
-              level: 1
-            })
-            .where(eq(users.id, user.id));
-            
-          // Import and run the demo user seeding function
-          try {
-            const { seedDemoUser } = await import('./seed-demo-user');
-            await seedDemoUser();
-            console.log('✅ Demo user activity history seeded successfully!');
-          } catch (error) {
-            console.error('❌ Error seeding demo user activity history:', error);
-          }
-        }
-      }
-      
       const userId = 1; // Default user ID
       
       // Sample issues
