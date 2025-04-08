@@ -45,6 +45,9 @@ const Header = () => {
           <Link href="/games" className={`${isActivePath("/games") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
             Games
           </Link>
+          <Link href="/analytics" className={`${isActivePath("/analytics") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Analytics
+          </Link>
         </nav>
         
         <button 
