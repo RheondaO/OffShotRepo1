@@ -98,8 +98,8 @@ const IssueCard = ({ issue }: IssueCardProps) => {
         </div>
       </div>
       
-      <Link href={`/issues/${issue.id}`}>
-        <a className="absolute inset-0 z-10 sr-only">View issue details</a>
+      <Link href={`/issues/${issue.id}`} className="absolute inset-0 z-10 sr-only">
+        View issue details
       </Link>
     </Card>
   );

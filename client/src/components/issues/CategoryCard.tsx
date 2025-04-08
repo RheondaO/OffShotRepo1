@@ -26,11 +26,9 @@ const CategoryCard = ({
       <p className="text-sm text-[hsl(var(--foreground)/60)] mb-3">
         {issueCount} active {issueCount === 1 ? 'issue' : 'issues'}
       </p>
-      <Link href={`/browse?categoryId=${category.id}`}>
-        <a className="text-[hsl(var(--space-pink))] text-sm hover:text-[hsl(var(--space-gold))] flex items-center justify-center gap-1 transition-colors">
-          View all
-          <i className="ri-arrow-right-line"></i>
-        </a>
+      <Link href={`/browse?categoryId=${category.id}`} className="text-[hsl(var(--space-pink))] text-sm hover:text-[hsl(var(--space-gold))] flex items-center justify-center gap-1 transition-colors">
+        View all
+        <i className="ri-arrow-right-line"></i>
       </Link>
     </Card>
   );

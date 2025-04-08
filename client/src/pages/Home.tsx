@@ -53,11 +53,9 @@ const Home = () => {
               ) : (
                 categories?.slice(0, 5).map((category) => (
                   <Link key={category.id} href={`/browse?categoryId=${category.id}`}>
-                    <a>
-                      <Button variant="category">
-                        {category.name}
-                      </Button>
-                    </a>
+                    <Button variant="category" className="cursor-pointer">
+                      {category.name}
+                    </Button>
                   </Link>
                 ))
               )}
@@ -92,11 +90,9 @@ const Home = () => {
               </span>
               Featured Community Issues
             </h2>
-            <Link href="/browse">
-              <a className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-gold))] flex items-center gap-1 transition-colors">
-                View all
-                <i className="ri-arrow-right-line"></i>
-              </a>
+            <Link href="/browse" className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-gold))] flex items-center gap-1 transition-colors">
+              View all
+              <i className="ri-arrow-right-line"></i>
             </Link>
           </div>
           
@@ -159,11 +155,9 @@ const Home = () => {
               </span>
               Trending This Week
             </h2>
-            <Link href="/browse">
-              <a className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-gold))] flex items-center gap-1 transition-colors">
-                View all
-                <i className="ri-arrow-right-line"></i>
-              </a>
+            <Link href="/browse" className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-gold))] flex items-center gap-1 transition-colors">
+              View all
+              <i className="ri-arrow-right-line"></i>
             </Link>
           </div>
           

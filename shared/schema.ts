@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -35,6 +36,39 @@ export const votes = pgTable("votes", {
   userId: integer("user_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  issues: many(issues),
+  votes: many(votes),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  issues: many(issues),
+}));
+
+export const issuesRelations = relations(issues, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [issues.categoryId],
+    references: [categories.id]
+  }),
+  user: one(users, {
+    fields: [issues.userId],
+    references: [users.id]
+  }),
+  votes: many(votes),
+}));
+
+export const votesRelations = relations(votes, ({ one }) => ({
+  issue: one(issues, {
+    fields: [votes.issueId],
+    references: [issues.id]
+  }),
+  user: one(users, {
+    fields: [votes.userId],
+    references: [users.id]
+  }),
+}));
 
 // Insert schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
