@@ -11,9 +11,10 @@ import useXp from "@/hooks/use-xp";
 // Simple memory game
 interface GameProps {
   onStartGame: (xpButtonRef: React.RefObject<XpButtonRef>) => void;
+  onGameWin: (xpButtonRef: React.RefObject<XpButtonRef>) => void;
 }
 
-function MemoryGame({ onStartGame }: GameProps) {
+function MemoryGame({ onStartGame, onGameWin }: GameProps) {
   const [cards, setCards] = useState<number[]>([]);
   const [flipped, setFlipped] = useState<boolean[]>([]);
   const [matched, setMatched] = useState<boolean[]>([]);
@@ -25,6 +26,7 @@ function MemoryGame({ onStartGame }: GameProps) {
   // Create refs for XP buttons
   const startButtonRef = useRef<XpButtonRef>(null);
   const restartButtonRef = useRef<XpButtonRef>(null);
+  const winButtonRef = useRef<XpButtonRef>(null);
   
   // Initialize game
   const startGame = () => {
@@ -78,6 +80,8 @@ function MemoryGame({ onStartGame }: GameProps) {
         if (newMatched.every(Boolean)) {
           setTimeout(() => {
             alert(`Congratulations! You've completed the game in ${moves + 1} moves.`);
+            // Award XP for winning the game
+            onGameWin(winButtonRef);
           }, 500);
         }
       } else {
@@ -150,7 +154,7 @@ function MemoryGame({ onStartGame }: GameProps) {
 }
 
 // Word Scramble Game
-function WordScrambleGame({ onStartGame }: GameProps) {
+function WordScrambleGame({ onStartGame, onGameWin }: GameProps) {
   const [currentWord, setCurrentWord] = useState("");
   const [scrambledWord, setScrambledWord] = useState("");
   const [userGuess, setUserGuess] = useState("");
@@ -164,6 +168,7 @@ function WordScrambleGame({ onStartGame }: GameProps) {
   
   const startButtonRef = useRef<XpButtonRef>(null);
   const playAgainButtonRef = useRef<XpButtonRef>(null);
+  const winButtonRef = useRef<XpButtonRef>(null);
   
   const words = [
     "community", "environment", "government", "healthcare", "education",
@@ -204,6 +209,12 @@ function WordScrambleGame({ onStartGame }: GameProps) {
         if (prev <= 1) {
           clearInterval(timerRef.current as NodeJS.Timeout);
           setGameOver(true);
+          if(score > 0) {
+            // If score is greater than 0, reward XP for completing the game
+            setTimeout(() => {
+              onGameWin(winButtonRef);
+            }, 500);
+          }
           return 0;
         }
         return prev - 1;
@@ -313,7 +324,7 @@ function WordScrambleGame({ onStartGame }: GameProps) {
 }
 
 // Reaction Speed Test Game
-function ReactionSpeedGame({ onStartGame }: GameProps) {
+function ReactionSpeedGame({ onStartGame, onGameWin }: GameProps) {
   const [status, setStatus] = useState<'waiting' | 'ready' | 'clicked' | 'tooEarly' | 'results'>('waiting');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [endTime, setEndTime] = useState<number | null>(null);
@@ -325,6 +336,7 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const tryAgainButtonRef = useRef<XpButtonRef>(null);
+  const winButtonRef = useRef<XpButtonRef>(null);
   
   const startGame = () => {
     setStatus('waiting');
@@ -368,6 +380,11 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
       }
       
       setStatus('results');
+      
+      // Award XP for successfully completing the reaction test
+      setTimeout(() => {
+        onGameWin(winButtonRef);
+      }, 500);
     } else if (status === 'tooEarly' || status === 'results') {
       startGame();
     }
@@ -483,7 +500,7 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
   );
 }
 
-function QuizGame({ onStartGame }: GameProps) {
+function QuizGame({ onStartGame, onGameWin }: GameProps) {
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -492,6 +509,7 @@ function QuizGame({ onStartGame }: GameProps) {
   
   const startButtonRef = useRef<XpButtonRef>(null);
   const playAgainButtonRef = useRef<XpButtonRef>(null);
+  const winButtonRef = useRef<XpButtonRef>(null);
   
   const quizQuestions = [
     {
@@ -544,6 +562,10 @@ function QuizGame({ onStartGame }: GameProps) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setShowResult(true);
+      // Award XP for completing the quiz
+      setTimeout(() => {
+        onGameWin(winButtonRef);
+      }, 500);
     }
   };
   
@@ -609,10 +631,16 @@ function QuizGame({ onStartGame }: GameProps) {
 export default function GamesPage() {
   const { rewards, performAction } = useXp();
   
-  // Function for starting games and rewarding XP
+  // This function is kept for compatibility, but we won't use it anymore
   const handleStartGame = async (gameName: string, xpButtonRef: React.RefObject<XpButtonRef>) => {
-    // Activity ID 12 is for starting a game (as per existing code patterns)
-    const result = await performAction(12, rewards.START_GAME);
+    // No-op function as we don't want to reward starting games
+    return null;
+  };
+  
+  // Function for rewarding XP when a game is completed/won
+  const handleGameWin = async (gameName: string, xpButtonRef: React.RefObject<XpButtonRef>) => {
+    // Activity ID 13 is for winning a game
+    const result = await performAction(13, rewards.GAME_WIN);
     
     // Only trigger the animation when XP is actually awarded
     if (result && xpButtonRef.current) {
@@ -627,12 +655,24 @@ export default function GamesPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
         <div>
-          <MemoryGame onStartGame={(xpButtonRef) => handleStartGame("Memory Game", xpButtonRef)} />
-          <ReactionSpeedGame onStartGame={(xpButtonRef) => handleStartGame("Reaction Speed Game", xpButtonRef)} />
+          <MemoryGame 
+            onStartGame={(xpButtonRef) => handleStartGame("Memory Game", xpButtonRef)}
+            onGameWin={(xpButtonRef) => handleGameWin("Memory Game", xpButtonRef)}
+          />
+          <ReactionSpeedGame 
+            onStartGame={(xpButtonRef) => handleStartGame("Reaction Speed Game", xpButtonRef)}
+            onGameWin={(xpButtonRef) => handleGameWin("Reaction Speed Game", xpButtonRef)}
+          />
         </div>
         <div>
-          <WordScrambleGame onStartGame={(xpButtonRef) => handleStartGame("Word Scramble Game", xpButtonRef)} />
-          <QuizGame onStartGame={(xpButtonRef) => handleStartGame("Quiz Game", xpButtonRef)} />
+          <WordScrambleGame 
+            onStartGame={(xpButtonRef) => handleStartGame("Word Scramble Game", xpButtonRef)}
+            onGameWin={(xpButtonRef) => handleGameWin("Word Scramble Game", xpButtonRef)}
+          />
+          <QuizGame 
+            onStartGame={(xpButtonRef) => handleStartGame("Quiz Game", xpButtonRef)}
+            onGameWin={(xpButtonRef) => handleGameWin("Quiz Game", xpButtonRef)}
+          />
         </div>
       </div>
       
@@ -644,6 +684,11 @@ export default function GamesPage() {
           We're working on adding competitive events and leaderboards to these games, so community members can 
           compete with each other. Stay tuned for upcoming tournaments and prizes!
         </p>
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <Badge variant="secondary" className="px-3 py-1">
+            <span className="font-bold">{rewards.GAME_WIN} XP</span> for completing any game
+          </Badge>
+        </div>
       </div>
     </div>
   );
