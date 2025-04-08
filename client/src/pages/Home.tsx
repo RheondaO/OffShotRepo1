@@ -72,7 +72,7 @@ const Home = () => {
               <span className="block">Your Community Adventure</span>
             </h2>
             <p className="text-[hsl(var(--foreground)/80)] text-lg md:text-xl mb-8 leading-relaxed">
-              Join the cosmic mission to improve your community. Complete challenges, earn XP, unlock NFT collectibles, and climb the leaderboard as you solve real issues together.
+              Join the cosmic mission to improve your community. Complete challenges, earn XP, unlock NFT collectibles, and climb the leaderboard as you solve real-world issues together.
             </p>
             
             <div className="flex flex-wrap justify-center items-center gap-4 mb-8">
