@@ -7,8 +7,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, MessageSquare } from "lucide-react";
+import { 
+  Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
+  MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
+  LogIn, UserPlus, CheckSquare, FileText, Share2, Reply, 
+  Image, Clipboard, Scissors, CheckCircle, Activity
+} from "lucide-react";
 import { Issue, Tag, Vote, UserActivity, UserNft, XpActivity } from "@shared/schema";
+import { 
+  getActivityName, getActivityColor, getActivityIcon, 
+  formatXp, groupActivitiesByDate, getSortedDates
+} from "@/lib/activity-utils";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -214,19 +223,51 @@ export default function ProfilePage() {
                   <p>Loading activity history...</p>
                 ) : getRecentActivities().length > 0 ? (
                   <div className="space-y-4">
-                    {getRecentActivities().map((activity, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="mt-0.5 bg-[hsl(var(--secondary)/50)] p-1.5 rounded-full">
-                          <Clock className="h-4 w-4 text-[hsl(var(--foreground)/70)]" />
+                    {getRecentActivities().map((activity, index) => {
+                      // Get the appropriate icon component based on activity type
+                      const IconComponent = (() => {
+                        const iconName = getActivityIcon(activity.activityId);
+                        switch(iconName) {
+                          case 'trophy': return Trophy;
+                          case 'play': return Play;
+                          case 'users': return Users;
+                          case 'mail': return Mail;
+                          case 'tag': return TagIcon;
+                          case 'log-in': return LogIn;
+                          case 'user-plus': return UserPlus;
+                          case 'check-square': return CheckSquare;
+                          case 'award': return Award;
+                          case 'heart': return Heart;
+                          case 'message-square': return MessageSquare;
+                          case 'file-text': return FileText;
+                          case 'share': return Share2;
+                          case 'reply': return Reply;
+                          case 'image': return Image;
+                          case 'clipboard': return Clipboard;
+                          case 'scissors': return Scissors;
+                          case 'check-circle': return CheckCircle;
+                          default: return Activity;
+                        }
+                      })();
+                      
+                      const color = getActivityColor(activity.activityId);
+                      const bgColorClass = `bg-[hsl(var(--space-${color})/20)]`;
+                      const textColorClass = `text-[hsl(var(--space-${color}))]`;
+                      
+                      return (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className={`mt-0.5 ${bgColorClass} p-1.5 rounded-full`}>
+                            <IconComponent className={`h-4 w-4 ${textColorClass}`} />
+                          </div>
+                          <div>
+                            <p className="font-medium">{getActivityName(activity.activityId)}</p>
+                            <p className="text-sm text-[hsl(var(--foreground)/70)]">
+                              Earned {formatXp(activity.xpEarned)} on {formatDate(activity.performedAt)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{activity.activityId} {/* Replace with activity name when available */}</p>
-                          <p className="text-sm text-[hsl(var(--foreground)/70)]">
-                            Earned {activity.xpEarned} XP on {formatDate(activity.performedAt)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-center text-sm text-[hsl(var(--foreground)/70)] py-2">
@@ -253,21 +294,54 @@ export default function ProfilePage() {
                           acc[curr.activityId] = (acc[curr.activityId] || 0) + curr.xpEarned;
                           return acc;
                         }, {} as { [key: number]: number })
-                      ).map(([activityId, xpEarned], index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4 flex justify-between items-center">
-                            <div>
-                              <p className="text-sm text-[hsl(var(--foreground)/70)]">
-                                Activity {activityId} {/* Replace with activity name when available */}
-                              </p>
-                              <p className="font-medium">{xpEarned} XP</p>
-                            </div>
-                            <div className="bg-[hsl(var(--space-blue)/20)] p-2 rounded-full">
-                              <ArrowUp className="h-5 w-5 text-[hsl(var(--space-blue))]" />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      ).map(([activityIdStr, xpEarned], index) => {
+                        const activityId = parseInt(activityIdStr);
+                        const color = getActivityColor(activityId);
+                        const bgColorClass = `bg-[hsl(var(--space-${color})/20)]`;
+                        const textColorClass = `text-[hsl(var(--space-${color}))]`;
+
+                        // Get the appropriate icon component based on activity type
+                        const IconComponent = (() => {
+                          const iconName = getActivityIcon(activityId);
+                          switch(iconName) {
+                            case 'trophy': return Trophy;
+                            case 'play': return Play;
+                            case 'users': return Users;
+                            case 'mail': return Mail;
+                            case 'tag': return TagIcon;
+                            case 'log-in': return LogIn;
+                            case 'user-plus': return UserPlus;
+                            case 'check-square': return CheckSquare;
+                            case 'award': return Award;
+                            case 'heart': return Heart;
+                            case 'message-square': return MessageSquare;
+                            case 'file-text': return FileText;
+                            case 'share': return Share2;
+                            case 'reply': return Reply;
+                            case 'image': return Image;
+                            case 'clipboard': return Clipboard;
+                            case 'scissors': return Scissors;
+                            case 'check-circle': return CheckCircle;
+                            default: return Activity;
+                          }
+                        })();
+                        
+                        return (
+                          <Card key={index}>
+                            <CardContent className="p-4 flex justify-between items-center">
+                              <div>
+                                <p className="text-sm text-[hsl(var(--foreground)/70)]">
+                                  {getActivityName(activityId)}
+                                </p>
+                                <p className="font-medium">{formatXp(xpEarned)}</p>
+                              </div>
+                              <div className={`${bgColorClass} p-2 rounded-full`}>
+                                <IconComponent className={`h-5 w-5 ${textColorClass}`} />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -466,27 +540,67 @@ export default function ProfilePage() {
                 <p>Loading activity history...</p>
               ) : userActivities && userActivities.length > 0 ? (
                 <div className="space-y-6">
-                  {userActivities
-                    .sort((a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime())
-                    .map((activity, index) => (
-                      <div key={index} className="relative pl-8 pb-6">
-                        {index !== userActivities.length - 1 && (
-                          <div className="absolute left-3 top-3 bottom-0 w-px bg-[hsl(var(--border))]"></div>
-                        )}
-                        <div className="absolute left-0 top-0 bg-[hsl(var(--secondary)/50)] p-1.5 rounded-full">
-                          <Clock className="h-4 w-4 text-[hsl(var(--foreground)/70)]" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Activity {activity.activityId}</p>
-                          <p className="text-sm text-[hsl(var(--foreground)/70)]">
-                            Earned {activity.xpEarned} XP
-                          </p>
-                          <p className="text-xs text-[hsl(var(--foreground)/60)]">
-                            {formatDate(activity.performedAt)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                  {/* Group activities by date */}
+                  {Object.entries(groupActivitiesByDate(userActivities)).map(([date, activities], groupIndex) => (
+                    <div key={groupIndex} className="mb-8">
+                      <h3 className="text-sm font-medium mb-4 text-[hsl(var(--foreground)/70)]">{date}</h3>
+                      
+                      {activities
+                        .sort((a, b) => new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime())
+                        .map((activity, index) => {
+                          // Get the appropriate icon component based on activity type
+                          const IconComponent = (() => {
+                            const iconName = getActivityIcon(activity.activityId);
+                            switch(iconName) {
+                              case 'trophy': return Trophy;
+                              case 'play': return Play;
+                              case 'users': return Users;
+                              case 'mail': return Mail;
+                              case 'tag': return TagIcon;
+                              case 'log-in': return LogIn;
+                              case 'user-plus': return UserPlus;
+                              case 'check-square': return CheckSquare;
+                              case 'award': return Award;
+                              case 'heart': return Heart;
+                              case 'message-square': return MessageSquare;
+                              case 'file-text': return FileText;
+                              case 'share': return Share2;
+                              case 'reply': return Reply;
+                              case 'image': return Image;
+                              case 'clipboard': return Clipboard;
+                              case 'scissors': return Scissors;
+                              case 'check-circle': return CheckCircle;
+                              default: return Activity;
+                            }
+                          })();
+                          
+                          const color = getActivityColor(activity.activityId);
+                          const bgColorClass = `bg-[hsl(var(--space-${color})/20)]`;
+                          const textColorClass = `text-[hsl(var(--space-${color}))]`;
+                          
+                          return (
+                            <div key={index} className="relative pl-8 pb-6">
+                              {index !== activities.length - 1 && (
+                                <div className="absolute left-3 top-3 bottom-0 w-px bg-[hsl(var(--border))]"></div>
+                              )}
+                              <div className={`absolute left-0 top-0 ${bgColorClass} p-1.5 rounded-full`}>
+                                <IconComponent className={`h-4 w-4 ${textColorClass}`} />
+                              </div>
+                              <div>
+                                <p className="font-medium">{getActivityName(activity.activityId)}</p>
+                                <p className="text-sm text-[hsl(var(--foreground)/70)]">
+                                  Earned {formatXp(activity.xpEarned)}
+                                </p>
+                                <p className="text-xs text-[hsl(var(--foreground)/60)]">
+                                  {new Date(activity.performedAt).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="text-center text-sm text-[hsl(var(--foreground)/70)] py-6">
