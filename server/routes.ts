@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { 
   insertIssueSchema, 
@@ -163,5 +164,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Set up WebSocket server on a distinct path
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store connected clients with their usernames
+  const clients = new Map<WebSocket, { username: string }>();
+  
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('Client connected to WebSocket');
+    
+    // Handle messages from clients
+    ws.on('message', (message: string) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Handle different message types
+        switch (data.type) {
+          case 'join':
+            // Store user info with the connection
+            clients.set(ws, { username: data.username || 'Anonymous' });
+            
+            // Broadcast join message to all clients
+            broadcastMessage({
+              type: 'system',
+              content: `${data.username || 'Anonymous'} has joined the chat`,
+              timestamp: new Date().toISOString(),
+              username: 'System'
+            });
+            break;
+            
+          case 'message':
+            // Get user info
+            const userInfo = clients.get(ws);
+            
+            if (userInfo && data.content) {
+              // Broadcast message to all clients
+              broadcastMessage({
+                type: 'message',
+                content: data.content,
+                timestamp: new Date().toISOString(),
+                username: userInfo.username
+              });
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    // Handle disconnection
+    ws.on('close', () => {
+      const userInfo = clients.get(ws);
+      
+      if (userInfo) {
+        // Broadcast leave message
+        broadcastMessage({
+          type: 'system',
+          content: `${userInfo.username} has left the chat`,
+          timestamp: new Date().toISOString(),
+          username: 'System'
+        });
+        
+        // Remove client from the map
+        clients.delete(ws);
+      }
+      
+      console.log('Client disconnected from WebSocket');
+    });
+  });
+  
+  // Function to broadcast messages to all connected clients
+  function broadcastMessage(message: any) {
+    const messageStr = JSON.stringify(message);
+    
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageStr);
+      }
+    });
+  }
+  
   return httpServer;
 }

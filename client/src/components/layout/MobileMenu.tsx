@@ -76,6 +76,15 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               </Link>
             </li>
             <li>
+              <Link 
+                href="/chat" 
+                className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                onClick={onClose}
+              >
+                Community Chat
+              </Link>
+            </li>
+            <li>
               <a 
                 href="#"
                 className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
@@ -95,12 +104,16 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         </nav>
         
         <div className="mt-auto space-y-4">
-          <Button className="w-full" variant="outline">
-            Log In
-          </Button>
-          <Button className="w-full">
-            Sign Up
-          </Button>
+          <Link href="/auth" onClick={onClose}>
+            <Button className="w-full" variant="outline">
+              Log In
+            </Button>
+          </Link>
+          <Link href="/auth?tab=register" onClick={onClose}>
+            <Button className="w-full">
+              Sign Up
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

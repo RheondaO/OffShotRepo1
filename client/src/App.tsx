@@ -11,6 +11,7 @@ import AuthPage from "@/pages/auth-page";
 import PrivacyPage from "@/pages/privacy-page";
 import TermsPage from "@/pages/terms-page";
 import NewsletterPage from "@/pages/newsletter-page";
+import ChatPage from "@/pages/chat-page";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -28,6 +29,7 @@ function Router() {
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/terms" component={TermsPage} />
           <Route path="/newsletter" component={NewsletterPage} />
+          <Route path="/chat" component={ChatPage} />
           {/* Fallback to 404 */}
           <Route component={NotFound} />
         </Switch>
