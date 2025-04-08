@@ -3,8 +3,12 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import IssueCard from "@/components/issues/IssueCard";
+import { IssueCardSkeleton } from "@/components/issues/IssueCardSkeleton";
 import CategoryCard from "@/components/issues/CategoryCard";
+import { CategoryCardSkeleton } from "@/components/issues/CategoryCardSkeleton";
 import IssueTable from "@/components/issues/IssueTable";
+import { IssueTableSkeleton } from "@/components/issues/IssueTableSkeleton";
+import { FeaturedIssuesSkeleton } from "@/components/issues/FeaturedIssuesSkeleton";
 import SearchBar from "@/components/ui/search";
 import { type Category, type Issue } from "@shared/schema";
 
@@ -99,7 +103,7 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {isFeaturedLoading ? (
               Array(3).fill(0).map((_, i) => (
-                <div key={i} className="card bg-[hsl(var(--space-gray)/50)] rounded-xl h-64 animate-pulse"></div>
+                <IssueCardSkeleton key={i} />
               ))
             ) : featuredIssues && featuredIssues.length > 0 ? (
               featuredIssues.slice(0, 3).map((issue) => (
@@ -129,7 +133,7 @@ const Home = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {isCategoriesLoading ? (
               Array(8).fill(0).map((_, i) => (
-                <div key={i} className="card bg-[hsl(var(--space-gray)/40)] rounded-xl h-40 animate-pulse"></div>
+                <CategoryCardSkeleton key={i} />
               ))
             ) : (
               categories?.map((category, index) => (
@@ -162,7 +166,7 @@ const Home = () => {
           </div>
           
           {isTrendingLoading ? (
-            <div className="card bg-[hsl(var(--space-gray)/30)] rounded-xl h-64 animate-pulse"></div>
+            <IssueTableSkeleton />
           ) : trendingIssues && trendingIssues.length > 0 ? (
             <IssueTable issues={trendingIssues} />
           ) : (

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import IssueCard from "@/components/issues/IssueCard";
+import { IssueCardSkeleton } from "@/components/issues/IssueCardSkeleton";
 import SearchBar from "@/components/ui/search";
 import { type Category, type Issue } from "@shared/schema";
 
@@ -127,7 +128,7 @@ const BrowseIssues = () => {
         {isIssuesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="card bg-[hsl(var(--space-gray)/50)] rounded-xl h-64 animate-pulse"></div>
+              <IssueCardSkeleton key={i} />
             ))}
           </div>
         ) : issues && issues.length > 0 ? (

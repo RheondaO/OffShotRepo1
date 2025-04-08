@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { IssueDetailsSkeleton } from "@/components/issues/IssueDetailsSkeleton";
 import { type Issue, type Category } from "@shared/schema";
 
 const IssueDetails = () => {
@@ -84,18 +85,7 @@ const IssueDetails = () => {
   }
   
   if (isIssueLoading || !issue) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto animate-pulse">
-          <div className="h-8 bg-[hsl(var(--space-gray)/50)] rounded-lg w-2/3 mb-4"></div>
-          <div className="h-4 bg-[hsl(var(--space-gray)/50)] rounded w-1/4 mb-8"></div>
-          <div className="h-40 bg-[hsl(var(--space-gray)/50)] rounded-lg mb-6"></div>
-          <div className="h-4 bg-[hsl(var(--space-gray)/50)] rounded w-full mb-3"></div>
-          <div className="h-4 bg-[hsl(var(--space-gray)/50)] rounded w-full mb-3"></div>
-          <div className="h-4 bg-[hsl(var(--space-gray)/50)] rounded w-2/3"></div>
-        </div>
-      </div>
-    );
+    return <IssueDetailsSkeleton />;
   }
   
   return (
