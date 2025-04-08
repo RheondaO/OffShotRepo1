@@ -8,7 +8,8 @@ import {
   nfts, type Nft, type InsertNft,
   userNfts, type UserNft, type InsertUserNft,
   xpActivities, type XpActivity, type InsertXpActivity,
-  userActivities, type UserActivity, type InsertUserActivity
+  userActivities, type UserActivity, type InsertUserActivity,
+  newsletterSubscribers, type NewsletterSubscriber, type InsertNewsletterSubscriber
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, or, sql } from "drizzle-orm";
