@@ -38,6 +38,9 @@ const Header = () => {
           <Link href="/chat" className={`${isActivePath("/chat") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
             Community Chat
           </Link>
+          <Link href="/mission" className={`${isActivePath("/mission") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Our Mission
+          </Link>
         </nav>
         
         <button 

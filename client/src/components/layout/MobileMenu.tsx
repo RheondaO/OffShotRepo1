@@ -85,19 +85,20 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               </Link>
             </li>
             <li>
-              <a 
-                href="#"
+              <Link 
+                href="/mission" 
                 className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                onClick={onClose}
               >
-                Categories
-              </a>
+                Our Mission
+              </Link>
             </li>
             <li>
               <a 
                 href="#"
                 className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
               >
-                About
+                Categories
               </a>
             </li>
           </ul>
