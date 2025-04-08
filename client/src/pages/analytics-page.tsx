@@ -26,7 +26,9 @@ import {
   TrendingUp, 
   Users, 
   Calendar, 
-  Filter 
+  Filter,
+  MapPin,
+  Map as MapIcon 
 } from "lucide-react";
 import { 
   Select,
@@ -36,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { type Issue, type Category } from "@shared/schema";
+import IssueMap from "@/components/analytics/IssueMap";
 
 // Chart colors
 const COLORS = [
@@ -221,6 +224,7 @@ const AnalyticsPage = () => {
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="details">Issue Details</TabsTrigger>
+          <TabsTrigger value="map">Geographic Map</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -436,6 +440,56 @@ const AnalyticsPage = () => {
                     </Button>
                   </div>
                 </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="map">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <CardTitle>Geographic Distribution of Issues</CardTitle>
+                  <CardDescription>
+                    View issues mapped by location to see geographical patterns
+                  </CardDescription>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[hsl(var(--foreground)/70)]" />
+                  <Select
+                    value={categoryFilter}
+                    onValueChange={setCategoryFilter}
+                  >
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Filter by Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories?.map(category => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {issuesLoading || categoriesLoading ? (
+                <div className="h-[600px] flex items-center justify-center">
+                  <p>Loading map data...</p>
+                </div>
+              ) : (
+                <div className="h-[600px]">
+                  <IssueMap 
+                    issues={issues || []} 
+                    categories={categories || []} 
+                    selectedCategoryId={categoryFilter} 
+                  />
+                </div>
               )}
             </CardContent>
           </Card>
