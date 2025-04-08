@@ -187,6 +187,9 @@ const AnalyticsPage = () => {
                 <BarChart2 className="h-5 w-5 text-[hsl(var(--space-pink))] mr-2" />
                 <span className="text-2xl font-bold">{getTotalIssueCount()}</span>
               </div>
+              <p className="text-xs mt-2 text-[hsl(var(--foreground)/60)]">
+                The total number of community issues submitted to the platform for tracking and resolution
+              </p>
             </CardContent>
           </Card>
           
@@ -201,6 +204,9 @@ const AnalyticsPage = () => {
                 <TrendingUp className="h-5 w-5 text-[hsl(var(--space-blue))] mr-2" />
                 <span className="text-2xl font-bold">{getTotalVoteCount()}</span>
               </div>
+              <p className="text-xs mt-2 text-[hsl(var(--foreground)/60)]">
+                The cumulative count of all votes cast across all issues, indicating overall community engagement
+              </p>
             </CardContent>
           </Card>
           
@@ -215,6 +221,9 @@ const AnalyticsPage = () => {
                 <Users className="h-5 w-5 text-[hsl(var(--space-gold))] mr-2" />
                 <span className="text-2xl font-bold">{getAverageVotesPerIssue()}</span>
               </div>
+              <p className="text-xs mt-2 text-[hsl(var(--foreground)/60)]">
+                The mean number of votes per issue, reflecting typical community interest in submitted concerns
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -263,6 +272,9 @@ const AnalyticsPage = () => {
                     </ResponsiveContainer>
                   )}
                 </div>
+                <p className="text-xs mt-4 text-[hsl(var(--foreground)/60)]">
+                  This pie chart shows how issues are distributed across different categories, helping identify which areas receive the most community attention.
+                </p>
               </CardContent>
             </Card>
             
@@ -294,6 +306,9 @@ const AnalyticsPage = () => {
                     </ResponsiveContainer>
                   )}
                 </div>
+                <p className="text-xs mt-4 text-[hsl(var(--foreground)/60)]">
+                  This bar chart highlights the most popular issues based on community votes, indicating which concerns have gained the most support.
+                </p>
               </CardContent>
             </Card>
             
@@ -329,6 +344,9 @@ const AnalyticsPage = () => {
                     </ResponsiveContainer>
                   )}
                 </div>
+                <p className="text-xs mt-4 text-[hsl(var(--foreground)/60)]">
+                  This trend line shows the number of new issues submitted each month, helping identify patterns in community engagement and seasonal variations.
+                </p>
               </CardContent>
             </Card>
           </div>
