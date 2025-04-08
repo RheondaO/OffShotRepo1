@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserIcon, LogOut } from "lucide-react";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -10,6 +13,7 @@ interface MobileMenuProps {
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const [mounted, setMounted] = useState(false);
+  const { user, logoutMutation } = useAuth();
   
   useEffect(() => {
     setMounted(true);
@@ -120,6 +124,20 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                 Categories
               </a>
             </li>
+            {user && (
+              <li>
+                <Link 
+                  href="/profile" 
+                  className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
+                  onClick={onClose}
+                >
+                  <div className="flex items-center">
+                    <UserIcon className="w-5 h-5 mr-2" />
+                    My Profile
+                  </div>
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
         
@@ -127,16 +145,57 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           <div className="flex justify-center mb-4">
             <ThemeToggle />
           </div>
-          <Link href="/auth" onClick={onClose}>
-            <Button className="w-full" variant="outline">
-              Log In
-            </Button>
-          </Link>
-          <Link href="/auth?tab=register" onClick={onClose}>
-            <Button className="w-full">
-              Sign Up
-            </Button>
-          </Link>
+          
+          {user ? (
+            <>
+              <div className="flex items-center space-x-4 mb-6 bg-[hsl(var(--space-blue)/40)] p-4 rounded-lg">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-[hsl(var(--space-blue)/20)] text-sm">
+                    {user.name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="font-medium text-[hsl(var(--foreground))]">{user.name}</h3>
+                  <p className="text-sm text-[hsl(var(--foreground)/70)]">@{user.username}</p>
+                </div>
+                <div className="flex items-center justify-center rounded-full bg-[hsl(var(--space-green))] h-8 w-8 text-xs font-bold">
+                  {user.level}
+                </div>
+              </div>
+
+              <Link href="/profile" onClick={onClose}>
+                <Button className="w-full flex items-center justify-center gap-2" variant="outline">
+                  <UserIcon className="w-4 h-4" />
+                  <span>My Profile</span>
+                </Button>
+              </Link>
+              
+              <Button 
+                className="w-full flex items-center justify-center gap-2 text-[hsl(var(--destructive))]" 
+                variant="outline"
+                onClick={() => {
+                  logoutMutation.mutate();
+                  onClose();
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/auth" onClick={onClose}>
+                <Button className="w-full" variant="outline">
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/auth?tab=register" onClick={onClose}>
+                <Button className="w-full">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

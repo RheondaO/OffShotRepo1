@@ -39,6 +39,7 @@ export interface IStorage {
   
   // Votes
   getVotesByIssue(issueId: number): Promise<Vote[]>;
+  getVotesByUser(userId: number): Promise<Vote[]>;
   createVote(vote: InsertVote): Promise<Vote>;
   removeVote(issueId: number, userId: number): Promise<boolean>;
   hasUserVoted(issueId: number, userId: number): Promise<boolean>;
@@ -290,6 +291,12 @@ export class MemStorage implements IStorage {
   async getVotesByIssue(issueId: number): Promise<Vote[]> {
     return Array.from(this.votes.values()).filter(
       (vote) => vote.issueId === issueId
+    );
+  }
+  
+  async getVotesByUser(userId: number): Promise<Vote[]> {
+    return Array.from(this.votes.values()).filter(
+      (vote) => vote.userId === userId
     );
   }
 
@@ -717,6 +724,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(votes)
       .where(eq(votes.issueId, issueId));
+  }
+  
+  async getVotesByUser(userId: number): Promise<Vote[]> {
+    return await db
+      .select()
+      .from(votes)
+      .where(eq(votes.userId, userId));
   }
 
   async createVote(insertVote: InsertVote): Promise<Vote> {

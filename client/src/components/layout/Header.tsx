@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 import MobileMenu from "./MobileMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { UserIcon, LogOut, Settings, BadgeHelp } from "lucide-react";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
 
   const isActivePath = (path: string) => {
     return location === path;
@@ -60,16 +71,65 @@ const Header = () => {
         
         <div className="hidden md:flex items-center space-x-4">
           <ThemeToggle />
-          <Link href="/auth">
-            <Button variant="outline" size="sm">
-              Log In
-            </Button>
-          </Link>
-          <Link href="/auth?tab=register">
-            <Button size="sm">
-              Sign Up
-            </Button>
-          </Link>
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-[hsl(var(--space-blue)/20)] text-xs">
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[hsl(var(--space-green))] flex items-center justify-center text-[10px] font-bold">
+                    {user.level}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-0.5">
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-[hsl(var(--foreground)/70)]">@{user.username}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <Link href="/profile">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    <span>My Profile</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/submit">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <i className="ri-add-line w-4 h-4 mr-2" />
+                    <span>Submit Issue</span>
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer text-[hsl(var(--destructive))]" 
+                  onClick={() => logoutMutation.mutate()}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  <span>Log Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link href="/auth">
+                <Button variant="outline" size="sm">
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/auth?tab=register">
+                <Button size="sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

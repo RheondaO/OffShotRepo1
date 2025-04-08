@@ -348,6 +348,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get user's issues (issues created by a specific user)
+  app.get("/api/users/:userId/issues", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const issues = await storage.getAllIssues();
+      const userIssues = issues.filter(issue => issue.userId === userId);
+      return res.json(userIssues);
+    } catch (error) {
+      console.error("Error getting user issues:", error);
+      return res.status(500).json({ message: "Failed to fetch user issues" });
+    }
+  });
+  
+  // Get user's votes
+  app.get("/api/users/:userId/votes", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const votes = await storage.getVotesByUser(userId);
+      return res.json(votes);
+    } catch (error) {
+      console.error("Error getting user votes:", error);
+      return res.status(500).json({ message: "Failed to fetch user votes" });
+    }
+  });
+  
   // Purchase an NFT
   app.post("/api/users/:userId/nfts", async (req: Request, res: Response) => {
     try {

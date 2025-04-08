@@ -10,6 +10,7 @@ import BrowseIssues from "@/pages/BrowseIssues";
 import IssueDetails from "@/pages/IssueDetails";
 import SubmitIssue from "@/pages/SubmitIssue";
 import AuthPage from "@/pages/auth-page";
+import ProfilePage from "@/pages/profile-page";
 import PrivacyPage from "@/pages/privacy-page";
 import TermsPage from "@/pages/terms-page";
 import NewsletterPage from "@/pages/newsletter-page";
@@ -31,6 +32,7 @@ function Router() {
           <Route path="/issues/:id" component={IssueDetails} />
           <Route path="/submit" component={SubmitIssue} />
           <Route path="/auth" component={AuthPage} />
+          <Route path="/profile" component={ProfilePage} />
           <Route path="/privacy" component={PrivacyPage} />
           <Route path="/terms" component={TermsPage} />
           <Route path="/newsletter" component={NewsletterPage} />
