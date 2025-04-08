@@ -297,7 +297,15 @@ export default function ProfilePage() {
                   <div className="space-y-8">
                     {/* XP Level Preview Section */}
                     <div>
-                      <h3 className="text-sm font-medium mb-4">XP Level Progression</h3>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-medium">XP Level Progression</h3>
+                        <div className="text-xs text-[hsl(var(--foreground)/70)]">
+                          <span className="inline-flex items-center mr-3">
+                            <UserPlus className="h-3 w-3 mr-1" />
+                            New users receive 25 XP for signing up
+                          </span>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Current Level */}
                         <Card className="bg-[hsl(var(--space-blue)/5)] border-[hsl(var(--space-blue)/30)]">
@@ -342,7 +350,23 @@ export default function ProfilePage() {
                     
                     {/* XP Sources Section */}
                     <div>
-                      <h3 className="text-sm font-medium mb-4">XP Sources</h3>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-medium">XP Sources</h3>
+                        <div className="text-xs text-[hsl(var(--foreground)/70)]">
+                          <span className="inline-flex items-center mr-3">
+                            <Trophy className="h-3 w-3 mr-1" />
+                            Game Win (1 XP)
+                          </span>
+                          <span className="inline-flex items-center mr-3">
+                            <Heart className="h-3 w-3 mr-1" />
+                            Vote (1 XP)
+                          </span>
+                          <span className="inline-flex items-center">
+                            <FileText className="h-3 w-3 mr-1" />
+                            Submit Issue (5 XP)
+                          </span>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Group activities by type and sum XP */}
                         {Object.entries(

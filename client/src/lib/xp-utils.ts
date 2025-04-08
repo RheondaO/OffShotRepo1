@@ -2,8 +2,9 @@
 
 // Level threshold definitions
 // This defines how much XP is needed to reach each level
+// Note: Users start with 25 XP upon signup (as a SIGNUP reward)
 export const XP_THRESHOLDS = [
-  0,      // Level 1 (starting level) - 0 XP
+  0,      // Level 1 (starting level) - 0 XP (users start with 25 XP)
   100,    // Level 2 - 100 XP
   250,    // Level 3 - 250 XP
   450,    // Level 4 - 450 XP
