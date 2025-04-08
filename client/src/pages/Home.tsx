@@ -262,19 +262,35 @@ const Home = () => {
                   <ul className="space-y-1.5 text-sm">
                     <li className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
-                      <span>Daily Login (10 XP)</span>
+                      <span>Comment on Issues (1 XP)</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
-                      <span>Submit New Issues (50 XP)</span>
+                      <span>Reply to Comments (2 XP)</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
-                      <span>Post Comments (5 XP)</span>
+                      <span>Submit New Issues (5 XP)</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
-                      <span>Play Mini-Games (5 XP)</span>
+                      <span>Vote on Issues (1 XP)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
+                      <span>Add Tags (5 XP)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
+                      <span>Share Issues (1 XP)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
+                      <span>Play Mini-Games (1 XP)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 text-[hsl(var(--space-pink))]" />
+                      <span>Newsletter Signup (25 XP)</span>
                     </li>
                   </ul>
                 </div>
@@ -354,7 +370,7 @@ const Home = () => {
                         </div>
                         <span className="text-sm font-medium">Trash Dash</span>
                       </div>
-                      <Badge variant="outline" className="text-xs">5 XP</Badge>
+                      <Badge variant="outline" className="text-xs">1 XP</Badge>
                     </div>
                     
                     <div className="flex items-center justify-between rounded-md bg-[hsl(var(--space-purple))/10] p-2">
@@ -364,7 +380,7 @@ const Home = () => {
                         </div>
                         <span className="text-sm font-medium">City Builder</span>
                       </div>
-                      <Badge variant="outline" className="text-xs">5 XP</Badge>
+                      <Badge variant="outline" className="text-xs">1 XP</Badge>
                     </div>
                     
                     <div className="flex items-center justify-between rounded-md bg-[hsl(var(--space-purple))/10] p-2">
@@ -374,7 +390,7 @@ const Home = () => {
                         </div>
                         <span className="text-sm font-medium">Traffic Hero</span>
                       </div>
-                      <Badge variant="outline" className="text-xs">5 XP</Badge>
+                      <Badge variant="outline" className="text-xs">1 XP</Badge>
                     </div>
                   </div>
                 </div>
@@ -412,7 +428,7 @@ const Home = () => {
             <div className="inline-block rounded-full bg-[hsl(var(--space-pink))/20] px-4 py-1.5 mb-6">
               <span className="text-sm font-medium flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-[hsl(var(--space-gold))]" />
-                Earn 50 XP for Submitting Your First Issue!
+                Earn 5 XP for Submitting Your First Issue!
               </span>
             </div>
             
@@ -445,7 +461,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-[hsl(var(--space-gray)/30)] rounded-xl p-6 backdrop-blur-sm border border-[hsl(var(--space-purple)/20)] relative group hover:shadow-lg transition-all duration-300">
                 <div className="absolute -top-3 -right-3 bg-[hsl(var(--space-gold))] text-white rounded-full px-2 py-1 text-xs font-medium">
-                  +50 XP
+                  +5 XP
                 </div>
                 <div className="w-12 h-12 rounded-full bg-[hsl(var(--space-purple)/20)] flex items-center justify-center mx-auto mb-4">
                   <i className="ri-edit-line text-xl text-[hsl(var(--space-gold))]"></i>
@@ -456,7 +472,7 @@ const Home = () => {
               
               <div className="bg-[hsl(var(--space-gray)/30)] rounded-xl p-6 backdrop-blur-sm border border-[hsl(var(--space-purple)/20)] relative group hover:shadow-lg transition-all duration-300">
                 <div className="absolute -top-3 -right-3 bg-[hsl(var(--space-pink))] text-white rounded-full px-2 py-1 text-xs font-medium">
-                  +5 XP
+                  +1-2 XP
                 </div>
                 <div className="w-12 h-12 rounded-full bg-[hsl(var(--space-purple)/20)] flex items-center justify-center mx-auto mb-4">
                   <i className="ri-group-line text-xl text-[hsl(var(--space-gold))]"></i>
@@ -467,7 +483,7 @@ const Home = () => {
               
               <div className="bg-[hsl(var(--space-gray)/30)] rounded-xl p-6 backdrop-blur-sm border border-[hsl(var(--space-purple)/20)] relative group hover:shadow-lg transition-all duration-300">
                 <div className="absolute -top-3 -right-3 bg-[hsl(var(--space-blue))] text-white rounded-full px-2 py-1 text-xs font-medium">
-                  +10 XP
+                  +15 XP
                 </div>
                 <div className="w-12 h-12 rounded-full bg-[hsl(var(--space-purple)/20)] flex items-center justify-center mx-auto mb-4">
                   <i className="ri-lightbulb-line text-xl text-[hsl(var(--space-gold))]"></i>

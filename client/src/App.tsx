@@ -1,3 +1,4 @@
+
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -11,17 +12,6 @@ import BrowseIssues from "@/pages/BrowseIssues";
 import IssueDetails from "@/pages/IssueDetails";
 import SubmitIssue from "@/pages/SubmitIssue";
 import AuthPage from "@/pages/auth-page";
-
-  // Global error handler
-  useEffect(() => {
-    const handler = (event: PromiseRejectionEvent) => {
-      event.preventDefault();
-      console.error('Unhandled rejection:', event.reason);
-    };
-    window.addEventListener('unhandledrejection', handler);
-    return () => window.removeEventListener('unhandledrejection', handler);
-  }, []);
-
 import ProfilePage from "@/pages/profile-page";
 import PrivacyPage from "@/pages/privacy-page";
 import TermsPage from "@/pages/terms-page";
@@ -34,6 +24,16 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
 function Router() {
+  // Global error handler
+  useEffect(() => {
+    const handler = (event: PromiseRejectionEvent) => {
+      event.preventDefault();
+      console.error('Unhandled rejection:', event.reason);
+    };
+    window.addEventListener('unhandledrejection', handler);
+    return () => window.removeEventListener('unhandledrejection', handler);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -52,7 +52,6 @@ function Router() {
           <Route path="/mission" component={MissionPage} />
           <Route path="/games" component={GamesPage} />
           <Route path="/analytics" component={AnalyticsPage} />
-          {/* Fallback to 404 */}
           <Route component={NotFound} />
         </Switch>
       </main>

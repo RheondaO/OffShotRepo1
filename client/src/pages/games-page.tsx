@@ -100,7 +100,7 @@ function MemoryGame({ onStartGame }: GameProps) {
           <>
             <div className="text-center mb-4">
               <Badge variant="outline" className="mb-2">Moves: {moves}</Badge>
-              <Button variant="outline" size="sm" onClick={startGame} className="ml-4">Restart</Button>
+              <XpButton variant="outline" size="sm" onClick={startGame} className="ml-4" xpAmount={rewards.START_GAME}>Restart</XpButton>
             </div>
             <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
               {cards.map((card, index) => (
@@ -223,7 +223,7 @@ function WordScrambleGame({ onStartGame }: GameProps) {
           <div className="text-center space-y-4">
             <h3 className="text-xl font-bold">Game Over!</h3>
             <p className="text-lg">Your final score: {score}</p>
-            <Button onClick={startGame}>Play Again</Button>
+            <XpButton onClick={startGame} xpAmount={rewards.START_GAME}>Play Again</XpButton>
           </div>
         ) : (
           <>
@@ -377,9 +377,9 @@ function ReactionSpeedGame({ onStartGame }: GameProps) {
             <p className="text-xl mb-2">{getStatusText()}</p>
             {status === 'waiting' && <p className="text-sm">Click when the box turns green</p>}
             {status === 'results' && (
-              <Button variant="ghost" className="text-white border border-white mt-2" onClick={startGame}>
+              <XpButton variant="ghost" className="text-white border border-white mt-2" onClick={startGame} xpAmount={rewards.START_GAME}>
                 Try Again
-              </Button>
+              </XpButton>
             )}
             {status === 'waiting' && (
               <div className="flex justify-center">
@@ -496,7 +496,7 @@ function QuizGame({ onStartGame }: GameProps) {
           <div className="text-center space-y-4">
             <h3 className="text-xl font-bold">Quiz Complete!</h3>
             <p className="text-lg">Your score: {score} out of {quizQuestions.length}</p>
-            <Button onClick={startQuiz}>Play Again</Button>
+            <XpButton onClick={startQuiz} xpAmount={rewards.START_GAME}>Play Again</XpButton>
           </div>
         ) : (
           <div className="space-y-4">
