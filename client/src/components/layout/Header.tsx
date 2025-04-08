@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import MobileMenu from "./MobileMenu";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -55,6 +56,7 @@ const Header = () => {
         </button>
         
         <div className="hidden md:flex items-center space-x-4">
+          <ThemeToggle />
           <Link href="/auth">
             <Button variant="outline" size="sm">
               Log In

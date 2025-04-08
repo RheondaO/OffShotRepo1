@@ -4,59 +4,232 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 240 25% 8%;
-    --foreground: 220 13% 91%;
+  /* Cosmic theme (default) */
+  :root, .theme-cosmic {
+    --background: 270 30% 8%;
+    --foreground: 30 15% 95%;
 
-    --card: 240 25% 10%;
-    --card-foreground: 220 13% 91%;
+    --card: 270 30% 10%;
+    --card-foreground: 30 15% 95%;
 
-    --popover: 240 25% 10%;
-    --popover-foreground: 220 13% 91%;
+    --popover: 270 30% 10%;
+    --popover-foreground: 30 15% 95%;
 
-    --primary: 326 80% 65%;
-    --primary-foreground: 220 13% 91%;
+    --primary: 325 80% 60%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 250 70% 50%;
-    --secondary-foreground: 220 13% 91%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 25% 15%;
-    --muted-foreground: 220 13% 70%;
+    --muted: 270 30% 15%;
+    --muted-foreground: 30 15% 70%;
 
-    --accent: 39 84% 85%;
-    --accent-foreground: 240 25% 8%;
+    --accent: 342 80% 30%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 220 13% 91%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 25% 20%;
-    --input: 240 25% 15%;
-    --ring: 326 80% 65%;
+    --border: 270 30% 20%;
+    --input: 270 30% 15%;
+    --ring: 325 80% 60%;
 
     --radius: 0.5rem;
 
     /* Custom colors */
-    --space-blue: 222 70% 16%;
-    --space-purple: 270 58% 40%;
-    --space-pink: 340 83% 74%;
-    --space-gold: 32 100% 65%;
+    --space-blue: 240 50% 20%;
+    --space-purple: 260 70% 45%;
+    --space-pink: 325 80% 60%;
+    --space-gold: 30 70% 90%;
+    --space-burgundy: 342 80% 30%;
     
     /* Chart colors */
-    --chart-1: 270 58% 40%;
-    --chart-2: 340 83% 74%;
-    --chart-3: 32 100% 65%;
-    --chart-4: 222 47% 35%;
-    --chart-5: 158 64% 52%;
+    --chart-1: 260 70% 45%;
+    --chart-2: 325 80% 60%;
+    --chart-3: 30 70% 90%;
+    --chart-4: 342 80% 30%;
+    --chart-5: 240 50% 20%;
     
     /* Sidebar theme */
-    --sidebar-background: 222 47% 15%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 270 58% 40%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 222 47% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 270 58% 30%;
-    --sidebar-ring: 270 58% 40%;
+    --sidebar-background: 270 30% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 325 80% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 342 80% 30%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 260 70% 25%;
+    --sidebar-ring: 325 80% 60%;
+  }
+  
+  /* Cyberpunk theme */
+  .theme-cyberpunk {
+    --background: 235 70% 5%;
+    --foreground: 0 0% 98%;
+
+    --card: 235 70% 10%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 235 70% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 320 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 300 80% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 235 70% 15%;
+    --muted-foreground: 0 0% 80%;
+
+    --accent: 170 100% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 235 70% 20%;
+    --input: 235 70% 15%;
+    --ring: 320 100% 60%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors */
+    --space-blue: 190 70% 50%;
+    --space-purple: 300 80% 40%;
+    --space-pink: 320 100% 60%;
+    --space-gold: 60 100% 60%;
+    --space-burgundy: 330 80% 30%;
+    
+    /* Chart colors */
+    --chart-1: 300 80% 40%;
+    --chart-2: 320 100% 60%;
+    --chart-3: 60 100% 60%;
+    --chart-4: 190 70% 50%;
+    --chart-5: 235 70% 20%;
+    
+    /* Sidebar theme */
+    --sidebar-background: 235 70% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 320 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 170 100% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 300 80% 25%;
+    --sidebar-ring: 320 100% 60%;
+  }
+  
+  /* Midnight theme */
+  .theme-midnight {
+    --background: 220 70% 5%;
+    --foreground: 210 15% 95%;
+
+    --card: 220 70% 10%;
+    --card-foreground: 210 15% 95%;
+
+    --popover: 220 70% 10%;
+    --popover-foreground: 210 15% 95%;
+
+    --primary: 210 80% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 60% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 70% 15%;
+    --muted-foreground: 210 15% 70%;
+
+    --accent: 240 70% 25%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 35%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 70% 20%;
+    --input: 220 70% 15%;
+    --ring: 210 80% 60%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors */
+    --space-blue: 210 80% 40%;
+    --space-purple: 240 60% 40%;
+    --space-pink: 210 80% 60%;
+    --space-gold: 190 80% 80%;
+    --space-burgundy: 240 70% 25%;
+    
+    /* Chart colors */
+    --chart-1: 240 60% 40%;
+    --chart-2: 210 80% 60%;
+    --chart-3: 190 80% 80%;
+    --chart-4: 240 70% 25%;
+    --chart-5: 220 70% 20%;
+    
+    /* Sidebar theme */
+    --sidebar-background: 220 70% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 210 80% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 70% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 60% 20%;
+    --sidebar-ring: 210 80% 60%;
+  }
+  
+  /* Retro theme */
+  .theme-retro {
+    --background: 30 20% 10%;
+    --foreground: 30 15% 95%;
+
+    --card: 30 20% 15%;
+    --card-foreground: 30 15% 95%;
+
+    --popover: 30 20% 15%;
+    --popover-foreground: 30 15% 95%;
+
+    --primary: 20 80% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 280 50% 40%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 30 20% 20%;
+    --muted-foreground: 30 15% 70%;
+
+    --accent: 10 80% 35%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 20% 25%;
+    --input: 30 20% 20%;
+    --ring: 20 80% 55%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors */
+    --space-blue: 200 50% 40%;
+    --space-purple: 280 50% 40%;
+    --space-pink: 20 80% 55%;
+    --space-gold: 45 100% 60%;
+    --space-burgundy: 10 80% 35%;
+    
+    /* Chart colors */
+    --chart-1: 280 50% 40%;
+    --chart-2: 20 80% 55%;
+    --chart-3: 45 100% 60%;
+    --chart-4: 10 80% 35%;
+    --chart-5: 30 20% 20%;
+    
+    /* Sidebar theme */
+    --sidebar-background: 30 20% 15%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 20 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 10 80% 35%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 45 60% 30%;
+    --sidebar-ring: 20 80% 55%;
   }
   
   * {
@@ -64,9 +237,9 @@
   }
   
   body {
-    @apply font-sans antialiased bg-[#1a1f38] text-white;
-    background-image: radial-gradient(circle at 20% 30%, rgba(107, 70, 193, 0.15) 0%, transparent 40%),
-                      radial-gradient(circle at 80% 70%, rgba(246, 135, 179, 0.1) 0%, transparent 40%);
+    @apply font-sans antialiased bg-background text-foreground;
+    background-image: radial-gradient(circle at 20% 30%, hsl(var(--space-purple) / 0.15) 0%, transparent 40%),
+                      radial-gradient(circle at 80% 70%, hsl(var(--space-pink) / 0.1) 0%, transparent 40%);
     min-height: 100vh;
   }
   
@@ -103,7 +276,7 @@
     right: 0;
     bottom: 0;
     border-radius: inherit;
-    background: linear-gradient(135deg, rgba(107, 70, 193, 0.2), rgba(246, 135, 179, 0.2));
+    background: linear-gradient(135deg, hsl(var(--space-purple) / 0.2), hsl(var(--space-pink) / 0.2));
     z-index: -1;
     opacity: 0;
     transition: opacity 0.3s ease;

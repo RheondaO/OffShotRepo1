@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -114,6 +115,9 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         </nav>
         
         <div className="mt-auto space-y-4">
+          <div className="flex justify-center mb-4">
+            <ThemeToggle />
+          </div>
           <Link href="/auth" onClick={onClose}>
             <Button className="w-full" variant="outline">
               Log In
