@@ -32,7 +32,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   
   return (
     <div 
-      className="fixed inset-0 bg-[hsl(var(--space-blue))] z-50 transition-transform duration-300 ease-in-out"
+      className="fixed inset-0 bg-[hsl(var(--space-blue))] z-50 animate-in slide-in-from-right duration-300"
     >
       <div className="h-full flex flex-col p-6">
         <div className="flex justify-between items-center mb-8">

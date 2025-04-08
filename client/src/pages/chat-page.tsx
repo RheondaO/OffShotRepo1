@@ -49,7 +49,7 @@ export default function ChatPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="h-[600px]">
+            <div className="h-[calc(100vh-300px)] lg:h-[600px]">
               <ChatPanel username={savedUsername || "Anonymous"} />
             </div>
           </div>

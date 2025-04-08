@@ -60,10 +60,10 @@ const BrowseIssues = () => {
           <p className="text-[hsl(var(--foreground)/70)] mb-8">
             Discover issues that matter to your community and lend your support
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-8 px-4 sm:px-0">
             <SearchBar className="w-full sm:max-w-lg" />
-            <Link href="/submit">
-              <Button className="whitespace-nowrap">
+            <Link href="/submit" className="sm:flex-shrink-0">
+              <Button className="w-full sm:w-auto whitespace-nowrap">
                 <i className="ri-add-line mr-1"></i> Submit New Issue
               </Button>
             </Link>
