@@ -18,6 +18,10 @@ import {
   getActivityName, getActivityColor, getActivityIcon, 
   formatXp, groupActivitiesByDate, getSortedDates
 } from "@/lib/activity-utils";
+import {
+  getXpForNextLevel, getXpForCurrentLevel, getProgressToNextLevel,
+  getLevelTitle, getLevelColor, formatXpProgress, getXpRemaining
+} from "@/lib/xp-utils";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -53,21 +57,22 @@ export default function ProfilePage() {
     enabled: !!user,
   });
 
-  // Function to calculate XP for next level
-  const getXpForNextLevel = (currentLevel: number) => {
-    return currentLevel * 100; // Simple formula, can be adjusted
+  // Function to get user's level title
+  const getUserLevelTitle = () => {
+    if (!user) return "";
+    return getLevelTitle(user.level);
   };
-
-  // Function to calculate progress percentage to next level
-  const getProgressToNextLevel = () => {
+  
+  // Function to get the appropriate color for the user's level
+  const getUserLevelColor = () => {
+    if (!user) return "blue";
+    return getLevelColor(user.level);
+  };
+  
+  // Function to calculate user's progress to next level
+  const getUserProgressToNextLevel = () => {
     if (!user) return 0;
-    
-    const xpForCurrentLevel = (user.level - 1) * 100;
-    const xpForNextLevel = user.level * 100;
-    const xpNeeded = xpForNextLevel - xpForCurrentLevel;
-    const xpProgress = user.xp - xpForCurrentLevel;
-    
-    return Math.min(100, Math.max(0, (xpProgress / xpNeeded) * 100));
+    return getProgressToNextLevel(user.xp, user.level);
   };
 
   // Function to get recent activity items
@@ -114,8 +119,8 @@ export default function ProfilePage() {
                 <p className="text-[hsl(var(--foreground)/70)]">@{user.username}</p>
                 
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="outline" className="bg-[hsl(var(--space-blue)/20)]">
-                    Level {user.level}
+                  <Badge variant="outline" className={`bg-[hsl(var(--space-${getUserLevelColor()})/20)]`}>
+                    Level {user.level} - {getUserLevelTitle()}
                   </Badge>
                   <Badge variant="outline" className="bg-[hsl(var(--space-pink)/20)]">
                     {userIssues?.length || 0} Issues
@@ -133,9 +138,9 @@ export default function ProfilePage() {
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span>XP: {user.xp}</span>
-                    <span>{getXpForNextLevel(user.level)} XP for Level {user.level + 1}</span>
+                    <span>{formatXpProgress(user.xp, user.level)}</span>
                   </div>
-                  <Progress value={getProgressToNextLevel()} className="h-2" />
+                  <Progress value={getProgressToNextLevel(user.xp, user.level)} className="h-2" />
                 </div>
               </div>
             </div>
@@ -164,10 +169,13 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <Award className="h-5 w-5 text-[hsl(var(--space-blue))]" />
+                      <Award className={`h-5 w-5 text-[hsl(var(--space-${getUserLevelColor()}))]`} />
                       <span>Level</span>
                     </div>
-                    <span className="font-medium">{user.level}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">{user.level}</span>
+                      <span className="text-sm text-[hsl(var(--foreground)/70)]">({getUserLevelTitle()})</span>
+                    </div>
                   </div>
                   
                   <div className="flex justify-between items-center">
@@ -286,62 +294,111 @@ export default function ProfilePage() {
                 {activitiesLoading ? (
                   <p>Loading XP data...</p>
                 ) : userActivities && userActivities.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Group activities by type and sum XP */}
-                      {Object.entries(
-                        userActivities.reduce((acc, curr) => {
-                          acc[curr.activityId] = (acc[curr.activityId] || 0) + curr.xpEarned;
-                          return acc;
-                        }, {} as { [key: number]: number })
-                      ).map(([activityIdStr, xpEarned], index) => {
-                        const activityId = parseInt(activityIdStr);
-                        const color = getActivityColor(activityId);
-                        const bgColorClass = `bg-[hsl(var(--space-${color})/20)]`;
-                        const textColorClass = `text-[hsl(var(--space-${color}))]`;
-
-                        // Get the appropriate icon component based on activity type
-                        const IconComponent = (() => {
-                          const iconName = getActivityIcon(activityId);
-                          switch(iconName) {
-                            case 'trophy': return Trophy;
-                            case 'play': return Play;
-                            case 'users': return Users;
-                            case 'mail': return Mail;
-                            case 'tag': return TagIcon;
-                            case 'log-in': return LogIn;
-                            case 'user-plus': return UserPlus;
-                            case 'check-square': return CheckSquare;
-                            case 'award': return Award;
-                            case 'heart': return Heart;
-                            case 'message-square': return MessageSquare;
-                            case 'file-text': return FileText;
-                            case 'share': return Share2;
-                            case 'reply': return Reply;
-                            case 'image': return Image;
-                            case 'clipboard': return Clipboard;
-                            case 'scissors': return Scissors;
-                            case 'check-circle': return CheckCircle;
-                            default: return Activity;
-                          }
-                        })();
+                  <div className="space-y-8">
+                    {/* XP Level Preview Section */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">XP Level Progression</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {/* Current Level */}
+                        <Card className="bg-[hsl(var(--space-blue)/5)] border-[hsl(var(--space-blue)/30)]">
+                          <CardContent className="p-4 flex flex-col items-center text-center">
+                            <div className={`mt-2 bg-[hsl(var(--space-${getUserLevelColor()})/20)] p-2 rounded-full`}>
+                              <Award className={`h-6 w-6 text-[hsl(var(--space-${getUserLevelColor()}))]`} />
+                            </div>
+                            <h3 className="font-medium mt-3">Level {user.level}</h3>
+                            <p className="text-sm">{getUserLevelTitle()}</p>
+                            <Badge variant="outline" className="mt-2 bg-[hsl(var(--primary)/10)]">Current</Badge>
+                          </CardContent>
+                        </Card>
                         
-                        return (
-                          <Card key={index}>
-                            <CardContent className="p-4 flex justify-between items-center">
-                              <div>
-                                <p className="text-sm text-[hsl(var(--foreground)/70)]">
-                                  {getActivityName(activityId)}
-                                </p>
-                                <p className="font-medium">{formatXp(xpEarned)}</p>
-                              </div>
-                              <div className={`${bgColorClass} p-2 rounded-full`}>
-                                <IconComponent className={`h-5 w-5 ${textColorClass}`} />
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                        {/* Next 3 Levels */}
+                        {[1, 2, 3].map((offset) => {
+                          const nextLevel = user.level + offset;
+                          if (nextLevel <= 30) {
+                            const nextLevelXp = getXpForNextLevel(user.level + offset - 1);
+                            const xpNeeded = nextLevelXp - user.xp;
+                            
+                            return (
+                              <Card key={offset} className="bg-[hsl(var(--secondary)/5)]">
+                                <CardContent className="p-4 flex flex-col items-center text-center">
+                                  <div className={`mt-2 bg-[hsl(var(--space-${getLevelColor(nextLevel)})/20)] p-2 rounded-full`}>
+                                    <Award className={`h-6 w-6 text-[hsl(var(--space-${getLevelColor(nextLevel)}))]`} />
+                                  </div>
+                                  <h3 className="font-medium mt-3">Level {nextLevel}</h3>
+                                  <p className="text-sm">{getLevelTitle(nextLevel)}</p>
+                                  <p className="text-xs mt-2 text-[hsl(var(--foreground)/70)]">
+                                    Need {xpNeeded} more XP
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* XP Sources Section */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">XP Sources</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Group activities by type and sum XP */}
+                        {Object.entries(
+                          userActivities.reduce((acc, curr) => {
+                            acc[curr.activityId] = (acc[curr.activityId] || 0) + curr.xpEarned;
+                            return acc;
+                          }, {} as { [key: number]: number })
+                        ).map(([activityIdStr, xpEarned], index) => {
+                          const activityId = parseInt(activityIdStr);
+                          const color = getActivityColor(activityId);
+                          const bgColorClass = `bg-[hsl(var(--space-${color})/20)]`;
+                          const textColorClass = `text-[hsl(var(--space-${color}))]`;
+
+                          // Get the appropriate icon component based on activity type
+                          const IconComponent = (() => {
+                            const iconName = getActivityIcon(activityId);
+                            switch(iconName) {
+                              case 'trophy': return Trophy;
+                              case 'play': return Play;
+                              case 'users': return Users;
+                              case 'mail': return Mail;
+                              case 'tag': return TagIcon;
+                              case 'log-in': return LogIn;
+                              case 'user-plus': return UserPlus;
+                              case 'check-square': return CheckSquare;
+                              case 'award': return Award;
+                              case 'heart': return Heart;
+                              case 'message-square': return MessageSquare;
+                              case 'file-text': return FileText;
+                              case 'share': return Share2;
+                              case 'reply': return Reply;
+                              case 'image': return Image;
+                              case 'clipboard': return Clipboard;
+                              case 'scissors': return Scissors;
+                              case 'check-circle': return CheckCircle;
+                              default: return Activity;
+                            }
+                          })();
+                          
+                          return (
+                            <Card key={index}>
+                              <CardContent className="p-4 flex justify-between items-center">
+                                <div>
+                                  <p className="text-sm text-[hsl(var(--foreground)/70)]">
+                                    {getActivityName(activityId)}
+                                  </p>
+                                  <p className="font-medium">{formatXp(xpEarned)}</p>
+                                </div>
+                                <div className={`${bgColorClass} p-2 rounded-full`}>
+                                  <IconComponent className={`h-5 w-5 ${textColorClass}`} />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -413,12 +470,28 @@ export default function ProfilePage() {
                 
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center text-center">
-                    <div className="bg-[hsl(var(--space-gold)/20)] p-3 rounded-full mb-2">
-                      <Award className="h-6 w-6 text-[hsl(var(--space-gold))]" />
+                    <div className={`bg-[hsl(var(--space-${getLevelColor(5)})/20)] p-3 rounded-full mb-2`}>
+                      <Award className={`h-6 w-6 text-[hsl(var(--space-${getLevelColor(5)}))]`} />
                     </div>
-                    <h3 className="font-medium">Level 5</h3>
+                    <h3 className="font-medium">Level 5: {getLevelTitle(5)}</h3>
                     <p className="text-sm text-[hsl(var(--foreground)/70)]">Reached level 5 on the platform</p>
                     {(user?.level || 0) >= 5 && (
+                      <div className="mt-2 flex items-center text-[hsl(var(--space-green))]">
+                        <Check className="h-4 w-4 mr-1" />
+                        <span className="text-xs">Unlocked</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4 flex flex-col items-center text-center">
+                    <div className={`bg-[hsl(var(--space-${getLevelColor(10)})/20)] p-3 rounded-full mb-2`}>
+                      <Award className={`h-6 w-6 text-[hsl(var(--space-${getLevelColor(10)}))]`} />
+                    </div>
+                    <h3 className="font-medium">Level 10: {getLevelTitle(10)}</h3>
+                    <p className="text-sm text-[hsl(var(--foreground)/70)]">Reached level 10 on the platform</p>
+                    {(user?.level || 0) >= 10 && (
                       <div className="mt-2 flex items-center text-[hsl(var(--space-green))]">
                         <Check className="h-4 w-4 mr-1" />
                         <span className="text-xs">Unlocked</span>
