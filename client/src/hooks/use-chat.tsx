@@ -5,6 +5,7 @@ export type ChatMessage = {
   content: string;
   timestamp: string;
   username: string;
+  timezone?: string;
 };
 
 export function useChat(username: string = 'Anonymous') {
@@ -90,7 +91,8 @@ export function useChat(username: string = 'Anonymous') {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN && content.trim()) {
       socketRef.current.send(JSON.stringify({
         type: 'message',
-        content
+        content,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       }));
       return true;
     }

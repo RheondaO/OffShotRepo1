@@ -27,7 +27,11 @@ const ChatMessage = ({ message, isCurrentUser }: ChatMessageProps) => {
           {isCurrentUser ? 'You' : message.username}
         </span>
         <span className="text-xs text-[hsl(var(--foreground)/50)]">
-          {formatDateTime(new Date(message.timestamp))}
+          {new Date(message.timestamp).toLocaleString(undefined, {
+            timeZone: message.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
         </span>
       </div>
       <div 
