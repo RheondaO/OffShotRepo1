@@ -46,12 +46,16 @@ const Header = () => {
         </button>
         
         <div className="hidden md:flex items-center space-x-4">
-          <Button variant="outline" size="sm">
-            Log In
-          </Button>
-          <Button size="sm">
-            Sign Up
-          </Button>
+          <Link href="/auth">
+            <Button variant="outline" size="sm">
+              Log In
+            </Button>
+          </Link>
+          <Link href="/auth?tab=register">
+            <Button size="sm">
+              Sign Up
+            </Button>
+          </Link>
         </div>
       </div>
 

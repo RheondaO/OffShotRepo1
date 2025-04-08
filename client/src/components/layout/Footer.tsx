@@ -35,24 +35,18 @@ const Footer = () => {
             <h3 className="font-semibold mb-4 text-lg">Explore</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/browse">
-                  <a className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
-                    Browse Issues
-                  </a>
+                <Link href="/browse" className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
+                  Browse Issues
                 </Link>
               </li>
               <li>
-                <Link href="/browse">
-                  <a className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
-                    Categories
-                  </a>
+                <Link href="/browse" className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
+                  Categories
                 </Link>
               </li>
               <li>
-                <Link href="/browse">
-                  <a className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
-                    Trending
-                  </a>
+                <Link href="/browse" className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
+                  Trending
                 </Link>
               </li>
               <li>
@@ -67,10 +61,8 @@ const Footer = () => {
             <h3 className="font-semibold mb-4 text-lg">Community</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/submit">
-                  <a className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
-                    Submit Issue
-                  </a>
+                <Link href="/submit" className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors">
+                  Submit Issue
                 </Link>
               </li>
               <li>
@@ -123,15 +115,15 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Really Obvious Media Lab. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">
+            <Link href="/privacy" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">
+            </Link>
+            <Link href="/terms" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">
               Terms of Service
-            </a>
-            <a href="#" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">
+            </Link>
+            <Link href="/privacy" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">
               Cookie Policy
-            </a>
+            </Link>
           </div>
         </div>
       </div>

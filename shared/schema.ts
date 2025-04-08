@@ -6,6 +6,8 @@ import { relations } from "drizzle-orm";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
 });
 
@@ -73,6 +75,8 @@ export const votesRelations = relations(votes, ({ one }) => ({
 // Insert schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
+  name: true,
+  email: true,
   password: true,
 });
 

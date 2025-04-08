@@ -7,6 +7,9 @@ import Home from "@/pages/Home";
 import BrowseIssues from "@/pages/BrowseIssues";
 import IssueDetails from "@/pages/IssueDetails";
 import SubmitIssue from "@/pages/SubmitIssue";
+import AuthPage from "@/pages/auth-page";
+import PrivacyPage from "@/pages/privacy-page";
+import TermsPage from "@/pages/terms-page";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -20,6 +23,9 @@ function Router() {
           <Route path="/browse" component={BrowseIssues} />
           <Route path="/issues/:id" component={IssueDetails} />
           <Route path="/submit" component={SubmitIssue} />
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/privacy" component={PrivacyPage} />
+          <Route path="/terms" component={TermsPage} />
           {/* Fallback to 404 */}
           <Route component={NotFound} />
         </Switch>

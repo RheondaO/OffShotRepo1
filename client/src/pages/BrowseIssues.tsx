@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import IssueCard from "@/components/issues/IssueCard";
 import SearchBar from "@/components/ui/search";
@@ -59,7 +59,14 @@ const BrowseIssues = () => {
           <p className="text-[hsl(var(--foreground)/70)] mb-8">
             Discover issues that matter to your community and lend your support
           </p>
-          <SearchBar className="max-w-xl mx-auto mb-8" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <SearchBar className="w-full sm:max-w-lg" />
+            <Link href="/submit">
+              <Button className="whitespace-nowrap">
+                <i className="ri-add-line mr-1"></i> Submit New Issue
+              </Button>
+            </Link>
+          </div>
           
           {/* Category filters */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
@@ -140,7 +147,9 @@ const BrowseIssues = () => {
                 ? "No issues match your search criteria." 
                 : "There are no issues yet."}
             </p>
-            <Button href="/submit" size="lg">Submit a New Issue</Button>
+            <Link href="/submit">
+              <Button size="lg">Submit a New Issue</Button>
+            </Link>
           </div>
         )}
       </div>
