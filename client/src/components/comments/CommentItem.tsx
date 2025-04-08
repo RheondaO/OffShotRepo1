@@ -174,7 +174,7 @@ export default function CommentItem({ comment, issueId }: CommentItemProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsReplying(!isReplying)}
-                xpAmount={rewards.COMMENT}
+                xpAmount={rewards.REPLY}
               >
                 <Reply className="h-4 w-4 mr-1" /> Reply
               </XpButton>

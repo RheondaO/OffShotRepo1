@@ -55,7 +55,7 @@ export default function NewCommentForm({
           type="submit" 
           size="sm" 
           disabled={!value.trim() || isSubmitting}
-          xpAmount={rewards.COMMENT}
+          xpAmount={submitLabel === "Reply" ? rewards.REPLY : rewards.COMMENT}
         >
           {isSubmitting ? (
             <>

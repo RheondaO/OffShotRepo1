@@ -6,14 +6,19 @@ import { useAuth } from '@/hooks/use-auth';
 
 // XP activity constants
 const XP_REWARDS = {
-  COMMENT: 5,
-  SUBMIT_ISSUE: 50,
-  VOTE: 2,
+  COMMENT: 1,
+  REPLY: 2,
+  SUBMIT_ISSUE: 5,
+  VOTE: 1,
+  SHARE: 1,
   ADD_TAG: 5,
   LOGIN: 10,
+  SIGNUP: 15,
+  JOIN_MISSION: 15,
   GAME_WIN: 25,
-  GAME_PLAY: 5,
-  NEWSLETTER_SIGNUP: 15
+  GAME_PLAY: 1,
+  START_GAME: 1,
+  NEWSLETTER_SIGNUP: 25
 };
 
 export const useXp = () => {

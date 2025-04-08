@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { XpButton } from "@/components/ui/xp-button";
 import { Link } from "wouter";
+import useXp from "@/hooks/use-xp";
 
 export default function MissionPage() {
+  const { rewards } = useXp();
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
@@ -137,10 +140,10 @@ export default function MissionPage() {
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/browse">
-              <Button size="lg">Browse Issues</Button>
+              <XpButton size="lg" xpAmount={rewards.JOIN_MISSION}>Join the Mission</XpButton>
             </Link>
             <Link href="/submit">
-              <Button variant="secondary" size="lg">Submit an Issue</Button>
+              <XpButton variant="secondary" size="lg" xpAmount={rewards.SUBMIT_ISSUE}>Submit an Issue</XpButton>
             </Link>
           </div>
         </div>

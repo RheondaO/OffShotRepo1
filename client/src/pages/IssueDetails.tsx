@@ -184,10 +184,10 @@ const IssueDetails = () => {
                   Support ({issue.votes})
                 </XpButton>
                 
-                <Button variant="outline" className="flex items-center gap-2">
+                <XpButton variant="outline" className="flex items-center gap-2" xpAmount={rewards.SHARE}>
                   <i className="ri-share-line"></i>
                   Share
-                </Button>
+                </XpButton>
               </div>
               
               <div className="text-sm text-[hsl(var(--foreground)/60)]">
