@@ -21,12 +21,17 @@ export const categories = pgTable("categories", {
   description: text("description"),
 });
 
+// Define issue status and assignment timeframes
+export const ISSUE_STATUS = ['open', 'assigned', 'in_progress', 'resolved', 'closed'] as const;
+export type IssueStatus = typeof ISSUE_STATUS[number];
+
 export const issues = pgTable("issues", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   categoryId: integer("category_id").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull(), // Creator of the issue
+  assignedTo: integer("assigned_to"), // User assigned to the issue
   location: text("location"),
   status: text("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -34,6 +39,9 @@ export const issues = pgTable("issues", {
   comments: integer("comments").notNull().default(0),
   isFeatured: boolean("is_featured").notNull().default(false),
   priority: text("priority").notNull().default("low"),
+  assignedAt: timestamp("assigned_at"), // When the issue was assigned
+  expectedCompletionAt: timestamp("expected_completion_at"), // Deadline for completing the issue
+  lastActivityAt: timestamp("last_activity_at"), // Timestamp of the last activity on the issue
 });
 
 export const votes = pgTable("votes", {
@@ -112,13 +120,33 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   isActive: boolean("is_active").notNull().default(true),
 });
 
+// Track issue assignment history, including steals
+export const issueAssignmentHistory = pgTable("issue_assignment_history", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
+  assigneeId: integer("assignee_id").notNull(), // User assigned to the issue
+  assignerId: integer("assigner_id").notNull(), // User who assigned/stole the issue (can be the same as assigneeId for self-assignments)
+  assignedAt: timestamp("assigned_at").notNull().defaultNow(),
+  expectedCompletionAt: timestamp("expected_completion_at").notNull(),
+  isStolen: boolean("is_stolen").notNull().default(false), // Whether the issue was stolen from another user
+  previousAssigneeId: integer("previous_assignee_id"), // Only set when the issue is stolen
+  stealReason: text("steal_reason"), // Reason for stealing the issue
+  xpRewarded: integer("xp_rewarded"), // XP rewarded for completing the issue (set when completed)
+  completedAt: timestamp("completed_at"), // When the issue was completed (null if not completed)
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  issues: many(issues),
+  issues: many(issues), // Issues created by the user
+  assignedIssues: many(issues, { relationName: "assignedIssues" }), // Issues assigned to the user
   votes: many(votes),
   createdTags: many(tags, { relationName: "userCreatedTags" }),
   userNfts: many(userNfts),
   userActivities: many(userActivities),
+  // Issue assignment history relations
+  assignedHistories: many(issueAssignmentHistory, { relationName: "assignedHistories" }),
+  assignerHistories: many(issueAssignmentHistory, { relationName: "assignerHistories" }),
+  previousAssigneeHistories: many(issueAssignmentHistory, { relationName: "previousAssigneeHistories" }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -134,8 +162,14 @@ export const issuesRelations = relations(issues, ({ one, many }) => ({
     fields: [issues.userId],
     references: [users.id]
   }),
+  assignee: one(users, {
+    fields: [issues.assignedTo],
+    references: [users.id],
+    relationName: "assignedIssues"
+  }),
   votes: many(votes),
   issueTags: many(issueTags),
+  assignmentHistory: many(issueAssignmentHistory),
 }));
 
 export const votesRelations = relations(votes, ({ one }) => ({
@@ -203,6 +237,28 @@ export const userActivitiesRelations = relations(userActivities, ({ one }) => ({
   }),
 }));
 
+export const issueAssignmentHistoryRelations = relations(issueAssignmentHistory, ({ one }) => ({
+  issue: one(issues, {
+    fields: [issueAssignmentHistory.issueId],
+    references: [issues.id]
+  }),
+  assignee: one(users, {
+    fields: [issueAssignmentHistory.assigneeId],
+    references: [users.id],
+    relationName: "assignedHistories"
+  }),
+  assigner: one(users, {
+    fields: [issueAssignmentHistory.assignerId],
+    references: [users.id],
+    relationName: "assignerHistories"
+  }),
+  previousAssignee: one(users, {
+    fields: [issueAssignmentHistory.previousAssigneeId],
+    references: [users.id],
+    relationName: "previousAssigneeHistories"
+  }),
+}));
+
 // Insert schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -232,6 +288,21 @@ export const insertIssueSchema = createInsertSchema(issues)
     priority: z.enum(ISSUE_PRIORITY).default('low'),
   });
 
+// Schema for updating issues with all possible fields
+export const updateIssueSchema = z.object({
+  title: z.string().min(5).max(100).optional(),
+  description: z.string().min(20).max(2000).optional(),
+  categoryId: z.number().int().positive().optional(),
+  status: z.enum(ISSUE_STATUS).optional(),
+  priority: z.enum(ISSUE_PRIORITY).optional(),
+  location: z.string().nullable().optional(),
+  assignedTo: z.number().int().positive().nullable().optional(),
+  assignedAt: z.date().nullable().optional(),
+  expectedCompletionAt: z.date().nullable().optional(),
+  lastActivityAt: z.date().nullable().optional(),
+  isFeatured: z.boolean().optional(),
+});
+
 export const insertVoteSchema = createInsertSchema(votes).pick({
   issueId: true,
   userId: true,
@@ -259,6 +330,7 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;
 
 export type InsertIssue = z.infer<typeof insertIssueSchema>;
+export type UpdateIssue = z.infer<typeof updateIssueSchema>;
 export type Issue = typeof issues.$inferSelect;
 
 export type InsertVote = z.infer<typeof insertVoteSchema>;
@@ -330,3 +402,33 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
 
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+// Assignment and stealing schemas
+export const assignIssueSchema = z.object({
+  issueId: z.number(),
+  userId: z.number(),
+  expectedDays: z.number().min(1).max(30).default(7), // Default deadline is 7 days
+});
+
+export const stealIssueSchema = z.object({
+  issueId: z.number(),
+  userId: z.number(), // New assignee
+  reason: z.string().min(10).max(500),
+});
+
+export type AssignIssue = z.infer<typeof assignIssueSchema>;
+export type StealIssue = z.infer<typeof stealIssueSchema>;
+
+export const insertIssueAssignmentHistorySchema = createInsertSchema(issueAssignmentHistory)
+  .pick({
+    issueId: true,
+    assigneeId: true,
+    assignerId: true,
+    expectedCompletionAt: true,
+    isStolen: true,
+    previousAssigneeId: true,
+    stealReason: true,
+  });
+
+export type InsertIssueAssignmentHistory = z.infer<typeof insertIssueAssignmentHistorySchema>;
+export type IssueAssignmentHistory = typeof issueAssignmentHistory.$inferSelect;

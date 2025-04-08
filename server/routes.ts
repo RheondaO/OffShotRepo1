@@ -13,8 +13,15 @@ import {
   insertUserNftSchema,
   insertXpActivitySchema,
   insertUserActivitySchema,
-  insertNewsletterSubscriberSchema
+  insertNewsletterSubscriberSchema,
+  assignIssueSchema,
+  stealIssueSchema,
+  insertIssueAssignmentHistorySchema,
+  ISSUE_STATUS,
+  issues
 } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { calculateIssuePriority } from "./utils";
@@ -600,6 +607,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Issue assignment endpoints
+  
+  // Assign an issue to a user
+  app.post("/api/issues/:issueId/assign", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      if (isNaN(issueId)) return res.status(400).json({ message: "Invalid issue ID" });
+      
+      // Validate request body
+      const validatedData = assignIssueSchema.parse({
+        ...req.body,
+        issueId
+      });
+      
+      // Check that the issue exists
+      const issue = await storage.getIssueById(issueId);
+      if (!issue) return res.status(404).json({ message: "Issue not found" });
+      
+      // Check that the user exists
+      const assignee = await storage.getUser(validatedData.userId);
+      if (!assignee) return res.status(404).json({ message: "User not found" });
+      
+      // Check if issue is already assigned
+      if (issue.assignedTo && issue.assignedTo !== validatedData.userId) {
+        return res.status(409).json({ 
+          message: "Issue is already assigned to another user",
+          currentAssigneeId: issue.assignedTo
+        });
+      }
+      
+      // Set deadline based on expectedDays
+      const expectedCompletionAt = new Date();
+      expectedCompletionAt.setDate(expectedCompletionAt.getDate() + validatedData.expectedDays);
+      
+      // Create assignment history record
+      const assignmentHistory = await storage.createIssueAssignmentHistory({
+        issueId: validatedData.issueId,
+        assigneeId: validatedData.userId,
+        assignerId: req.body.assignerId || validatedData.userId, // Default to self-assignment if no assigner specified
+        expectedCompletionAt,
+        isStolen: false
+      });
+      
+      // Update issue with assignee and last activity time
+      const now = new Date();
+      const newStatus = issue.status === 'open' ? 'assigned' : issue.status;
+      const updatedIssue = await storage.updateIssue(issueId, {
+        status: newStatus as typeof ISSUE_STATUS[number],
+        assignedTo: validatedData.userId,
+        assignedAt: now,
+        lastActivityAt: now,
+        expectedCompletionAt
+      });
+      
+      // Broadcast update to all WebSocket clients
+      broadcastMessage({
+        type: 'ISSUE_ASSIGNED',
+        issue: updatedIssue,
+        assignmentHistory
+      });
+      
+      return res.status(200).json({
+        message: "Issue successfully assigned",
+        issue: updatedIssue,
+        assignmentHistory
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      console.error("Error assigning issue:", error);
+      return res.status(500).json({ message: "Failed to assign issue" });
+    }
+  });
+  
+  // Steal an issue from another user
+  app.post("/api/issues/:issueId/steal", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      if (isNaN(issueId)) return res.status(400).json({ message: "Invalid issue ID" });
+      
+      // Validate request body
+      const validatedData = stealIssueSchema.parse({
+        ...req.body,
+        issueId
+      });
+      
+      // Check that the issue exists
+      const issue = await storage.getIssueById(issueId);
+      if (!issue) return res.status(404).json({ message: "Issue not found" });
+      
+      // Check that the issue is assigned
+      if (!issue.assignedTo) {
+        return res.status(400).json({ 
+          message: "Issue is not currently assigned to anyone. Use the assign endpoint instead." 
+        });
+      }
+      
+      // Check that the issue is not already assigned to the requesting user
+      if (issue.assignedTo === validatedData.userId) {
+        return res.status(400).json({ message: "Issue is already assigned to you" });
+      }
+      
+      // Check that the assignee exists
+      const assignee = await storage.getUser(validatedData.userId);
+      if (!assignee) return res.status(404).json({ message: "User not found" });
+      
+      // Check when the issue was last active to see if it's eligible for stealing
+      const lastActivityThreshold = new Date();
+      lastActivityThreshold.setDate(lastActivityThreshold.getDate() - 7); // 7 days of inactivity
+      
+      if (issue.lastActivityAt && new Date(issue.lastActivityAt) > lastActivityThreshold) {
+        return res.status(403).json({ 
+          message: "Issue not eligible for stealing. Last activity was less than 7 days ago.",
+          lastActivityAt: issue.lastActivityAt
+        });
+      }
+      
+      // Set deadline to 7 days from now by default for stolen issues
+      const expectedCompletionAt = new Date();
+      expectedCompletionAt.setDate(expectedCompletionAt.getDate() + 7);
+      
+      // Store the previous assignee for history
+      const previousAssigneeId = issue.assignedTo;
+      
+      // Create assignment history record
+      const assignmentHistory = await storage.createIssueAssignmentHistory({
+        issueId: validatedData.issueId,
+        assigneeId: validatedData.userId,
+        assignerId: validatedData.userId, // The stealer is both the assigner and assignee
+        expectedCompletionAt,
+        isStolen: true,
+        previousAssigneeId,
+        stealReason: validatedData.reason
+      });
+      
+      // Update issue with new assignee and last activity time
+      const now = new Date();
+      const updatedIssue = await storage.updateIssue(issueId, {
+        status: 'assigned' as typeof ISSUE_STATUS[number], // Reset to assigned status when stolen
+        assignedTo: validatedData.userId,
+        assignedAt: now,
+        lastActivityAt: now,
+        expectedCompletionAt
+      });
+      
+      // Broadcast update to all WebSocket clients
+      broadcastMessage({
+        type: 'ISSUE_STOLEN',
+        issue: updatedIssue,
+        assignmentHistory,
+        previousAssigneeId
+      });
+      
+      return res.status(200).json({
+        message: "Issue successfully stolen",
+        issue: updatedIssue,
+        assignmentHistory
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      console.error("Error stealing issue:", error);
+      return res.status(500).json({ message: "Failed to steal issue" });
+    }
+  });
+  
+  // Get issue assignment history
+  app.get("/api/issues/:issueId/assignment-history", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      if (isNaN(issueId)) return res.status(400).json({ message: "Invalid issue ID" });
+      
+      const history = await storage.getIssueAssignmentHistory(issueId);
+      return res.json(history);
+    } catch (error) {
+      console.error("Error fetching assignment history:", error);
+      return res.status(500).json({ message: "Failed to fetch assignment history" });
+    }
+  });
+  
   const httpServer = createServer(app);
   
   // Set up WebSocket server on a distinct path

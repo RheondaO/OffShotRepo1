@@ -1,7 +1,7 @@
 import { 
   users, type User, type InsertUser,
   categories, type Category, type InsertCategory,
-  issues, type Issue, type InsertIssue,
+  issues, type Issue, type InsertIssue, type UpdateIssue,
   votes, type Vote, type InsertVote,
   tags, type Tag, type InsertTag,
   issueTags, type IssueTag, type InsertIssueTag,
@@ -9,10 +9,13 @@ import {
   userNfts, type UserNft, type InsertUserNft,
   xpActivities, type XpActivity, type InsertXpActivity,
   userActivities, type UserActivity, type InsertUserActivity,
-  newsletterSubscribers, type NewsletterSubscriber, type InsertNewsletterSubscriber
+  newsletterSubscribers, type NewsletterSubscriber, type InsertNewsletterSubscriber,
+  issueAssignmentHistory, type IssueAssignmentHistory, type InsertIssueAssignmentHistory,
+  ISSUE_STATUS
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, or, sql } from "drizzle-orm";
+import { calculateIssuePriority } from "./utils";
 
 export interface IStorage {
   // Users
@@ -31,7 +34,7 @@ export interface IStorage {
   getAllIssues(): Promise<Issue[]>;
   getIssueById(id: number): Promise<Issue | undefined>;
   createIssue(issue: InsertIssue): Promise<Issue>;
-  updateIssue(id: number, issue: Partial<InsertIssue>): Promise<Issue | undefined>;
+  updateIssue(id: number, issue: UpdateIssue): Promise<Issue | undefined>;
   getIssuesByCategory(categoryId: number): Promise<Issue[]>;
   getFeaturedIssues(): Promise<Issue[]>;
   getTrendingIssues(): Promise<Issue[]>;
@@ -76,6 +79,11 @@ export interface IStorage {
   getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined>;
   createNewsletterSubscriber(subscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
   unsubscribeFromNewsletter(email: string): Promise<boolean>;
+  
+  // Issue assignment and stealing
+  createIssueAssignmentHistory(history: InsertIssueAssignmentHistory): Promise<IssueAssignmentHistory>;
+  getIssueAssignmentHistory(issueId: number): Promise<IssueAssignmentHistory[]>;
+  getUserAssignedIssues(userId: number): Promise<Issue[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -90,6 +98,7 @@ export class MemStorage implements IStorage {
   private xpActivities: Map<number, XpActivity>;
   private userActivities: Map<number, UserActivity>;
   private newsletterSubscribers: Map<number, NewsletterSubscriber>;
+  private issueAssignmentHistories: Map<number, IssueAssignmentHistory>;
   
   private userId: number;
   private categoryId: number;
@@ -102,6 +111,7 @@ export class MemStorage implements IStorage {
   private xpActivityId: number;
   private userActivityId: number;
   private newsletterSubscriberId: number;
+  private issueAssignmentHistoryId: number;
 
   constructor() {
     this.users = new Map();
@@ -115,6 +125,7 @@ export class MemStorage implements IStorage {
     this.xpActivities = new Map();
     this.userActivities = new Map();
     this.newsletterSubscribers = new Map();
+    this.issueAssignmentHistories = new Map();
     
     this.userId = 1;
     this.categoryId = 1;
@@ -127,6 +138,7 @@ export class MemStorage implements IStorage {
     this.xpActivityId = 1;
     this.userActivityId = 1;
     this.newsletterSubscriberId = 1;
+    this.issueAssignmentHistoryId = 1;
     
     // Add some initial categories
     this.initializeData();
@@ -244,13 +256,17 @@ export class MemStorage implements IStorage {
       votes: 0, 
       comments: 0, 
       status: "open",
-      isFeatured: false
+      isFeatured: false,
+      assignedTo: null,
+      assignedAt: null,
+      expectedCompletionAt: null,
+      lastActivityAt: now
     };
     this.issues.set(id, issue);
     return issue;
   }
 
-  async updateIssue(id: number, updatedFields: Partial<InsertIssue>): Promise<Issue | undefined> {
+  async updateIssue(id: number, updatedFields: UpdateIssue): Promise<Issue | undefined> {
     const issue = this.issues.get(id);
     if (!issue) return undefined;
     
@@ -577,6 +593,35 @@ export class MemStorage implements IStorage {
     this.newsletterSubscribers.set(subscriber.id, updatedSubscriber);
     return true;
   }
+
+  // Issue assignment methods
+  async createIssueAssignmentHistory(insertHistory: InsertIssueAssignmentHistory): Promise<IssueAssignmentHistory> {
+    const id = this.issueAssignmentHistoryId++;
+    const now = new Date();
+    const history: IssueAssignmentHistory = {
+      ...insertHistory,
+      id,
+      assignedAt: now,
+      isStolen: insertHistory.isStolen || false,
+      previousAssigneeId: insertHistory.previousAssigneeId || null,
+      stealReason: insertHistory.stealReason || null,
+      xpRewarded: null,
+      completedAt: null
+    };
+    this.issueAssignmentHistories.set(id, history);
+    return history;
+  }
+
+  async getIssueAssignmentHistory(issueId: number): Promise<IssueAssignmentHistory[]> {
+    return Array.from(this.issueAssignmentHistories.values())
+      .filter(history => history.issueId === issueId)
+      .sort((a, b) => b.assignedAt.getTime() - a.assignedAt.getTime());
+  }
+
+  async getUserAssignedIssues(userId: number): Promise<Issue[]> {
+    return Array.from(this.issues.values())
+      .filter(issue => issue.assignedTo === userId && issue.status !== 'closed' && issue.status !== 'resolved');
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -662,18 +707,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createIssue(insertIssue: InsertIssue): Promise<Issue> {
+    const now = new Date();
     const [issue] = await db.insert(issues).values({
       ...insertIssue,
       location: insertIssue.location || null,
       status: "open", 
       votes: 0,
       comments: 0,
-      isFeatured: false
+      isFeatured: false,
+      assignedTo: null,
+      assignedAt: null,
+      expectedCompletionAt: null,
+      lastActivityAt: now
     }).returning();
     return issue;
   }
 
-  async updateIssue(id: number, updatedFields: Partial<InsertIssue>): Promise<Issue | undefined> {
+  async updateIssue(id: number, updatedFields: UpdateIssue): Promise<Issue | undefined> {
     const [issue] = await db
       .update(issues)
       .set(updatedFields)
@@ -889,7 +939,12 @@ export class DatabaseStorage implements IStorage {
         votes: issues.votes,
         comments: issues.comments,
         status: issues.status,
-        isFeatured: issues.isFeatured
+        isFeatured: issues.isFeatured,
+        priority: issues.priority,
+        assignedTo: issues.assignedTo,
+        assignedAt: issues.assignedAt,
+        expectedCompletionAt: issues.expectedCompletionAt,
+        lastActivityAt: issues.lastActivityAt
       })
       .from(issues)
       .innerJoin(issueTags, eq(issueTags.issueId, issues.id))
@@ -1097,6 +1152,42 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
   
+  // Issue assignment methods
+  async createIssueAssignmentHistory(insertHistory: InsertIssueAssignmentHistory): Promise<IssueAssignmentHistory> {
+    const now = new Date();
+    const [history] = await db
+      .insert(issueAssignmentHistory)
+      .values({
+        ...insertHistory,
+        isStolen: insertHistory.isStolen || false,
+        previousAssigneeId: insertHistory.previousAssigneeId || null,
+        stealReason: insertHistory.stealReason || null,
+        xpRewarded: null,
+        completedAt: null,
+        assignedAt: now
+      })
+      .returning();
+    return history;
+  }
+
+  async getIssueAssignmentHistory(issueId: number): Promise<IssueAssignmentHistory[]> {
+    return await db
+      .select()
+      .from(issueAssignmentHistory)
+      .where(eq(issueAssignmentHistory.issueId, issueId))
+      .orderBy(desc(issueAssignmentHistory.assignedAt));
+  }
+
+  async getUserAssignedIssues(userId: number): Promise<Issue[]> {
+    return await db
+      .select()
+      .from(issues)
+      .where(and(
+        eq(issues.assignedTo, userId),
+        sql`${issues.status} NOT IN ('closed', 'resolved')`
+      ));
+  }
+  
   // Helper to initialize sample data if needed
   async initializeData() {
     // Check if categories exist
@@ -1131,15 +1222,24 @@ export class DatabaseStorage implements IStorage {
       const defaultUser = await this.getUserByUsername("demo_user");
       
       if (!defaultUser) {
-        await this.createUser({
+        // We can only use fields from the schema
+        const user = await this.createUser({
           username: "demo_user",
           name: "Demo User",
           email: "demo@example.com",
-          password: "hashed_password", // This would be hashed in a real app
-          xp: 100,
-          level: 1,
-          createdAt: new Date().toISOString()
+          password: "hashed_password" // This would be hashed in a real app
         });
+        
+        // Then update the user's XP/level separately
+        if (user) {
+          await db
+            .update(users)
+            .set({ 
+              xp: 100,
+              level: 1
+            })
+            .where(eq(users.id, user.id));
+        }
       }
       
       const userId = 1; // Default user ID
@@ -1213,8 +1313,29 @@ export class DatabaseStorage implements IStorage {
         }
       ];
       
+      // We need to format each issue according to the InsertIssue schema
       for (const issue of sampleIssues) {
-        await this.createIssue(issue);
+        // Create issue with required fields
+        const createdIssue = await this.createIssue({
+          title: issue.title,
+          description: issue.description,
+          categoryId: issue.categoryId,
+          userId: issue.userId,
+          priority: calculateIssuePriority(issue.votes || 0), // Calculate priority based on votes
+          location: issue.location
+        });
+        
+        // Then update with additional fields
+        if (createdIssue) {
+          await db
+            .update(issues)
+            .set({
+              votes: issue.votes || 0,
+              status: issue.status as typeof ISSUE_STATUS[number],
+              isFeatured: issue.featured || false
+            })
+            .where(eq(issues.id, createdIssue.id));
+        }
       }
     }
     
