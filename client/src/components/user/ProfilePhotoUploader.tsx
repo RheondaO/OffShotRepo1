@@ -8,6 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { ProfileImageModal } from './ProfileImageModal';
+import XpAnimation from '@/components/animations/XpAnimation';
 
 interface ProfilePhotoUploaderProps {
   userId: number;
@@ -26,6 +27,8 @@ export function ProfilePhotoUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhotoUrl);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [showXpAnimation, setShowXpAnimation] = useState(false);
+  const [xpAwarded, setXpAwarded] = useState(0);
   
   const uploadMutation = useMutation({
     mutationFn: async (photoData: string) => {
@@ -38,10 +41,29 @@ export function ProfilePhotoUploader({
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
-      toast({
-        title: 'Photo updated',
-        description: 'Your profile photo has been updated successfully',
-      });
+      
+      // Check if XP was awarded for first photo upload
+      if (data.xpAwarded > 0) {
+        setXpAwarded(data.xpAwarded);
+        setShowXpAnimation(true);
+        
+        // Show special toast for XP award
+        toast({
+          title: 'Profile Photo Uploaded! +5 XP',
+          description: 'You earned 5 XP for uploading your first profile photo!',
+          variant: 'default',
+        });
+        
+        // Make sure to invalidate XP-related queries
+        queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/xp`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/activities`] });
+      } else {
+        toast({
+          title: 'Photo updated',
+          description: 'Your profile photo has been updated successfully',
+        });
+      }
+      
       if (onPhotoUpdated && data.user.photoUrl) {
         onPhotoUpdated(data.user.photoUrl);
       }
@@ -96,8 +118,23 @@ export function ProfilePhotoUploader({
     return username ? username.substring(0, 2).toUpperCase() : '??';
   };
 
+  // Handle XP animation completion
+  const handleXpAnimationComplete = () => {
+    setShowXpAnimation(false);
+  };
+
   return (
-    <Card className="w-full">
+    <Card className="w-full relative">
+      {/* XP Animation */}
+      {showXpAnimation && (
+        <div className="absolute top-10 left-1/2 transform -translate-x-1/2 z-50">
+          <XpAnimation 
+            xpAmount={xpAwarded}
+            isVisible={showXpAnimation}
+            onComplete={handleXpAnimationComplete}
+          />
+        </div>
+      )}
       <CardContent className="pt-6 flex flex-col items-center justify-center space-y-4">
         <div className="relative group">
           <Avatar className="w-24 h-24 border-2 border-[hsl(var(--space-blue)/40)]">

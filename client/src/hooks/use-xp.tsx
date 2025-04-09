@@ -17,7 +17,8 @@ const XP_REWARDS = {
   JOIN_MISSION: 15,
   GAME_WIN: 1,
   START_GAME: 1,
-  NEWSLETTER_SIGNUP: 25
+  NEWSLETTER_SIGNUP: 25,
+  UPLOAD_PROFILE_PHOTO: 5
 };
 
 export const useXp = () => {

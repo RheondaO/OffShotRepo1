@@ -95,10 +95,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to update user photo" });
       }
       
+      // Check if this is the user's first profile photo upload
+      // We can determine this by checking if the user previously had a photoUrl
+      // If they didn't have one before, award XP
+      let xpAwarded = false;
+      if (!user.photoUrl) {
+        try {
+          // Find the 'Upload Profile Photo' XP activity
+          const xpActivities = await storage.getAllXpActivities();
+          const uploadPhotoActivity = xpActivities.find(activity => 
+            activity.name === "Upload Profile Photo"
+          );
+          
+          if (uploadPhotoActivity) {
+            // Record the activity and award XP
+            await storage.recordUserActivity({
+              userId,
+              activityId: uploadPhotoActivity.id,
+              xpEarned: uploadPhotoActivity.xpReward,
+              performedAt: new Date()
+            });
+            
+            // Update the user's XP
+            await storage.updateUserXp(userId, uploadPhotoActivity.xpReward);
+            xpAwarded = true;
+          }
+        } catch (error) {
+          console.error("Error awarding XP for profile photo:", error);
+          // Don't fail the request if XP award fails
+        }
+      }
+      
       // Don't send the password in the response
       const { password, ...userWithoutPassword } = updatedUser;
       
-      return res.json({ success: true, user: userWithoutPassword });
+      return res.json({ 
+        success: true, 
+        user: userWithoutPassword,
+        xpAwarded: xpAwarded ? 5 : 0
+      });
     } catch (error) {
       console.error("Error uploading profile photo:", error);
       return res.status(500).json({ message: "Failed to upload profile photo" });

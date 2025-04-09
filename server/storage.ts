@@ -1642,6 +1642,12 @@ export class DatabaseStorage implements IStorage {
           description: "Participate in community chat", 
           xpReward: 1, 
           cooldownMinutes: 1 // 1 minute
+        },
+        {
+          name: "Upload Profile Photo",
+          description: "Upload your first profile photo",
+          xpReward: 5,
+          cooldownMinutes: 0 // One-time reward, no cooldown needed
         }
       ];
       
