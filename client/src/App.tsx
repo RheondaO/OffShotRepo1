@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { StreakUpdater } from "@/components/user/StreakUpdater";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import BrowseIssues from "@/pages/BrowseIssues";
@@ -58,6 +59,7 @@ function Router() {
         </Switch>
       </main>
       <Footer />
+      <StreakUpdater />
     </div>
   );
 }

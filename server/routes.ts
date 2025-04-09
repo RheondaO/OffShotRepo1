@@ -30,6 +30,43 @@ import { calculateIssuePriority } from "./utils";
 import path from 'path';
 import fs from 'fs';
 
+// Helper function to ensure the streak activity exists in the database
+async function ensureStreakActivity(): Promise<number> {
+  try {
+    // Check if the streak activity already exists
+    const allActivities = await storage.getAllXpActivities();
+    const streakActivity = allActivities.find(a => a.name === "Daily Login Streak");
+    
+    if (streakActivity) {
+      return streakActivity.id;
+    }
+    
+    // Create the streak activity if it doesn't exist
+    const newActivity = await storage.createXpActivity({
+      name: "Daily Login Streak",
+      description: "Maintained a daily login streak",
+      xpReward: 5,
+      cooldownMinutes: 1440 // 24 hours in minutes
+    });
+    
+    // Make sure we also create the Upload Profile Photo activity if it doesn't exist
+    const profilePhotoActivity = allActivities.find(a => a.name === "Upload Profile Photo");
+    if (!profilePhotoActivity) {
+      await storage.createXpActivity({
+        name: "Upload Profile Photo",
+        description: "Added a profile photo",
+        xpReward: 5,
+        cooldownMinutes: 0 // One-time activity
+      });
+    }
+    
+    return newActivity.id;
+  } catch (error) {
+    console.error("Error ensuring streak activity:", error);
+    throw error;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create uploads directory for profile photos if needed
   const uploadDir = path.join(process.cwd(), 'uploads');
@@ -38,6 +75,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
   // Make the uploads directory accessible
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
+  // Ensure we have a streak activity
+  const streakActivity = await ensureStreakActivity();
 
   // Add API endpoint for profile photo uploads
   app.post("/api/users/:userId/photo", async (req: Request, res: Response) => {
@@ -457,6 +497,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json({ xp: user.xp, level: user.level });
     } catch (error) {
       return res.status(500).json({ message: "Failed to fetch user XP" });
+    }
+  });
+  
+  // Update user login streak
+  app.post("/api/users/:userId/streak", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      // Update the user's streak
+      const updatedUser = await storage.updateUserLoginStreak(userId);
+      if (!updatedUser) return res.status(500).json({ message: "Failed to update streak" });
+      
+      // Calculate if we should award XP (only if the streak increased)
+      let xpAwarded = 0;
+      if (updatedUser.currentStreak > (user.currentStreak || 0)) {
+        // Find the streak activity
+        try {
+          // Record the activity and award XP
+          await storage.recordUserActivity({
+            userId,
+            activityId: streakActivity,
+            xpEarned: 5, // 5 XP for maintaining streak
+            performedAt: new Date()
+          });
+          xpAwarded = 5;
+        } catch (error) {
+          console.error("Error awarding XP for streak:", error);
+          // Don't fail the request if XP award fails
+        }
+      }
+      
+      // Don't send the password in the response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      return res.json({
+        user: userWithoutPassword,
+        xpAwarded,
+        message: xpAwarded > 0 ? `Streak maintained! +${xpAwarded} XP` : 'Streak updated'
+      });
+    } catch (error) {
+      console.error("Error updating streak:", error);
+      return res.status(500).json({ message: "Failed to update login streak" });
+    }
+  });
+  
+  // Get user streak information
+  app.get("/api/users/:userId/streak", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+      
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      return res.json({
+        currentStreak: user.currentStreak || 0,
+        longestStreak: user.longestStreak || 0,
+        lastLoginAt: user.lastLoginAt
+      });
+    } catch (error) {
+      console.error("Error getting streak:", error);
+      return res.status(500).json({ message: "Failed to fetch streak information" });
     }
   });
   

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ProfilePhotoUploader } from "@/components/user/ProfilePhotoUploader";
 import { ProfileImageModal } from "@/components/user/ProfileImageModal";
+import { StreakDisplay } from "@/components/user/StreakDisplay";
 import { 
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
@@ -261,6 +262,9 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Streak Display Card */}
+            <StreakDisplay />
             
             <Card>
               <CardHeader>

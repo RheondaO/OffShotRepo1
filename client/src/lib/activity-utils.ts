@@ -17,7 +17,9 @@ export const activityNames: Record<number, string> = {
   15: "Purchased an NFT",
   16: "Assigned an issue",
   17: "Stole an issue",
-  18: "Resolved an issue"
+  18: "Resolved an issue",
+  19: "Maintained login streak",
+  20: "Upload Profile Photo"
 };
 
 // Mapping from activity IDs to icon names
@@ -39,7 +41,9 @@ export const activityIcons: Record<number, string> = {
   15: "image",        // NFT
   16: "clipboard",    // Assign issue
   17: "scissors",     // Steal issue
-  18: "check-circle"  // Resolve issue
+  18: "check-circle", // Resolve issue
+  19: "flame",        // Login streak
+  20: "image"         // Profile Photo
 };
 
 // Get a readable activity name from an ID
@@ -73,7 +77,9 @@ export const getActivityColor = (activityId: number): string => {
     15: "fuchsia", // NFT - fuchsia
     16: "teal",   // Assign issue - teal
     17: "red",    // Steal issue - red
-    18: "green"   // Resolve issue - green
+    18: "green",  // Resolve issue - green
+    19: "orange", // Login streak - orange
+    20: "blue"    // Profile Photo - blue
   };
   
   return colorMap[activityId] || "gray";

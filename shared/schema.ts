@@ -13,6 +13,9 @@ export const users = pgTable("users", {
   xp: integer("xp").notNull().default(0),
   level: integer("level").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastLoginAt: timestamp("last_login_at"),
 });
 
 export const categories = pgTable("categories", {

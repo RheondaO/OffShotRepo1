@@ -26,6 +26,8 @@ export interface IStorage {
   updateUserPhoto(userId: number, photoUrl: string): Promise<User | undefined>;
   updateUserXp(userId: number, xpAmount: number): Promise<User | undefined>;
   getUserLevel(userId: number): Promise<number>;
+  updateUserLoginStreak(userId: number): Promise<User | undefined>;
+  resetUserLoginStreak(userId: number): Promise<User | undefined>;
 
   // Categories
   getAllCategories(): Promise<Category[]>;
@@ -199,7 +201,10 @@ export class MemStorage implements IStorage {
       photoUrl: photoUrl || null,
       xp: 0,
       level: 1,
-      createdAt: now
+      createdAt: now,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLoginAt: now
     };
     this.users.set(id, user);
     return user;
@@ -242,6 +247,66 @@ export class MemStorage implements IStorage {
     const user = this.users.get(userId);
     if (!user) return 1; // Default level
     return user.level;
+  }
+  
+  async updateUserLoginStreak(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const now = new Date();
+    const lastLogin = user.lastLoginAt || new Date(0); // Default to epoch if no previous login
+    
+    // Check if this is a new day (compare dates without time)
+    const lastLoginDate = new Date(lastLogin);
+    lastLoginDate.setHours(0, 0, 0, 0);
+    
+    const todayDate = new Date(now);
+    todayDate.setHours(0, 0, 0, 0);
+    
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+    const diffDays = Math.round((todayDate.getTime() - lastLoginDate.getTime()) / oneDayInMs);
+    
+    let updatedStreak = user.currentStreak || 0;
+    
+    // If exactly one day since last login, increment streak
+    if (diffDays === 1) {
+      updatedStreak += 1;
+    } 
+    // If same day, no change
+    else if (diffDays === 0) {
+      // No change to streak
+    } 
+    // If more than one day, reset streak to 1
+    else {
+      updatedStreak = 1;
+    }
+    
+    // Update longest streak if current streak is longer
+    const longestStreak = Math.max(user.longestStreak || 0, updatedStreak);
+    
+    const updatedUser = { 
+      ...user, 
+      currentStreak: updatedStreak,
+      longestStreak: longestStreak,
+      lastLoginAt: now
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async resetUserLoginStreak(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { 
+      ...user, 
+      currentStreak: 0,
+      lastLoginAt: new Date()
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
   }
 
   // Category methods
@@ -733,6 +798,67 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
+  
+  async updateUserLoginStreak(userId: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) return undefined;
+    
+    const now = new Date();
+    const lastLogin = user.lastLoginAt || new Date(0); // Default to epoch if no previous login
+    
+    // Check if this is a new day (compare dates without time)
+    const lastLoginDate = new Date(lastLogin);
+    lastLoginDate.setHours(0, 0, 0, 0);
+    
+    const todayDate = new Date(now);
+    todayDate.setHours(0, 0, 0, 0);
+    
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+    const diffDays = Math.round((todayDate.getTime() - lastLoginDate.getTime()) / oneDayInMs);
+    
+    let updatedStreak = user.currentStreak || 0;
+    
+    // If exactly one day since last login, increment streak
+    if (diffDays === 1) {
+      updatedStreak += 1;
+    } 
+    // If same day, no change
+    else if (diffDays === 0) {
+      // No change to streak
+    } 
+    // If more than one day, reset streak to 1
+    else {
+      updatedStreak = 1;
+    }
+    
+    // Update longest streak if current streak is longer
+    const longestStreak = Math.max(user.longestStreak || 0, updatedStreak);
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        currentStreak: updatedStreak,
+        longestStreak: longestStreak,
+        lastLoginAt: now
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+  
+  async resetUserLoginStreak(userId: number): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        currentStreak: 0,
+        lastLoginAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
@@ -743,12 +869,16 @@ export class DatabaseStorage implements IStorage {
     // When creating a new user, ensure the XP fields are properly initialized
     // Also handle the photoUrl field
     const { photoUrl, ...rest } = insertUser;
+    const now = new Date();
     
     const [user] = await db.insert(users).values({
       ...rest,
       photoUrl: photoUrl || null,
       xp: 0,
-      level: 1
+      level: 1,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLoginAt: now
     }).returning();
     return user;
   }
