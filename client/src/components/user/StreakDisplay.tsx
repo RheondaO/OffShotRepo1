@@ -68,17 +68,7 @@ export function StreakDisplay() {
           <span>Last login: {lastLoginText}</span>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full" 
-          onClick={() => updateStreak()}
-          disabled={isUpdatingStreak}
-        >
-          {isUpdatingStreak ? "Updating..." : "Update Streak"}
-        </Button>
-      </CardFooter>
+      {/* CardFooter removed as requested */}
     </Card>
   );
 }
