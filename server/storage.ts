@@ -23,6 +23,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserPhoto(userId: number, photoUrl: string): Promise<User | undefined>;
   updateUserXp(userId: number, xpAmount: number): Promise<User | undefined>;
   getUserLevel(userId: number): Promise<number>;
 
@@ -188,15 +189,33 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
     const now = new Date();
+    
+    // Create a copy of the input without the potentially undefined photoUrl
+    const { photoUrl, ...rest } = insertUser;
+    
     const user: User = { 
-      ...insertUser, 
+      ...rest, 
       id,
+      photoUrl: photoUrl || null,
       xp: 0,
       level: 1,
       createdAt: now
     };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUserPhoto(userId: number, photoUrl: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { 
+      ...user, 
+      photoUrl
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
   }
   
   async updateUserXp(userId: number, xpAmount: number): Promise<User | undefined> {
@@ -722,12 +741,35 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     // When creating a new user, ensure the XP fields are properly initialized
+    // Also handle the photoUrl field
+    const { photoUrl, ...rest } = insertUser;
+    
     const [user] = await db.insert(users).values({
-      ...insertUser,
+      ...rest,
+      photoUrl: photoUrl || null,
       xp: 0,
       level: 1
     }).returning();
     return user;
+  }
+  
+  async updateUserPhoto(userId: number, photoUrl: string): Promise<User | undefined> {
+    // Get current user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    if (!user) return undefined;
+    
+    // Update user's photo URL
+    const [updatedUser] = await db
+      .update(users)
+      .set({ photoUrl })
+      .where(eq(users.id, userId))
+      .returning();
+      
+    return updatedUser;
   }
   
   async updateUserXp(userId: number, xpAmount: number): Promise<User | undefined> {

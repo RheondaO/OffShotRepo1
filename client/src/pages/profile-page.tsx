@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ProfilePhotoUploader } from "@/components/user/ProfilePhotoUploader";
 import { 
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
@@ -25,7 +27,17 @@ import {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [location] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Set active tab based on URL query parameter
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const tab = searchParams.get("tab");
+    if (tab && ["overview", "achievements", "issues", "assigned-issues", "activity", "nfts", "settings"].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location]);
 
   // Fetch user's issues
   const { data: userIssues, isLoading: issuesLoading } = useQuery<Issue[]>({
@@ -110,7 +122,7 @@ export default function ProfilePage() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <Avatar className="h-24 w-24 border-4">
-                <AvatarImage src="" />
+                <AvatarImage src={user.photoUrl || ''} alt={user.name} />
                 <AvatarFallback className="text-3xl">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               
@@ -156,6 +168,7 @@ export default function ProfilePage() {
           <TabsTrigger value="assigned-issues">Assigned Issues</TabsTrigger>
           <TabsTrigger value="activity">Activity History</TabsTrigger>
           <TabsTrigger value="nfts">NFT Collection</TabsTrigger>
+          <TabsTrigger value="settings">Profile Settings</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -746,6 +759,49 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Photo</CardTitle>
+                  <CardDescription>Update your profile picture</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProfilePhotoUploader 
+                    userId={user.id} 
+                    currentPhotoUrl={user.photoUrl} 
+                    username={user.username} 
+                  />
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Information</CardTitle>
+                  <CardDescription>Your account details</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Display Name</h3>
+                    <p className="text-[hsl(var(--foreground)/70)]">{user.name}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Username</h3>
+                    <p className="text-[hsl(var(--foreground)/70)]">@{user.username}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Joined</h3>
+                    <p className="text-[hsl(var(--foreground)/70)]">{formatDate(user.createdAt)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

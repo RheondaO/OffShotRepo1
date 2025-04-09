@@ -1,0 +1,136 @@
+import { useState, useRef } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { ImagePlus, Loader2 } from "lucide-react";
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+
+interface ProfilePhotoUploaderProps {
+  userId: number;
+  currentPhotoUrl: string | null;
+  username: string;
+  onPhotoUpdated?: (photoUrl: string) => void;
+}
+
+export function ProfilePhotoUploader({ 
+  userId, 
+  currentPhotoUrl, 
+  username,
+  onPhotoUpdated 
+}: ProfilePhotoUploaderProps) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhotoUrl);
+  
+  const uploadMutation = useMutation({
+    mutationFn: async (photoData: string) => {
+      const res = await apiRequest('POST', `/api/users/${userId}/photo`, { photoData });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to upload photo');
+      }
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
+      toast({
+        title: 'Photo updated',
+        description: 'Your profile photo has been updated successfully',
+      });
+      if (onPhotoUpdated && data.user.photoUrl) {
+        onPhotoUpdated(data.user.photoUrl);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: 'Upload failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please select an image under 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please select an image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setPreviewUrl(dataUrl);
+      uploadMutation.mutate(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const getUserInitials = () => {
+    return username ? username.substring(0, 2).toUpperCase() : '??';
+  };
+
+  return (
+    <Card className="w-full">
+      <CardContent className="pt-6 flex flex-col items-center justify-center space-y-4">
+        <div className="relative">
+          <Avatar className="w-24 h-24">
+            <AvatarImage src={previewUrl || undefined} alt={username} />
+            <AvatarFallback className="text-lg font-bold">{getUserInitials()}</AvatarFallback>
+          </Avatar>
+          {uploadMutation.isPending && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+              <Loader2 className="h-8 w-8 animate-spin text-white" />
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-col items-center">
+          <Label htmlFor="profile-photo" className="font-medium mb-2">Profile Photo</Label>
+          <input
+            ref={fileInputRef}
+            id="profile-photo"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={triggerFileInput}
+            disabled={uploadMutation.isPending}
+            className="flex items-center gap-2"
+          >
+            <ImagePlus className="h-4 w-4" />
+            {currentPhotoUrl ? 'Change Photo' : 'Upload Photo'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

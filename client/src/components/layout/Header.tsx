@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import MobileMenu from "./MobileMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -80,6 +80,7 @@ const Header = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.photoUrl || ''} alt={user.name} />
                     <AvatarFallback className="bg-[hsl(var(--space-blue)/20)] text-xs">
                       {user.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -91,6 +92,12 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="flex items-center justify-start gap-2 p-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.photoUrl || ''} alt={user.name} />
+                    <AvatarFallback className="bg-[hsl(var(--space-blue)/20)] text-xs">
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex flex-col space-y-0.5">
                     <p className="text-sm font-medium">{user.name}</p>
                     <p className="text-xs text-[hsl(var(--foreground)/70)]">@{user.username}</p>
@@ -107,6 +114,12 @@ const Header = () => {
                   <DropdownMenuItem className="cursor-pointer">
                     <i className="ri-add-line w-4 h-4 mr-2" />
                     <span>Submit Issue</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/profile?tab=settings">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Settings className="w-4 h-4 mr-2" />
+                    <span>Profile Settings</span>
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />

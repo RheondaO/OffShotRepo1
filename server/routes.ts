@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
@@ -27,7 +27,84 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { calculateIssuePriority } from "./utils";
 
+import path from 'path';
+import fs from 'fs';
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create uploads directory for profile photos if needed
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  // Make the uploads directory accessible
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+  // Add API endpoint for profile photo uploads
+  app.post("/api/users/:userId/photo", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Validate and process the base64 image
+      const { photoData } = req.body;
+      
+      if (!photoData || !photoData.startsWith('data:image/')) {
+        return res.status(400).json({ message: "Invalid photo data. Must be base64 image data." });
+      }
+      
+      // Extract the mime type and base64 data
+      const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        return res.status(400).json({ message: "Invalid photo data format" });
+      }
+      
+      const mimeType = matches[1];
+      const base64Data = matches[2];
+      const fileData = Buffer.from(base64Data, 'base64');
+      
+      // Validate mime type
+      if (!['image/jpeg', 'image/png', 'image/gif'].includes(mimeType)) {
+        return res.status(400).json({ message: "Only JPEG, PNG, and GIF images are allowed" });
+      }
+      
+      // Validate file size (max 5MB)
+      if (fileData.length > 5 * 1024 * 1024) {
+        return res.status(400).json({ message: "Photo too large. Maximum size is 5MB" });
+      }
+      
+      // Generate a unique filename
+      const extension = mimeType.split('/')[1];
+      const filename = `${userId}-${Date.now()}.${extension}`;
+      const filepath = path.join(uploadDir, filename);
+      
+      // Save the file
+      fs.writeFileSync(filepath, fileData);
+      
+      // Update the user's photoUrl
+      const photoUrl = `/uploads/${filename}`;
+      const updatedUser = await storage.updateUserPhoto(userId, photoUrl);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user photo" });
+      }
+      
+      // Don't send the password in the response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      return res.json({ success: true, user: userWithoutPassword });
+    } catch (error) {
+      console.error("Error uploading profile photo:", error);
+      return res.status(500).json({ message: "Failed to upload profile photo" });
+    }
+  });
+
   // Users routes
   // Get user by ID 
   app.get("/api/users/:userId", async (req: Request, res: Response) => {
