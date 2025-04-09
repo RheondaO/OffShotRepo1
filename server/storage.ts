@@ -767,7 +767,18 @@ export class DatabaseStorage implements IStorage {
 
   // Category methods
   async getAllCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
+    // Get all categories
+    const allCategories = await db.select().from(categories);
+    
+    // Sort categories such that "Other" is always last
+    return allCategories.sort((a, b) => {
+      // If "Other" category, move to the end
+      if (a.name === "Other") return 1;
+      if (b.name === "Other") return -1;
+      
+      // Regular alphabetical sorting for all other categories
+      return a.name.localeCompare(b.name);
+    });
   }
 
   async getCategoryById(id: number): Promise<Category | undefined> {
