@@ -15,6 +15,7 @@ import {
   Sparkles,
   Rocket
 } from "lucide-react";
+import IssueModal from "@/components/issues/IssueModal";
 import IssueCard from "@/components/issues/IssueCard";
 import { IssueCardSkeleton } from "@/components/issues/IssueCardSkeleton";
 import CategoryCard from "@/components/issues/CategoryCard";
@@ -42,6 +43,8 @@ import {
 
 const Home = () => {
   const [_, navigate] = useLocation();
+  const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Fetch categories
   const { data: categories, isLoading: isCategoriesLoading } = useQuery<Category[]>({
@@ -57,6 +60,17 @@ const Home = () => {
   const { data: trendingIssues, isLoading: isTrendingLoading } = useQuery<Issue[]>({
     queryKey: ['/api/issues/trending'],
   });
+  
+  // Function to open modal with specific issue
+  const handleIssueClick = (issueId: number) => {
+    setSelectedIssueId(issueId);
+    setIsModalOpen(true);
+  };
+  
+  // Function to close modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
   
   return (
     <>
@@ -152,7 +166,11 @@ const Home = () => {
               ))
             ) : featuredIssues && featuredIssues.length > 0 ? (
               featuredIssues.slice(0, 3).map((issue) => (
-                <IssueCard key={issue.id} issue={issue} />
+                <IssueCard 
+                  key={issue.id} 
+                  issue={issue} 
+                  onClick={handleIssueClick}
+                />
               ))
             ) : (
               <div className="col-span-3 text-center py-12 text-[hsl(var(--foreground)/60)]">
@@ -213,7 +231,10 @@ const Home = () => {
           {isTrendingLoading ? (
             <IssueTableSkeleton />
           ) : trendingIssues && trendingIssues.length > 0 ? (
-            <IssueTable issues={trendingIssues} />
+            <IssueTable 
+              issues={trendingIssues} 
+              onIssueClick={handleIssueClick}
+            />
           ) : (
             <div className="text-center py-12 text-[hsl(var(--foreground)/60)]">
               No trending issues yet. Be the first to submit an issue!
@@ -504,6 +525,13 @@ const Home = () => {
           </div>
         </div>
       </section>
+      
+      {/* Issue Modal */}
+      <IssueModal 
+        issueId={selectedIssueId}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </>
   );
 };

@@ -10,9 +10,10 @@ import { type Category, type Issue } from "@shared/schema";
 
 interface IssueCardProps {
   issue: Issue;
+  onClick?: (issueId: number) => void;
 }
 
-const IssueCard = ({ issue }: IssueCardProps) => {
+const IssueCard = ({ issue, onClick }: IssueCardProps) => {
   const { toast } = useToast();
   const [isVoting, setIsVoting] = useState(false);
   
@@ -52,8 +53,22 @@ const IssueCard = ({ issue }: IssueCardProps) => {
     }
   };
   
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent the default behavior and propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Only trigger the onClick if it exists
+    if (onClick) {
+      onClick(issue.id);
+    }
+  };
+  
   return (
-    <Card className="card issue-card bg-[hsl(var(--space-gray)/50)] rounded-xl overflow-hidden border border-[hsl(var(--space-purple)/20)] relative z-0">
+    <Card 
+      className="card issue-card bg-[hsl(var(--space-gray)/50)] rounded-xl overflow-hidden border border-[hsl(var(--space-purple)/20)] relative z-0 cursor-pointer hover:shadow-lg transition-all"
+      onClick={handleCardClick}
+    >
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <span className="px-3 py-1 text-xs font-mono rounded-full bg-[hsl(var(--space-purple)/20)] text-[hsl(var(--space-pink))] border border-[hsl(var(--space-purple)/30)]">
@@ -83,14 +98,20 @@ const IssueCard = ({ issue }: IssueCardProps) => {
           
           <div className="flex items-center gap-3">
             <button 
-              className="flex items-center gap-1 text-[hsl(var(--foreground)/60)] hover:text-[hsl(var(--space-pink))] transition-colors"
-              onClick={handleVote}
+              className="flex items-center gap-1 text-[hsl(var(--foreground)/60)] hover:text-[hsl(var(--space-pink))] transition-colors relative z-20"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVote();
+              }}
               disabled={isVoting}
             >
               <i className="ri-heart-line"></i>
               <span>{issue.votes}</span>
             </button>
-            <button className="flex items-center gap-1 text-[hsl(var(--foreground)/60)] hover:text-[hsl(var(--space-gold))] transition-colors">
+            <button 
+              className="flex items-center gap-1 text-[hsl(var(--foreground)/60)] hover:text-[hsl(var(--space-gold))] transition-colors relative z-20"
+              onClick={(e) => e.stopPropagation()}
+            >
               <i className="ri-chat-1-line"></i>
               <span>{issue.comments}</span>
             </button>
@@ -98,9 +119,15 @@ const IssueCard = ({ issue }: IssueCardProps) => {
         </div>
       </div>
       
-      <Link href={`/issues/${issue.id}`} className="absolute inset-0 z-10 sr-only">
-        View issue details
-      </Link>
+      {!onClick && (
+        <Link 
+          href={`/issues/${issue.id}`} 
+          className="absolute inset-0 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="sr-only">View issue details</span>
+        </Link>
+      )}
     </Card>
   );
 };

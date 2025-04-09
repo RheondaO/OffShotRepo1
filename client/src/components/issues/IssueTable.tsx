@@ -9,9 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 
 interface IssueTableProps {
   issues: Issue[];
+  onIssueClick?: (issueId: number) => void;
 }
 
-const IssueTable = ({ issues }: IssueTableProps) => {
+const IssueTable = ({ issues, onIssueClick }: IssueTableProps) => {
   const { toast } = useToast();
   const [votingIssueId, setVotingIssueId] = useState<number | null>(null);
   
@@ -135,11 +136,21 @@ const IssueTable = ({ issues }: IssueTableProps) => {
                   </span>
                 </td>
                 <td className="py-4 px-6">
-                  <Link href={`/issues/${issue.id}`}>
-                    <Button variant="outline" size="sm">
-                      View Details
+                  {onIssueClick ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onIssueClick(issue.id)}
+                    >
+                      Quick View
                     </Button>
-                  </Link>
+                  ) : (
+                    <Link href={`/issues/${issue.id}`}>
+                      <Button variant="outline" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
+                  )}
                 </td>
               </tr>
             ))
