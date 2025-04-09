@@ -3,10 +3,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, Search } from "lucide-react";
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { ProfileImageModal } from './ProfileImageModal';
 
 interface ProfilePhotoUploaderProps {
   userId: number;
@@ -24,6 +25,7 @@ export function ProfilePhotoUploader({
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhotoUrl);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   
   const uploadMutation = useMutation({
     mutationFn: async (photoData: string) => {
@@ -107,11 +109,45 @@ export function ProfilePhotoUploader({
               <Loader2 className="h-8 w-8 animate-spin text-white" />
             </div>
           ) : (
-            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-full flex items-center justify-center transition-opacity duration-200 cursor-pointer" onClick={triggerFileInput}>
-              <div className="bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <ImagePlus className="h-5 w-5 text-[hsl(var(--space-blue))]" />
+            <>
+              <div 
+                className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-full flex items-center justify-center transition-opacity duration-200 cursor-pointer" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Open the view modal if there's an image, otherwise open file picker
+                  if (previewUrl) {
+                    setIsImageModalOpen(true);
+                  } else {
+                    triggerFileInput();
+                  }
+                }}
+              >
+                <div className="bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {previewUrl ? 
+                    <Search className="h-5 w-5 text-[hsl(var(--space-blue))]" /> : 
+                    <ImagePlus className="h-5 w-5 text-[hsl(var(--space-blue))]" />
+                  }
+                </div>
               </div>
-            </div>
+              
+              {/* Edit button at corner */}
+              {previewUrl && (
+                <div 
+                  className="absolute bottom-0 right-0 transform translate-x-1/3 translate-y-1/3 bg-[hsl(var(--space-blue))] p-1.5 rounded-full shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-all z-10" 
+                  onClick={triggerFileInput}
+                >
+                  <ImagePlus className="h-3.5 w-3.5 text-white" />
+                </div>
+              )}
+              
+              {/* Image Modal */}
+              <ProfileImageModal
+                imageUrl={previewUrl}
+                username={username}
+                open={isImageModalOpen}
+                onOpenChange={setIsImageModalOpen}
+              />
+            </>
           )}
         </div>
         

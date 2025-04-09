@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ProfilePhotoUploader } from "@/components/user/ProfilePhotoUploader";
+import { ProfileImageModal } from "@/components/user/ProfileImageModal";
 import { 
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const [location] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   
   // Set active tab based on URL query parameter
   useEffect(() => {
@@ -126,16 +128,30 @@ export default function ProfilePage() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <div className="relative group">
-                <Avatar className="h-24 w-24 border-4">
+                <Avatar 
+                  className="h-24 w-24 border-4 cursor-pointer" 
+                  onClick={() => setIsImageModalOpen(true)}
+                >
                   <AvatarImage src={user.photoUrl || ''} alt={user.name} />
                   <AvatarFallback className="text-3xl">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <Link href="/profile?tab=settings" className="absolute bottom-0 right-0 bg-[hsl(var(--space-blue))] hover:bg-[hsl(var(--space-purple))] text-white p-1.5 rounded-full shadow-md cursor-pointer transition-all opacity-80 hover:opacity-100">
+                <Link href="/profile?tab=settings" className="absolute bottom-1 right-1 transform translate-x-1/2 translate-y-1/2 bg-[hsl(var(--space-blue))] hover:bg-[hsl(var(--space-purple))] text-white p-1.5 rounded-full shadow-md cursor-pointer transition-all opacity-80 hover:opacity-100 z-10">
                   <Settings className="h-4 w-4" />
                 </Link>
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer">
-                  <span className="text-white text-opacity-0 group-hover:text-opacity-100 text-xs font-medium transition-all duration-200">Change Photo</span>
+                <div 
+                  className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer"
+                  onClick={() => setIsImageModalOpen(true)}
+                >
+                  <span className="text-white text-opacity-0 group-hover:text-opacity-100 text-xs font-medium transition-all duration-200">View Photo</span>
                 </div>
+
+                {/* Image Modal */}
+                <ProfileImageModal
+                  imageUrl={user.photoUrl}
+                  username={user.name}
+                  open={isImageModalOpen}
+                  onOpenChange={setIsImageModalOpen}
+                />
               </div>
               
               <div className="flex-1">
