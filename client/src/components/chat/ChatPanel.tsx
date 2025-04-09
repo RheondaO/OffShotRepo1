@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ChatPanelProps {
   username?: string;
+  room?: string;
+  location?: string;
 }
 
 const ChatPanel = ({ username = "Anonymous" }: ChatPanelProps) => {

@@ -50,7 +50,35 @@ export default function ChatPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <div className="h-[calc(100vh-300px)] lg:h-[600px]">
-              <ChatPanel username={savedUsername || "Anonymous"} />
+              <Tabs defaultValue="chat">
+              <TabsList>
+                <TabsTrigger value="chat">General Chat</TabsTrigger>
+                <TabsTrigger value="local">Local Chat</TabsTrigger>
+                <TabsTrigger value="debates">Debates</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="chat">
+                <ChatPanel username={savedUsername || "Anonymous"} />
+              </TabsContent>
+              
+              <TabsContent value="local">
+                <ChatPanel 
+                  username={savedUsername || "Anonymous"}
+                  room="local"
+                  location={localStorage.getItem("user-location")}
+                />
+              </TabsContent>
+              
+              <TabsContent value="debates">
+                <div className="space-y-4">
+                  <DebateScheduler />
+                  <ChatPanel 
+                    username={savedUsername || "Anonymous"}
+                    room="debates"
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
             </div>
           </div>
           
