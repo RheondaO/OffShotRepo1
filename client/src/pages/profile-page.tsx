@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import {
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
   LogIn, UserPlus, CheckSquare, FileText, Share2, Reply, 
-  Image, Clipboard, Scissors, CheckCircle, Activity
+  Image, Clipboard, Scissors, CheckCircle, Activity, Settings
 } from "lucide-react";
 import { Issue, Tag, Vote, UserActivity, UserNft, XpActivity } from "@shared/schema";
 import { 
@@ -32,9 +32,13 @@ export default function ProfilePage() {
   
   // Set active tab based on URL query parameter
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const tab = searchParams.get("tab");
+    const url = new URL(window.location.href);
+    const tab = url.searchParams.get("tab");
+    
+    console.log("Tab from URL:", tab); // Debug log
+    
     if (tab && ["overview", "achievements", "issues", "assigned-issues", "activity", "nfts", "settings"].includes(tab)) {
+      console.log("Setting active tab to:", tab); // Debug log
       setActiveTab(tab);
     }
   }, [location]);
@@ -121,10 +125,18 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <Avatar className="h-24 w-24 border-4">
-                <AvatarImage src={user.photoUrl || ''} alt={user.name} />
-                <AvatarFallback className="text-3xl">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <div className="relative group">
+                <Avatar className="h-24 w-24 border-4">
+                  <AvatarImage src={user.photoUrl || ''} alt={user.name} />
+                  <AvatarFallback className="text-3xl">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <Link href="/profile?tab=settings" className="absolute bottom-0 right-0 bg-[hsl(var(--space-blue))] hover:bg-[hsl(var(--space-purple))] text-white p-1.5 rounded-full shadow-md cursor-pointer transition-all opacity-80 hover:opacity-100">
+                  <Settings className="h-4 w-4" />
+                </Link>
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer">
+                  <span className="text-white text-opacity-0 group-hover:text-opacity-100 text-xs font-medium transition-all duration-200">Change Photo</span>
+                </div>
+              </div>
               
               <div className="flex-1">
                 <h1 className="text-3xl font-bold">{user.name}</h1>

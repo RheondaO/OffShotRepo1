@@ -97,14 +97,20 @@ export function ProfilePhotoUploader({
   return (
     <Card className="w-full">
       <CardContent className="pt-6 flex flex-col items-center justify-center space-y-4">
-        <div className="relative">
-          <Avatar className="w-24 h-24">
+        <div className="relative group">
+          <Avatar className="w-24 h-24 border-2 border-[hsl(var(--space-blue)/40)]">
             <AvatarImage src={previewUrl || undefined} alt={username} />
             <AvatarFallback className="text-lg font-bold">{getUserInitials()}</AvatarFallback>
           </Avatar>
-          {uploadMutation.isPending && (
+          {uploadMutation.isPending ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
               <Loader2 className="h-8 w-8 animate-spin text-white" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 rounded-full flex items-center justify-center transition-opacity duration-200 cursor-pointer" onClick={triggerFileInput}>
+              <div className="bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <ImagePlus className="h-5 w-5 text-[hsl(var(--space-blue))]" />
+              </div>
             </div>
           )}
         </div>
