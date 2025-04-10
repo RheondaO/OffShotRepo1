@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, ArrowDown } from "lucide-react";
 import { useChat } from "@/hooks/use-chat-new";
 import { DEFAULT_USER_ID } from "@/lib/utils";
 import ChatMessage from "./ChatMessage";
@@ -11,11 +11,19 @@ interface ChatPanelProps {
   username?: string;
   room?: string;
   location?: string;
+  isActive?: boolean;  // New prop to indicate if this chat panel is active
 }
 
-const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) => {
+const ChatPanel = ({ 
+  username = "Anonymous", 
+  room, 
+  location,
+  isActive = false 
+}: ChatPanelProps) => {
   const [message, setMessage] = useState("");
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const { 
     messages, 
     isConnected, 
@@ -30,15 +38,43 @@ const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) =
     connect();
   }, [connect]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive, but only if the chat panel is active
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Only scroll if this chat panel is active in the tabs
+    if (isActive && messages.length > 0) {
+      // Use a small timeout to ensure DOM has updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [messages, isActive]);
 
+  // Function to scroll to the bottom of the chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+  
+  // Check if user has scrolled up to show the scroll-to-bottom button
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      // Show button if scrolled up more than 200px from bottom
+      const scrolledUp = container.scrollHeight - container.clientHeight - container.scrollTop > 200;
+      setShowScrollButton(scrolledUp);
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+  
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (sendMessage(message)) {
       setMessage("");
+      // Scroll to bottom when sending a message
+      setTimeout(scrollToBottom, 100);
     }
   };
 
@@ -64,7 +100,10 @@ const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) =
         </Alert>
       )}
 
-      <div className="flex-grow overflow-auto p-4 space-y-4">
+      <div 
+        ref={chatContainerRef}
+        className="flex-grow overflow-auto p-4 space-y-4 relative"
+      >
         {messages.length === 0 && !isConnecting && (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground text-sm">
@@ -88,6 +127,18 @@ const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) =
           />
         ))}
         <div ref={messagesEndRef} />
+        
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <Button
+            className="absolute bottom-4 right-4 rounded-full z-10 opacity-80 hover:opacity-100 transition-opacity shadow-md"
+            size="icon"
+            variant="secondary"
+            onClick={scrollToBottom}
+          >
+            <ArrowDown className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <form 
