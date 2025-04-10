@@ -1287,14 +1287,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Function to broadcast messages to all connected clients
-  function broadcastMessage(message: any) {
+  // Debate routes
+  app.post("/api/debates", async (req: Request, res: Response) => {
+    try {
+      const { topic, scheduledFor, location } = req.body;
+      
+      if (!topic || !scheduledFor) {
+        return res.status(400).json({ message: "Topic and scheduled date are required" });
+      }
+
+      // Store debate in database
+      const debate = await storage.createDebate({
+        topic,
+        scheduledFor: new Date(scheduledFor),
+        location: location || null,
+        participants: []
+      });
+
+      // Broadcast to all clients
+      broadcastMessage({
+        type: 'DEBATE_SCHEDULED',
+        debate
+      });
+
+      return res.status(201).json(debate);
+    } catch (error) {
+      console.error("Error scheduling debate:", error);
+      return res.status(500).json({ message: "Failed to schedule debate" });
+    }
+  });
+
+  app.get("/api/debates", async (_req: Request, res: Response) => {
+    try {
+      const debates = await storage.getAllDebates();
+      return res.json(debates);
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to fetch debates" });
+    }
+  });
+
+  // Handle WebSocket messages with room support
+  function broadcastToRoom(message: any, room?: string) {
     const messageStr = JSON.stringify(message);
     
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(messageStr);
+        const clientInfo = clients.get(client);
+        if (!room || (clientInfo && clientInfo.room === room)) {
+          client.send(messageStr);
+        }
       }
     });
+  }
+
+  function broadcastMessage(message: any) {
+    broadcastToRoom(message);
   }
   
   return httpServer;

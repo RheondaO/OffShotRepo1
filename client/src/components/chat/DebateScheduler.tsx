@@ -17,11 +17,34 @@ export function DebateScheduler() {
   const [date, setDate] = useState<Date>();
   const [location, setLocation] = useState("");
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!topic || !date) return;
     
-    // Send to backend
-    console.log("Scheduling debate:", { topic, date, location });
+    try {
+      const response = await fetch('/api/debates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          topic,
+          scheduledFor: date,
+          location
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to schedule debate');
+      }
+
+      // Clear form
+      setTopic('');
+      setDate(undefined);
+      setLocation('');
+      
+    } catch (error) {
+      console.error('Error scheduling debate:', error);
+    }
   };
 
   return (
