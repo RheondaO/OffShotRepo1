@@ -8,12 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ProfilePhotoUploader } from "@/components/user/ProfilePhotoUploader";
-import { ProfileImageModal } from "@/components/user/ProfileImageModal";
-import { StreakDisplay } from "@/components/user/StreakDisplay";
-import { UserRoleBadge } from "@/components/user/UserRoleBadge";
-import { RoleVoting } from "@/components/user/RoleVoting";
-import { ProfileBioEditor } from "@/components/user/ProfileBioEditor";
+import {
+  ProfilePhotoUploader,
+  ProfileImageModal,
+  StreakDisplay,
+  UserRoleBadge,
+  RoleVoting,
+  ProfileBioEditor
+} from "@/components/user";
 import { 
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
