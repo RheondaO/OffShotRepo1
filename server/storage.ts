@@ -96,6 +96,14 @@ export interface IStorage {
   updateComment(id: number, content: string): Promise<Comment | undefined>;
   deleteComment(id: number): Promise<boolean>;
   getRepliesByComment(commentId: number): Promise<Comment[]>;
+  
+  // Debate methods
+  createDebate(debate: InsertDebate): Promise<Debate>;
+  getAllDebates(): Promise<Debate[]>;
+  getDebateById(id: number): Promise<Debate | undefined>;
+  addDebateParticipant(participant: InsertDebateParticipant): Promise<DebateParticipant>;
+  getDebateParticipants(debateId: number): Promise<DebateParticipant[]>;
+  updateDebateStatus(id: number, status: string): Promise<Debate | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -1558,6 +1566,59 @@ export class DatabaseStorage implements IStorage {
       .from(comments)
       .where(eq(comments.parentId, commentId))
       .orderBy(comments.createdAt);
+  }
+
+  // Debate methods
+  async createDebate(insertDebate: InsertDebate): Promise<Debate> {
+    const roomId = `debate-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const [debate] = await db
+      .insert(debates)
+      .values({
+        ...insertDebate,
+        roomId,
+        status: "scheduled"
+      })
+      .returning();
+    return debate;
+  }
+
+  async getAllDebates(): Promise<Debate[]> {
+    return await db
+      .select()
+      .from(debates)
+      .orderBy(debates.scheduledFor);
+  }
+
+  async getDebateById(id: number): Promise<Debate | undefined> {
+    const [debate] = await db
+      .select()
+      .from(debates)
+      .where(eq(debates.id, id));
+    return debate;
+  }
+
+  async addDebateParticipant(insertParticipant: InsertDebateParticipant): Promise<DebateParticipant> {
+    const [participant] = await db
+      .insert(debateParticipants)
+      .values(insertParticipant)
+      .returning();
+    return participant;
+  }
+
+  async getDebateParticipants(debateId: number): Promise<DebateParticipant[]> {
+    return await db
+      .select()
+      .from(debateParticipants)
+      .where(eq(debateParticipants.debateId, debateId));
+  }
+
+  async updateDebateStatus(id: number, status: string): Promise<Debate | undefined> {
+    const [debate] = await db
+      .update(debates)
+      .set({ status })
+      .where(eq(debates.id, id))
+      .returning();
+    return debate;
   }
   
   // Helper to initialize sample data if needed
