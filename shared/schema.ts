@@ -442,6 +442,44 @@ export type InsertIssueAssignmentHistory = z.infer<typeof insertIssueAssignmentH
 export type IssueAssignmentHistory = typeof issueAssignmentHistory.$inferSelect;
 
 // Comment system
+export const debates = pgTable("debates", {
+  id: serial("id").primaryKey(),
+  topic: text("topic").notNull(),
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  location: text("location"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: integer("created_by").notNull(),
+  status: text("status").notNull().default("scheduled"), // scheduled, active, completed, cancelled
+  roomId: text("room_id").notNull().unique() // For WebSocket room identification
+});
+
+export const debateParticipants = pgTable("debate_participants", {
+  id: serial("id").primaryKey(),
+  debateId: integer("debate_id").notNull(),
+  userId: integer("user_id").notNull(),
+  role: text("role").notNull().default("participant"), // moderator, participant
+  joinedAt: timestamp("joined_at").notNull().defaultNow()
+});
+
+export const debatesRelations = relations(debates, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [debates.createdBy],
+    references: [users.id]
+  }),
+  participants: many(debateParticipants)
+}));
+
+export const debateParticipantsRelations = relations(debateParticipants, ({ one }) => ({
+  debate: one(debates, {
+    fields: [debateParticipants.debateId],
+    references: [debates.id]
+  }),
+  user: one(users, {
+    fields: [debateParticipants.userId],
+    references: [users.id]
+  })
+}));
+
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   issueId: integer("issue_id").notNull(),
@@ -483,3 +521,25 @@ export const insertCommentSchema = createInsertSchema(comments)
 
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type Comment = typeof comments.$inferSelect;
+
+export const insertDebateSchema = createInsertSchema(debates).pick({
+  topic: true,
+  scheduledFor: true,
+  location: true,
+  createdBy: true,
+}).extend({
+  topic: z.string().min(5).max(200),
+  scheduledFor: z.coerce.date(),
+  location: z.string().optional()
+});
+
+export const insertDebateParticipantSchema = createInsertSchema(debateParticipants).pick({
+  debateId: true,
+  userId: true,
+  role: true
+});
+
+export type InsertDebate = z.infer<typeof insertDebateSchema>;
+export type Debate = typeof debates.$inferSelect;
+export type InsertDebateParticipant = z.infer<typeof insertDebateParticipantSchema>;
+export type DebateParticipant = typeof debateParticipants.$inferSelect;
