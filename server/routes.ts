@@ -1217,8 +1217,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up WebSocket server on a distinct path
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
-  // Store connected clients with their usernames
-  const clients = new Map<WebSocket, { username: string }>();
+  // Store connected clients with their usernames and room info
+  const clients = new Map<WebSocket, { username: string; room?: string }>();
   
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected to WebSocket');
@@ -1236,7 +1236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         switch (data.type) {
           case 'join':
             // Store user info with the connection
-            clients.set(ws, { username: data.username || 'Anonymous' });
+            clients.set(ws, { 
+              username: data.username || 'Anonymous',
+              room: data.room // Set room if provided
+            });
             
             // Broadcast join message to all clients
             broadcastMessage({
@@ -1303,7 +1306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         topic,
         scheduledFor: new Date(scheduledFor),
         location: location || null,
-        participants: []
+        createdBy: req.body.createdBy || 1 // Default to user ID 1 if not provided
       });
 
       // Broadcast to all clients
