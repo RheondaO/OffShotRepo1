@@ -162,11 +162,3 @@ const IssueTable = ({ issues, onIssueClick }: IssueTableProps) => {
 };
 
 export default IssueTable;
-<div className="flex items-center gap-2">
-  {issue.trendingScore > 100 && (
-    <span className="text-[hsl(var(--space-pink))]">
-      <i className="ri-fire-fill"></i> Trending
-    </span>
-  )}
-  {title}
-</div>
