@@ -13,7 +13,7 @@ interface ChatPanelProps {
   location?: string;
 }
 
-const ChatPanel = ({ username = "Anonymous" }: ChatPanelProps) => {
+const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) => {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { 

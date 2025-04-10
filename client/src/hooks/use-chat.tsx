@@ -8,7 +8,7 @@ export type ChatMessage = {
   timezone?: string;
 };
 
-export function useChat(username: string = 'Anonymous') {
+export function useChat(username: string = 'Anonymous', room?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +32,19 @@ export function useChat(username: string = 'Anonymous') {
       // Create WebSocket connection
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       
-      // Handle potential Replit deployment scenarios
-      // If we're in a Replit environment, ensure we're connecting to the same domain
+      // Use the current host to ensure we connect to the correct server
+      // This works both in development and production environments
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       console.log('Attempting to connect to WebSocket at:', wsUrl);
       
-      const socket = new WebSocket(wsUrl);
+      // Create the WebSocket with proper error handling
+      let socket: WebSocket;
+      try {
+        socket = new WebSocket(wsUrl);
+      } catch (err) {
+        console.error('Failed to initialize WebSocket connection:', err);
+        throw new Error('Failed to connect to chat server. Please try again later.');
+      }
       socketRef.current = socket;
       
       // Connection opened
