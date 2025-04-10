@@ -147,7 +147,11 @@ export class MemStorage implements IStorage {
 
   async addDebateParticipant(insertParticipant: InsertDebateParticipant): Promise<DebateParticipant> {
     const id = this.debateParticipantId++;
-    const participant: DebateParticipant = { ...insertParticipant, id };
+    const participant: DebateParticipant = { 
+      ...insertParticipant, 
+      id, 
+      role: insertParticipant.role || "participant" 
+    };
     this.debateParticipants.set(id, participant);
     return participant;
   }
