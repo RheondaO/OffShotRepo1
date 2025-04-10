@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -5,8 +6,10 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelativeTime, getCategoryIconElement, DEFAULT_USER_ID } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Share2, Bookmark } from 'lucide-react';
 import { type Category, type Issue } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 interface IssueCardProps {
   issue: Issue;
@@ -17,7 +20,6 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
   const { toast } = useToast();
   const [isVoting, setIsVoting] = useState(false);
   
-  // Fetch the category for this issue
   const { data: category } = useQuery<Category>({
     queryKey: [`/api/categories/${issue.categoryId}`],
   });
@@ -32,7 +34,6 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
         userId: DEFAULT_USER_ID 
       });
       
-      // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ['/api/issues'] });
       await queryClient.invalidateQueries({ queryKey: [`/api/issues/${issue.id}`] });
       await queryClient.invalidateQueries({ queryKey: ['/api/issues/featured'] });
@@ -52,13 +53,27 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
       setIsVoting(false);
     }
   };
+
+  const handleShare = async () => {
+    // Share functionality
+    toast({
+      title: "Share",
+      description: "Sharing feature coming soon!",
+    });
+  };
+
+  const handleBookmark = async () => {
+    // Bookmark functionality
+    toast({
+      title: "Bookmark",
+      description: "Bookmark feature coming soon!",
+    });
+  };
   
   const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent the default behavior and propagation
     e.preventDefault();
     e.stopPropagation();
     
-    // Only trigger the onClick if it exists
     if (onClick) {
       onClick(issue.id);
     }
@@ -115,6 +130,17 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
               <i className="ri-chat-1-line"></i>
               <span>{issue.comments}</span>
             </button>
+            
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => handleShare()}>
+                <Share2 className="h-4 w-4 mr-1" />
+                Share
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => handleBookmark()}>
+                <Bookmark className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -132,18 +158,4 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
   );
 };
 
-import { Button } from "@/components/ui/button";
-import { Share2, Bookmark } from 'lucide-react';
 export default IssueCard;
-
-// Add to the card actions:
-<div className="flex gap-2">
-  <Button variant="ghost" size="sm" onClick={() => handleShare(issue)}>
-    <Share2 className="h-4 w-4 mr-1" />
-    Share
-  </Button>
-  <Button variant="ghost" size="sm" onClick={() => handleBookmark(issue)}>
-    <Bookmark className="h-4 w-4 mr-1" />
-    Save
-  </Button>
-</div>
