@@ -23,7 +23,7 @@ const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) =
     error, 
     connect, 
     sendMessage 
-  } = useChat(username);
+  } = useChat(username, room);
 
   // Auto-connect when component mounts
   useEffect(() => {
@@ -45,7 +45,9 @@ const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) =
   return (
     <div className="flex flex-col h-full border rounded-lg overflow-hidden">
       <div className="p-4 border-b bg-[hsl(var(--card))]">
-        <h3 className="text-lg font-medium">Community Chat</h3>
+        <h3 className="text-lg font-medium">
+          {room ? `${room.charAt(0).toUpperCase() + room.slice(1)} Chat` : 'General Chat'}
+        </h3>
         <p className="text-sm text-muted-foreground">
           {isConnected ? 'Connected as ' + username : 'Connecting...'}
         </p>

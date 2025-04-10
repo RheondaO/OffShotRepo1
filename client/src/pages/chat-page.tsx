@@ -6,7 +6,109 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanel from "@/components/chat/ChatPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PanelTopClose } from "lucide-react";
+import { PanelTopClose, Calendar as CalendarIcon } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+
+// Simple component for scheduling debates
+function DebateScheduler() {
+  const [topic, setTopic] = useState("");
+  const [date, setDate] = useState<Date>();
+  const { toast } = useToast();
+  
+  const scheduleMutation = useMutation({
+    mutationFn: async (data: { topic: string; scheduledFor: Date }) => {
+      return apiRequest("/api/debates", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Debate scheduled",
+        description: "Your debate has been scheduled successfully.",
+      });
+      setTopic("");
+      setDate(undefined);
+    },
+    onError: () => {
+      toast({
+        title: "Failed to schedule debate",
+        description: "There was an error scheduling your debate. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (topic && date) {
+      scheduleMutation.mutate({ topic, scheduledFor: date });
+    }
+  };
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Schedule a Debate</CardTitle>
+        <CardDescription>
+          Create a new topic for community discussion
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="topic">Debate Topic</Label>
+            <Input
+              id="topic"
+              placeholder="Enter the topic for discussion"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <Label htmlFor="date">Scheduled Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : "Select a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            type="submit" 
+            disabled={!topic || !date || scheduleMutation.isPending}
+          >
+            {scheduleMutation.isPending ? "Scheduling..." : "Schedule Debate"}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
 
 export default function ChatPage() {
   const [username, setUsername] = useState("Anonymous");

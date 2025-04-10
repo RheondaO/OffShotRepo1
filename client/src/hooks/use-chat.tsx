@@ -53,10 +53,11 @@ export function useChat(username: string = 'Anonymous', room?: string) {
         setIsConnected(true);
         setIsConnecting(false);
         
-        // Send join message
+        // Send join message with room information if available
         socket.send(JSON.stringify({
           type: 'join',
-          username
+          username,
+          room // Include room parameter if provided
         }));
       });
       
@@ -123,7 +124,7 @@ export function useChat(username: string = 'Anonymous', room?: string) {
       setError('Failed to connect to chat server. Please try again later.');
       setIsConnecting(false);
     }
-  }, [username, reconnectAttempts]);
+  }, [username, room, reconnectAttempts]);
   
   // Disconnect from WebSocket server
   const disconnect = useCallback(() => {
@@ -149,12 +150,13 @@ export function useChat(username: string = 'Anonymous', room?: string) {
       socketRef.current.send(JSON.stringify({
         type: 'message',
         content,
+        room, // Include room if present
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       }));
       return true;
     }
     return false;
-  }, []);
+  }, [room]);
   
   // Clean up on unmount
   useEffect(() => {
