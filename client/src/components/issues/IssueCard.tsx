@@ -132,8 +132,9 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
   );
 };
 
-export default IssueCard;
+import { Button } from "@/components/ui/button";
 import { Share2, Bookmark } from 'lucide-react';
+export default IssueCard;
 
 // Add to the card actions:
 <div className="flex gap-2">
