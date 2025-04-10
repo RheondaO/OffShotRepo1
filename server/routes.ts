@@ -1215,13 +1215,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
   // Set up WebSocket server on a distinct path
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws',
+    // Add proper error handling on the server side
+    clientTracking: true,
+    perMessageDeflate: false
+  });
   
   // Store connected clients with their usernames and room info
   const clients = new Map<WebSocket, { username: string; room?: string }>();
   
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('Client connected to WebSocket');
+  // Handle WebSocket server errors
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+  });
+  
+  wss.on('connection', (ws: WebSocket, req) => {
+    console.log('Client connected to WebSocket from:', req.socket.remoteAddress);
     
     // Handle messages from clients
     ws.on('error', (error) => {

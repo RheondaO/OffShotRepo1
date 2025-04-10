@@ -29,12 +29,15 @@ export function useChat(username: string = 'Anonymous', room?: string) {
         socketRef.current.close();
       }
       
-      // Create WebSocket connection
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      // Determine host and protocol based on environment
+      const isSecure = window.location.protocol === "https:";
+      const protocol = isSecure ? "wss:" : "ws:";
       
-      // Use the current host to ensure we connect to the correct server
-      // This works both in development and production environments
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // In Replit, WebSockets connect to the same domain as the webpage
+      const host = window.location.host;
+      
+      // Create the full WebSocket URL
+      const wsUrl = `${protocol}//${host}/ws`;
       console.log('Attempting to connect to WebSocket at:', wsUrl);
       
       // Create the WebSocket with proper error handling
@@ -72,13 +75,16 @@ export function useChat(username: string = 'Anonymous', room?: string) {
       });
       
       // Connection closed with automatic reconnection
-      socket.addEventListener('close', () => {
-        console.log('Disconnected from chat server');
+      socket.addEventListener('close', (event) => {
+        console.log('Disconnected from chat server', { 
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean
+        });
         setIsConnected(false);
         
-        // Attempt to reconnect if not explicitly disconnected by user
-        // and we haven't exceeded maximum reconnect attempts
-        if (reconnectAttempts < 5) {
+        // Only try to reconnect if it wasn't a clean closure or deliberate disconnect
+        if (reconnectAttempts < 5 && (!event.wasClean || event.code !== 1000)) {
           console.log(`Attempting to reconnect (attempt ${reconnectAttempts + 1}/5)...`);
           
           // Clear any existing reconnect timeout
@@ -97,7 +103,7 @@ export function useChat(username: string = 'Anonymous', room?: string) {
           
           // Store the numeric timeoutId for cleanup
           reconnectTimeoutRef.current = timeoutId as unknown as number;
-        } else {
+        } else if (reconnectAttempts >= 5) {
           setError('Unable to establish a stable connection after multiple attempts. Please refresh the page to try again.');
         }
       });

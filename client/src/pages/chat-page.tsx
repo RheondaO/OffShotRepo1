@@ -22,10 +22,7 @@ function DebateScheduler() {
   
   const scheduleMutation = useMutation({
     mutationFn: async (data: { topic: string; scheduledFor: Date }) => {
-      return apiRequest("/api/debates", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("POST", "/api/debates", data);
     },
     onSuccess: () => {
       toast({
@@ -167,7 +164,7 @@ export default function ChatPage() {
                 <ChatPanel 
                   username={savedUsername || "Anonymous"}
                   room="local"
-                  location={localStorage.getItem("user-location")}
+                  location={localStorage.getItem("user-location") || undefined}
                 />
               </TabsContent>
               
