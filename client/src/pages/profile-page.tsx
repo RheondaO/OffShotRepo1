@@ -11,6 +11,8 @@ import { Progress } from "@/components/ui/progress";
 import { ProfilePhotoUploader } from "@/components/user/ProfilePhotoUploader";
 import { ProfileImageModal } from "@/components/user/ProfileImageModal";
 import { StreakDisplay } from "@/components/user/StreakDisplay";
+import { UserRoleBadge } from "@/components/user/UserRoleBadge";
+import { RoleVoting } from "@/components/user/RoleVoting";
 import { 
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
@@ -160,6 +162,7 @@ export default function ProfilePage() {
                 <p className="text-[hsl(var(--foreground)/70)]">@{user.username}</p>
                 
                 <div className="flex flex-wrap gap-2 mt-2">
+                  <UserRoleBadge role={(user.role as "member" | "council_member" | "moderator" | "czar") || 'member'} className="mr-1" />
                   <Badge variant="outline" className={`bg-[hsl(var(--space-${getUserLevelColor()})/20)]`}>
                     Level {user.level} - {getUserLevelTitle()}
                   </Badge>
@@ -265,6 +268,9 @@ export default function ProfilePage() {
             
             {/* Streak Display Card */}
             <StreakDisplay />
+            
+            {/* Role Voting Card */}
+            {user?.id && <RoleVoting userId={user.id} />}
             
             <Card>
               <CardHeader>
