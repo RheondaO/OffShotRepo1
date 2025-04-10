@@ -188,7 +188,7 @@ export function ProfilePhotoUploader({
           )}
         </div>
         
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-full">
           <Label htmlFor="profile-photo" className="font-medium mb-2">Profile Photo</Label>
           <input
             ref={fileInputRef}
@@ -203,11 +203,17 @@ export function ProfilePhotoUploader({
             variant="outline" 
             onClick={triggerFileInput}
             disabled={uploadMutation.isPending}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 mb-2"
           >
             <ImagePlus className="h-4 w-4" />
             {currentPhotoUrl ? 'Change Photo' : 'Upload Photo'}
           </Button>
+          
+          <div className="text-xs text-muted-foreground mt-2 text-center">
+            <p><span className="font-medium">Allowed formats:</span> JPEG, PNG, GIF, WebP</p>
+            <p><span className="font-medium">Maximum size:</span> 5MB</p>
+            <p><span className="font-medium">Recommended:</span> Square image (1:1 ratio)</p>
+          </div>
         </div>
       </CardContent>
     </Card>

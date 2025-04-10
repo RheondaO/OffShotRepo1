@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { testDatabaseConnection } from "./db";
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '6mb' })); // Increased limit for image uploads
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {

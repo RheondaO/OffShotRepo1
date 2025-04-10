@@ -112,8 +112,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileData = Buffer.from(base64Data, 'base64');
       
       // Validate mime type
-      if (!['image/jpeg', 'image/png', 'image/gif'].includes(mimeType)) {
-        return res.status(400).json({ message: "Only JPEG, PNG, and GIF images are allowed" });
+      if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)) {
+        return res.status(400).json({ message: "Only JPEG, PNG, GIF, and WebP images are allowed" });
       }
       
       // Validate file size (max 5MB)
