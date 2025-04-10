@@ -13,6 +13,7 @@ import { ProfileImageModal } from "@/components/user/ProfileImageModal";
 import { StreakDisplay } from "@/components/user/StreakDisplay";
 import { UserRoleBadge } from "@/components/user/UserRoleBadge";
 import { RoleVoting } from "@/components/user/RoleVoting";
+import { ProfileBioEditor } from "@/components/user/ProfileBioEditor";
 import { 
   Check, Award, Heart, Star, Clock, ArrowUp, Calendar, BookOpen, 
   MessageSquare, Trophy, Play, Users, Mail, Tag as TagIcon, 
@@ -176,6 +177,10 @@ export default function ProfilePage() {
                     {userNfts?.length || 0} NFTs
                   </Badge>
                 </div>
+                
+                {user.bio && (
+                  <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{user.bio}</p>
+                )}
               </div>
               
               <div className="w-full md:w-1/3">
@@ -812,6 +817,21 @@ export default function ProfilePage() {
                     userId={user.id} 
                     currentPhotoUrl={user.photoUrl} 
                     username={user.username} 
+                  />
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Bio</CardTitle>
+                  <CardDescription>Update your bio</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProfileBioEditor 
+                    userId={user.id}
+                    currentBio={user.bio || ''}
                   />
                 </CardContent>
               </Card>
