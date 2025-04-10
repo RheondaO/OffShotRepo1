@@ -133,3 +133,16 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
 };
 
 export default IssueCard;
+import { Share2, Bookmark } from 'lucide-react';
+
+// Add to the card actions:
+<div className="flex gap-2">
+  <Button variant="ghost" size="sm" onClick={() => handleShare(issue)}>
+    <Share2 className="h-4 w-4 mr-1" />
+    Share
+  </Button>
+  <Button variant="ghost" size="sm" onClick={() => handleBookmark(issue)}>
+    <Bookmark className="h-4 w-4 mr-1" />
+    Save
+  </Button>
+</div>
