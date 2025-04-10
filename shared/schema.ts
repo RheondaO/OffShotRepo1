@@ -3,6 +3,10 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// Define roles enum
+export const USER_ROLES = ['member', 'council_member', 'moderator', 'czar'] as const;
+export type UserRole = typeof USER_ROLES[number];
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -12,10 +16,15 @@ export const users = pgTable("users", {
   photoUrl: text("photo_url"),
   xp: integer("xp").notNull().default(0),
   level: integer("level").notNull().default(1),
+  role: text("role").notNull().default('member'),
+  bio: text("bio"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   currentStreak: integer("current_streak").notNull().default(0),
   longestStreak: integer("longest_streak").notNull().default(0),
   lastLoginAt: timestamp("last_login_at"),
+  councilVotes: integer("council_votes").notNull().default(0),
+  moderatorVotes: integer("moderator_votes").notNull().default(0),
+  czarVotes: integer("czar_votes").notNull().default(0),
 });
 
 export const categories = pgTable("categories", {
@@ -152,6 +161,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   assignedHistories: many(issueAssignmentHistory, { relationName: "assignedHistories" }),
   assignerHistories: many(issueAssignmentHistory, { relationName: "assignerHistories" }),
   previousAssigneeHistories: many(issueAssignmentHistory, { relationName: "previousAssigneeHistories" }),
+  // Role voting relations
+  votesGiven: many(roleVotes, { relationName: "votesGiven" }),
+  votesReceived: many(roleVotes, { relationName: "votesReceived" }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -457,9 +469,32 @@ export const debateParticipants = pgTable("debate_participants", {
   id: serial("id").primaryKey(),
   debateId: integer("debate_id").notNull(),
   userId: integer("user_id").notNull(),
-  role: text("role").notNull().default("participant"), // moderator, participant
-  joinedAt: timestamp("joined_at").notNull().defaultNow()
+  role: text("role").notNull().default("participant"), // moderator, participant, spectator
 });
+
+// User role voting system
+export const roleVotes = pgTable("role_votes", {
+  id: serial("id").primaryKey(),
+  voterId: integer("voter_id").notNull(), // User casting the vote
+  targetUserId: integer("target_user_id").notNull(), // User being voted for
+  role: text("role").notNull(), // council_member, moderator, czar
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  active: boolean("active").notNull().default(true), // Allows vote withdrawal
+});
+
+// Role votes relations
+export const roleVotesRelations = relations(roleVotes, ({ one }) => ({
+  voter: one(users, {
+    fields: [roleVotes.voterId],
+    references: [users.id],
+    relationName: "votesGiven"
+  }),
+  targetUser: one(users, {
+    fields: [roleVotes.targetUserId],
+    references: [users.id],
+    relationName: "votesReceived"
+  })
+}));
 
 export const debatesRelations = relations(debates, ({ one, many }) => ({
   creator: one(users, {
@@ -538,6 +573,18 @@ export const insertDebateParticipantSchema = createInsertSchema(debateParticipan
   userId: true,
   role: true
 });
+
+// Role vote schema
+export const insertRoleVoteSchema = createInsertSchema(roleVotes).pick({
+  voterId: true,
+  targetUserId: true,
+  role: true,
+}).extend({
+  role: z.enum(USER_ROLES).refine(val => val !== 'member', "Cannot vote for 'member' role"),
+});
+
+export type InsertRoleVote = z.infer<typeof insertRoleVoteSchema>;
+export type RoleVote = typeof roleVotes.$inferSelect;
 
 export type InsertDebate = z.infer<typeof insertDebateSchema>;
 export type Debate = typeof debates.$inferSelect;

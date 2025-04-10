@@ -12,7 +12,10 @@ import {
   newsletterSubscribers, type NewsletterSubscriber, type InsertNewsletterSubscriber,
   issueAssignmentHistory, type IssueAssignmentHistory, type InsertIssueAssignmentHistory,
   comments, type Comment, type InsertComment,
-  ISSUE_STATUS
+  roleVotes, type RoleVote, type InsertRoleVote, type UserRole,
+  debates, type Debate, type InsertDebate,
+  debateParticipants, type DebateParticipant, type InsertDebateParticipant,
+  ISSUE_STATUS, USER_ROLES
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, or, sql } from "drizzle-orm";
@@ -28,6 +31,15 @@ export interface IStorage {
   getUserLevel(userId: number): Promise<number>;
   updateUserLoginStreak(userId: number): Promise<User | undefined>;
   resetUserLoginStreak(userId: number): Promise<User | undefined>;
+  updateUserBio(userId: number, bio: string): Promise<User | undefined>;
+  
+  // User roles
+  castRoleVote(voteData: InsertRoleVote): Promise<RoleVote>;
+  getRoleVotesByVoter(voterId: number): Promise<RoleVote[]>;
+  getRoleVotesForUser(targetUserId: number): Promise<RoleVote[]>;
+  withdrawRoleVote(voteId: number): Promise<boolean>;
+  hasUserVotedForRole(voterId: number, targetUserId: number, role: UserRole): Promise<boolean>;
+  updateUserRole(userId: number, role: UserRole): Promise<User | undefined>;
 
   // Categories
   getAllCategories(): Promise<Category[]>;
@@ -209,6 +221,11 @@ export class MemStorage implements IStorage {
       photoUrl: photoUrl || null,
       xp: 0,
       level: 1,
+      role: 'member',
+      bio: null,
+      councilVotes: 0,
+      moderatorVotes: 0,
+      czarVotes: 0,
       createdAt: now,
       currentStreak: 0,
       longestStreak: 0,
@@ -315,6 +332,146 @@ export class MemStorage implements IStorage {
     
     this.users.set(userId, updatedUser);
     return updatedUser;
+  }
+  
+  async updateUserBio(userId: number, bio: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { 
+      ...user, 
+      bio
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  // Role voting methods
+  private roleVotes: Map<number, RoleVote> = new Map();
+  private roleVoteId: number = 1;
+  
+  async castRoleVote(voteData: InsertRoleVote): Promise<RoleVote> {
+    const id = this.roleVoteId++;
+    const now = new Date();
+    
+    const vote: RoleVote = {
+      ...voteData,
+      id,
+      createdAt: now,
+      active: true
+    };
+    
+    this.roleVotes.set(id, vote);
+    
+    // Update the target user's vote count
+    const targetUser = this.users.get(voteData.targetUserId);
+    if (targetUser) {
+      const updatedUser = { ...targetUser };
+      
+      // Increment the appropriate vote count
+      if (voteData.role === 'council_member') {
+        updatedUser.councilVotes = (targetUser.councilVotes || 0) + 1;
+      } else if (voteData.role === 'moderator') {
+        updatedUser.moderatorVotes = (targetUser.moderatorVotes || 0) + 1;
+      } else if (voteData.role === 'czar') {
+        updatedUser.czarVotes = (targetUser.czarVotes || 0) + 1;
+      }
+      
+      // Update user role if vote count crosses threshold
+      this.updateUserRoleBasedOnVotes(updatedUser);
+      
+      this.users.set(targetUser.id, updatedUser);
+    }
+    
+    return vote;
+  }
+  
+  async getRoleVotesByVoter(voterId: number): Promise<RoleVote[]> {
+    return Array.from(this.roleVotes.values())
+      .filter(vote => vote.voterId === voterId && vote.active);
+  }
+  
+  async getRoleVotesForUser(targetUserId: number): Promise<RoleVote[]> {
+    return Array.from(this.roleVotes.values())
+      .filter(vote => vote.targetUserId === targetUserId && vote.active);
+  }
+  
+  async withdrawRoleVote(voteId: number): Promise<boolean> {
+    const vote = this.roleVotes.get(voteId);
+    if (!vote || !vote.active) return false;
+    
+    // Deactivate the vote
+    const updatedVote = { ...vote, active: false };
+    this.roleVotes.set(voteId, updatedVote);
+    
+    // Update the target user's vote count
+    const targetUser = this.users.get(vote.targetUserId);
+    if (targetUser) {
+      const updatedUser = { ...targetUser };
+      
+      // Decrement the appropriate vote count
+      if (vote.role === 'council_member') {
+        updatedUser.councilVotes = Math.max(0, (targetUser.councilVotes || 0) - 1);
+      } else if (vote.role === 'moderator') {
+        updatedUser.moderatorVotes = Math.max(0, (targetUser.moderatorVotes || 0) - 1);
+      } else if (vote.role === 'czar') {
+        updatedUser.czarVotes = Math.max(0, (targetUser.czarVotes || 0) - 1);
+      }
+      
+      // Update user role if vote count drops below threshold
+      this.updateUserRoleBasedOnVotes(updatedUser);
+      
+      this.users.set(targetUser.id, updatedUser);
+    }
+    
+    return true;
+  }
+  
+  async hasUserVotedForRole(voterId: number, targetUserId: number, role: UserRole): Promise<boolean> {
+    return Array.from(this.roleVotes.values()).some(
+      vote => vote.voterId === voterId && 
+              vote.targetUserId === targetUserId && 
+              vote.role === role && 
+              vote.active
+    );
+  }
+  
+  async updateUserRole(userId: number, role: UserRole): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, role };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  // Helper method to update role based on vote counts
+  private updateUserRoleBasedOnVotes(user: User): void {
+    // Define vote thresholds for each role
+    const COUNCIL_MEMBER_THRESHOLD = 5;
+    const MODERATOR_THRESHOLD = 10;
+    const CZAR_THRESHOLD = 20;
+    
+    // Determine the highest role the user qualifies for
+    let newRole: UserRole = 'member';
+    
+    if (user.councilVotes >= COUNCIL_MEMBER_THRESHOLD) {
+      newRole = 'council_member';
+    }
+    
+    if (user.moderatorVotes >= MODERATOR_THRESHOLD) {
+      newRole = 'moderator';
+    }
+    
+    if (user.czarVotes >= CZAR_THRESHOLD) {
+      newRole = 'czar';
+    }
+    
+    // Update the user's role if it's changed
+    if (user.role !== newRole) {
+      user.role = newRole;
+    }
   }
 
   // Category methods
@@ -805,6 +962,189 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+  
+  async updateUserBio(userId: number, bio: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ bio })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  async castRoleVote(voteData: InsertRoleVote): Promise<RoleVote> {
+    // Insert vote
+    const [vote] = await db
+      .insert(roleVotes)
+      .values({
+        ...voteData,
+        createdAt: new Date(),
+        active: true
+      })
+      .returning();
+    
+    // Get target user
+    const [targetUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, voteData.targetUserId));
+    
+    // Update user vote counts
+    if (targetUser) {
+      let updateData = {};
+      
+      if (voteData.role === 'council_member') {
+        updateData = { councilVotes: (targetUser.councilVotes || 0) + 1 };
+      } else if (voteData.role === 'moderator') {
+        updateData = { moderatorVotes: (targetUser.moderatorVotes || 0) + 1 };
+      } else if (voteData.role === 'czar') {
+        updateData = { czarVotes: (targetUser.czarVotes || 0) + 1 };
+      }
+      
+      // Update user vote counts
+      await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, voteData.targetUserId));
+      
+      // Check if user should be promoted to a new role
+      await this.updateUserRoleBasedOnVotes(voteData.targetUserId);
+    }
+    
+    return vote;
+  }
+  
+  async getRoleVotesByVoter(voterId: number): Promise<RoleVote[]> {
+    return db
+      .select()
+      .from(roleVotes)
+      .where(and(
+        eq(roleVotes.voterId, voterId),
+        eq(roleVotes.active, true)
+      ));
+  }
+  
+  async getRoleVotesForUser(targetUserId: number): Promise<RoleVote[]> {
+    return db
+      .select()
+      .from(roleVotes)
+      .where(and(
+        eq(roleVotes.targetUserId, targetUserId),
+        eq(roleVotes.active, true)
+      ));
+  }
+  
+  async withdrawRoleVote(voteId: number): Promise<boolean> {
+    // Get the vote first to identify the target user and role
+    const [vote] = await db
+      .select()
+      .from(roleVotes)
+      .where(and(
+        eq(roleVotes.id, voteId),
+        eq(roleVotes.active, true)
+      ));
+    
+    if (!vote) return false;
+    
+    // Update vote to inactive
+    await db
+      .update(roleVotes)
+      .set({ active: false })
+      .where(eq(roleVotes.id, voteId));
+    
+    // Get target user to update vote counts
+    const [targetUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, vote.targetUserId));
+    
+    if (targetUser) {
+      let updateData = {};
+      
+      // Decrement the appropriate vote count
+      if (vote.role === 'council_member') {
+        updateData = { councilVotes: Math.max(0, (targetUser.councilVotes || 0) - 1) };
+      } else if (vote.role === 'moderator') {
+        updateData = { moderatorVotes: Math.max(0, (targetUser.moderatorVotes || 0) - 1) };
+      } else if (vote.role === 'czar') {
+        updateData = { czarVotes: Math.max(0, (targetUser.czarVotes || 0) - 1) };
+      }
+      
+      // Update user vote counts
+      await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, vote.targetUserId));
+      
+      // Check if user should be demoted from their role
+      await this.updateUserRoleBasedOnVotes(vote.targetUserId);
+    }
+    
+    return true;
+  }
+  
+  async hasUserVotedForRole(voterId: number, targetUserId: number, role: UserRole): Promise<boolean> {
+    const [vote] = await db
+      .select()
+      .from(roleVotes)
+      .where(and(
+        eq(roleVotes.voterId, voterId),
+        eq(roleVotes.targetUserId, targetUserId),
+        eq(roleVotes.role, role),
+        eq(roleVotes.active, true)
+      ));
+    
+    return !!vote;
+  }
+  
+  async updateUserRole(userId: number, role: UserRole): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return user;
+  }
+  
+  // Helper method to update role based on vote counts
+  private async updateUserRoleBasedOnVotes(userId: number): Promise<void> {
+    // Define vote thresholds for each role
+    const COUNCIL_MEMBER_THRESHOLD = 5;
+    const MODERATOR_THRESHOLD = 10;
+    const CZAR_THRESHOLD = 20;
+    
+    // Get the user with their vote counts
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    if (!user) return;
+    
+    // Determine the highest role the user qualifies for
+    let newRole: UserRole = 'member';
+    
+    if (user.councilVotes >= COUNCIL_MEMBER_THRESHOLD) {
+      newRole = 'council_member';
+    }
+    
+    if (user.moderatorVotes >= MODERATOR_THRESHOLD) {
+      newRole = 'moderator';
+    }
+    
+    if (user.czarVotes >= CZAR_THRESHOLD) {
+      newRole = 'czar';
+    }
+    
+    // Update the user's role if it has changed
+    if (user.role !== newRole) {
+      await db
+        .update(users)
+        .set({ role: newRole })
+        .where(eq(users.id, userId));
+    }
   }
   
   async updateUserLoginStreak(userId: number): Promise<User | undefined> {

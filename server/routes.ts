@@ -18,6 +18,8 @@ import {
   stealIssueSchema,
   insertIssueAssignmentHistorySchema,
   insertCommentSchema,
+  insertRoleVoteSchema,
+  USER_ROLES,
   ISSUE_STATUS,
   issues
 } from "@shared/schema";
@@ -1323,6 +1325,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(debates);
     } catch (error) {
       return res.status(500).json({ message: "Failed to fetch debates" });
+    }
+  });
+  
+  // Role voting API endpoints
+  app.post("/api/role-votes", async (req: Request, res: Response) => {
+    try {
+      const voteData = insertRoleVoteSchema.parse(req.body);
+      
+      // Verify that the role is valid
+      if (!USER_ROLES.includes(voteData.role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      
+      // Check if user has already voted for this role for this target user
+      const hasVoted = await storage.hasUserVotedForRole(voteData.voterId, voteData.targetUserId, voteData.role);
+      
+      if (hasVoted) {
+        return res.status(409).json({ message: "You have already voted for this role for this user" });
+      }
+      
+      // Cast the vote
+      const vote = await storage.castRoleVote(voteData);
+      
+      // Get the updated target user with their new vote counts
+      const updatedUser = await storage.getUser(voteData.targetUserId);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Target user not found" });
+      }
+      
+      // Don't send the password in the response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      return res.status(201).json({ 
+        vote, 
+        user: userWithoutPassword 
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      console.error("Error casting role vote:", error);
+      return res.status(500).json({ message: "Failed to cast role vote" });
+    }
+  });
+  
+  app.get("/api/users/:userId/role-votes", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const votes = await storage.getRoleVotesForUser(userId);
+      return res.json(votes);
+    } catch (error) {
+      console.error("Error fetching role votes:", error);
+      return res.status(500).json({ message: "Failed to fetch role votes" });
+    }
+  });
+  
+  app.get("/api/users/:userId/role-votes/cast", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const votes = await storage.getRoleVotesByVoter(userId);
+      return res.json(votes);
+    } catch (error) {
+      console.error("Error fetching cast role votes:", error);
+      return res.status(500).json({ message: "Failed to fetch cast role votes" });
+    }
+  });
+  
+  app.delete("/api/role-votes/:voteId", async (req: Request, res: Response) => {
+    try {
+      const voteId = parseInt(req.params.voteId);
+      
+      if (isNaN(voteId)) {
+        return res.status(400).json({ message: "Invalid vote ID" });
+      }
+      
+      const success = await storage.withdrawRoleVote(voteId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Vote not found or already withdrawn" });
+      }
+      
+      return res.status(200).json({ message: "Vote successfully withdrawn" });
+    } catch (error) {
+      console.error("Error withdrawing role vote:", error);
+      return res.status(500).json({ message: "Failed to withdraw role vote" });
+    }
+  });
+  
+  app.patch("/api/users/:userId/bio", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const { bio } = req.body;
+      
+      if (typeof bio !== 'string') {
+        return res.status(400).json({ message: "Bio must be a string" });
+      }
+      
+      const user = await storage.updateUserBio(userId, bio);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't send the password in the response
+      const { password, ...userWithoutPassword } = user;
+      
+      return res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user bio:", error);
+      return res.status(500).json({ message: "Failed to update user bio" });
     }
   });
 
