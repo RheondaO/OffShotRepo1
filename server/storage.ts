@@ -119,6 +119,52 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  // Debate methods
+  async createDebate(insertDebate: InsertDebate): Promise<Debate> {
+    const id = this.debateId++;
+    const now = new Date();
+    const roomId = `debate-${id}-${Date.now()}`;
+    const debate: Debate = {
+      ...insertDebate,
+      id,
+      createdAt: now,
+      status: "scheduled",
+      roomId,
+      location: insertDebate.location || null
+    };
+    this.debates.set(id, debate);
+    return debate;
+  }
+
+  async getAllDebates(): Promise<Debate[]> {
+    return Array.from(this.debates.values())
+      .sort((a, b) => new Date(b.scheduledFor).getTime() - new Date(a.scheduledFor).getTime());
+  }
+
+  async getDebateById(id: number): Promise<Debate | undefined> {
+    return this.debates.get(id);
+  }
+
+  async addDebateParticipant(insertParticipant: InsertDebateParticipant): Promise<DebateParticipant> {
+    const id = this.debateParticipantId++;
+    const participant: DebateParticipant = { ...insertParticipant, id };
+    this.debateParticipants.set(id, participant);
+    return participant;
+  }
+
+  async getDebateParticipants(debateId: number): Promise<DebateParticipant[]> {
+    return Array.from(this.debateParticipants.values())
+      .filter(participant => participant.debateId === debateId);
+  }
+
+  async updateDebateStatus(id: number, status: string): Promise<Debate | undefined> {
+    const debate = this.debates.get(id);
+    if (!debate) return undefined;
+    
+    const updatedDebate = { ...debate, status };
+    this.debates.set(id, updatedDebate);
+    return updatedDebate;
+  }
   private users: Map<number, User>;
   private categories: Map<number, Category>;
   private issues: Map<number, Issue>;
@@ -145,6 +191,11 @@ export class MemStorage implements IStorage {
   private newsletterSubscriberId: number;
   private issueAssignmentHistoryId: number;
 
+  private debates: Map<number, Debate>;
+  private debateParticipants: Map<number, DebateParticipant>;
+  private debateId: number;
+  private debateParticipantId: number;
+
   constructor() {
     this.users = new Map();
     this.categories = new Map();
@@ -158,6 +209,9 @@ export class MemStorage implements IStorage {
     this.userActivities = new Map();
     this.newsletterSubscribers = new Map();
     this.issueAssignmentHistories = new Map();
+    this.debates = new Map();
+    this.debateParticipants = new Map();
+    this.comments = new Map();
     
     this.userId = 1;
     this.categoryId = 1;
@@ -171,6 +225,9 @@ export class MemStorage implements IStorage {
     this.userActivityId = 1;
     this.newsletterSubscriberId = 1;
     this.issueAssignmentHistoryId = 1;
+    this.debateId = 1;
+    this.debateParticipantId = 1;
+    this.commentId = 1;
     
     // Add some initial categories
     this.initializeData();
