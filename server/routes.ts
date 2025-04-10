@@ -1218,10 +1218,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const wss = new WebSocketServer({ 
     server: httpServer, 
     path: '/ws',
-    // Add proper error handling on the server side
+    // Add proper error handling options
     clientTracking: true,
-    perMessageDeflate: false
+    perMessageDeflate: false,
+    // Increase the heartbeat interval to prevent frequent disconnects
+    verifyClient: (info, cb) => {
+      // Always accept the connection
+      cb(true);
+    }
   });
+  
+  // Set ping interval to keep connections alive 
+  // (many networks/proxies will drop inactive connections)
+  const PING_INTERVAL = 30000; // 30 seconds
+  const pingInterval = setInterval(() => {
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.ping(); // Send a ping frame
+        } catch (err) {
+          console.error('Error sending ping:', err);
+        }
+      }
+    });
+  }, PING_INTERVAL);
   
   // Store connected clients with their usernames and room info
   const clients = new Map<WebSocket, { username: string; room?: string }>();
@@ -1245,6 +1265,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle different message types
         switch (data.type) {
+          case 'ping':
+            // Client-side ping to keep the connection alive
+            // Send a pong response back
+            ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+            break;
+            
           case 'join':
             // Store user info with the connection
             const username = data.username || 'Anonymous';
@@ -1522,6 +1548,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   function broadcastMessage(message: any) {
     broadcastToRoom(message);
   }
+  
+  // Clean up the ping interval when the server is stopped
+  httpServer.on('close', () => {
+    console.log('Cleaning up WebSocket server...');
+    clearInterval(pingInterval);
+    
+    // Close all open WebSocket connections
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.close(1000, 'Server shutting down');
+      }
+    });
+    
+    // Close WebSocket server
+    wss.close();
+  });
   
   return httpServer;
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Loader2 } from "lucide-react";
-import { useChat } from "@/hooks/use-chat";
+import { useChat } from "@/hooks/use-chat-new";
 import { DEFAULT_USER_ID } from "@/lib/utils";
 import ChatMessage from "./ChatMessage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
