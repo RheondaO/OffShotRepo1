@@ -22,7 +22,13 @@ function DebateScheduler() {
   
   const scheduleMutation = useMutation({
     mutationFn: async (data: { topic: string; scheduledFor: Date }) => {
-      return apiRequest("POST", "/api/debates", data);
+      try {
+        const response = await apiRequest("POST", "/api/debates", data);
+        return await response.json();
+      } catch (error) {
+        console.error("Failed to schedule debate:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({

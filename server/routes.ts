@@ -1247,18 +1247,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         switch (data.type) {
           case 'join':
             // Store user info with the connection
+            const username = data.username || 'Anonymous';
+            const room = data.room; // May be undefined for main chat
+            
             clients.set(ws, { 
-              username: data.username || 'Anonymous',
-              room: data.room // Set room if provided
+              username: username,
+              room: room
             });
             
-            // Broadcast join message to all clients
-            broadcastMessage({
+            console.log(`User ${username} joined ${room ? 'room: ' + room : 'the main chat'}`);
+            
+            // Create join message
+            const joinMessage = {
               type: 'system',
-              content: `${data.username || 'Anonymous'} has joined the chat`,
+              content: `${username} has joined the chat`,
               timestamp: new Date().toISOString(),
               username: 'System'
-            });
+            };
+            
+            // If joining a specific room, only broadcast to that room
+            if (room) {
+              broadcastToRoom(joinMessage, room);
+            } else {
+              // Otherwise broadcast to main chat
+              broadcastMessage(joinMessage);
+            }
             break;
             
           case 'message':
@@ -1266,13 +1279,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const userInfo = clients.get(ws);
             
             if (userInfo && data.content) {
-              // Broadcast message to all clients
-              broadcastMessage({
+              // Create message object with all data
+              const message = {
                 type: 'message',
                 content: data.content,
                 timestamp: new Date().toISOString(),
-                username: userInfo.username
-              });
+                username: userInfo.username,
+                timezone: data.timezone
+              };
+              
+              // If the message includes a room, broadcast only to that room
+              if (data.room) {
+                console.log(`Broadcasting message to room: ${data.room}`);
+                broadcastToRoom(message, data.room);
+              } else {
+                // Otherwise broadcast to all clients
+                console.log('Broadcasting message to all clients');
+                broadcastMessage(message);
+              }
             }
             break;
         }
@@ -1282,23 +1306,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     
     // Handle disconnection
-    ws.on('close', () => {
+    ws.on('close', (code, reason) => {
       const userInfo = clients.get(ws);
       
       if (userInfo) {
-        // Broadcast leave message
-        broadcastMessage({
+        // Create leave message
+        const leaveMessage = {
           type: 'system',
           content: `${userInfo.username} has left the chat`,
           timestamp: new Date().toISOString(),
           username: 'System'
-        });
+        };
+        
+        // If the user was in a room, only broadcast to that room
+        if (userInfo.room) {
+          console.log(`User ${userInfo.username} left room: ${userInfo.room}`);
+          broadcastToRoom(leaveMessage, userInfo.room);
+        } else {
+          // Otherwise broadcast to all clients
+          console.log(`User ${userInfo.username} left the main chat`);
+          broadcastMessage(leaveMessage);
+        }
         
         // Remove client from the map
         clients.delete(ws);
       }
       
-      console.log('Client disconnected from WebSocket');
+      console.log(`Client disconnected from WebSocket: code=${code}, reason=${reason || 'none'}`);
     });
   });
   
@@ -1320,11 +1354,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: req.body.createdBy || 1 // Default to user ID 1 if not provided
       });
 
-      // Broadcast to all clients
-      broadcastMessage({
-        type: 'DEBATE_SCHEDULED',
-        debate
-      });
+      // Broadcast to the debates room
+      broadcastToRoom({
+        type: 'system',
+        content: `New debate scheduled: "${topic}" on ${new Date(scheduledFor).toLocaleDateString()}`,
+        timestamp: new Date().toISOString(),
+        username: 'System',
+        debate  // Include the debate data
+      }, 'debates');
 
       return res.status(201).json(debate);
     } catch (error) {

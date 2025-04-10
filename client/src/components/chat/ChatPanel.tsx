@@ -46,10 +46,15 @@ const ChatPanel = ({ username = "Anonymous", room, location }: ChatPanelProps) =
     <div className="flex flex-col h-full border rounded-lg overflow-hidden">
       <div className="p-4 border-b bg-[hsl(var(--card))]">
         <h3 className="text-lg font-medium">
-          {room ? `${room.charAt(0).toUpperCase() + room.slice(1)} Chat` : 'General Chat'}
+          {room === 'debates' ? 'Debate Discussion' : 
+           room === 'local' ? 'Local Community Chat' : 
+           'General Discussion'}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {isConnected ? 'Connected as ' + username : 'Connecting...'}
+          {isConnected ? 
+            `Connected as ${username}${location ? ` • Location: ${location}` : ''}` : 
+            isConnecting ? 'Connecting...' : 'Disconnected'
+          }
         </p>
       </div>
 
