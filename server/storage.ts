@@ -33,7 +33,7 @@ export interface IStorage {
   resetUserLoginStreak(userId: number): Promise<User | undefined>;
   updateUserBio(userId: number, bio: string): Promise<User | undefined>;
   
-  // User roles
+  // User roles & voting
   castRoleVote(voteData: InsertRoleVote): Promise<RoleVote>;
   getRoleVotesByVoter(voterId: number): Promise<RoleVote[]>;
   getRoleVotesForUser(targetUserId: number): Promise<RoleVote[]>;
