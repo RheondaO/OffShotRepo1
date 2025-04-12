@@ -302,11 +302,11 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="container max-w-screen-xl py-6 lg:py-10">
-      <div className="flex flex-col space-y-8">
+    <div className="container max-w-screen-xl py-6 lg:py-8">
+      <div className="flex flex-col space-y-6">
         <div>
-          <h1 className="text-3xl font-bold md:text-4xl">Community Chat</h1>
-          <p className="mt-2 text-muted-foreground">
+          <h1 className="text-2xl font-bold md:text-3xl">Community Chat</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
             Connect with other community members in real-time to discuss local issues,
             share ideas, and build a stronger community together.
           </p>

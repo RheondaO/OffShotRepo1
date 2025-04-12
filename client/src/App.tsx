@@ -23,7 +23,7 @@ import GamesPage from "@/pages/games-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import DemoUserPage from "@/pages/demo-user-page";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import ConditionalFooter from "@/components/layout/ConditionalFooter";
 
 function Router() {
   // Global error handler
@@ -58,7 +58,7 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </main>
-      <Footer />
+      <ConditionalFooter />
       <StreakUpdater />
     </div>
   );
