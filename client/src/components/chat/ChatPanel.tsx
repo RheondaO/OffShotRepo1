@@ -130,19 +130,25 @@ const ChatPanel = ({
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = useCallback((e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedMessage = message.trim();
     // Only send if the message isn't empty
-    if (message.trim() && sendMessage(message.trim())) {
+    if (trimmedMessage && sendMessage(trimmedMessage)) {
       setMessage("");
-      // Scroll to bottom when sending a message, but don't cause jumps
+      // Use RAF + timeout for smoother scrolling
       requestAnimationFrame(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
+        setTimeout(() => {
+          if (messagesEndRef.current && isActive) {
+            messagesEndRef.current.scrollIntoView({ 
+              behavior: "smooth",
+              block: "end" 
+            });
+          }
+        }, 50);
       });
     }
-  };
+  }, [message, sendMessage, isActive]);
 
   return (
     <div className="flex flex-col h-full border rounded-lg overflow-hidden">

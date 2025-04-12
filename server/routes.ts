@@ -1533,14 +1533,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Handle WebSocket messages with room support
   function broadcastToRoom(message: any, room?: string) {
+    // Pre-stringify message once
     const messageStr = JSON.stringify(message);
     
+    // Use Set for O(1) lookup
+    const targetClients = new Set<WebSocket>();
+    
+    // Collect eligible clients first
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         const clientInfo = clients.get(client);
         if (!room || (clientInfo && clientInfo.room === room)) {
-          client.send(messageStr);
+          targetClients.add(client);
         }
+      }
+    });
+    
+    // Batch send messages
+    targetClients.forEach(client => {
+      try {
+        client.send(messageStr);
+      } catch (err) {
+        console.error('Failed to send message to client:', err);
       }
     });
   }
