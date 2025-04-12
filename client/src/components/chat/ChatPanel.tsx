@@ -145,7 +145,7 @@ const ChatPanel = ({
   };
 
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden" style={{ maxHeight: '460px' }}>
+    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
       <div className="p-3 border-b bg-[hsl(var(--card))]">
         <h3 className="text-base font-medium">
           {room === 'debates' ? 'Debate Discussion' : 
@@ -168,7 +168,7 @@ const ChatPanel = ({
 
       <div 
         ref={chatContainerRef}
-        className="h-[350px] overflow-auto p-3 space-y-3 relative"
+        className="flex-grow overflow-auto p-3 space-y-3 relative"
       >
         {messages.length === 0 && !isConnecting && (
           <div className="flex items-center justify-center h-full">

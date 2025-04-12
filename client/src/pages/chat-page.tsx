@@ -312,9 +312,10 @@ export default function ChatPage() {
           </p>
         </div>
 
+        {/* Main content with a fixed height container */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="h-[500px]">
+            <div className="border rounded-lg overflow-hidden" style={{ height: "480px" }}>
               <Tabs 
                 defaultValue="chat" 
                 value={activeTab} 
@@ -330,7 +331,7 @@ export default function ChatPage() {
                     });
                   }
                 }}
-                className="h-full"
+                className="h-full flex flex-col"
               >
                 <TabsList>
                   <TabsTrigger value="chat">General Chat</TabsTrigger>
