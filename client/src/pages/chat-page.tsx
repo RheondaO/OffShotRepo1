@@ -66,146 +66,149 @@ function DebateScheduler() {
   };
   
   return (
-    <div className="space-y-6 pb-8">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Community Debates</h1>
-        <p className="text-muted-foreground">
-          Schedule and participate in structured discussions about important community issues.
+    <div className="h-full flex flex-col">
+      <div className="mb-4">
+        <h1 className="text-xl font-bold">Community Debates</h1>
+        <p className="text-sm text-muted-foreground">
+          Schedule and participate in structured discussions about community issues.
         </p>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Schedule form */}
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <CardTitle>Schedule a Debate</CardTitle>
-            <CardDescription>
-              Create a new topic for community discussion
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4 pb-4">
-              <div className="space-y-1">
-                <Label htmlFor="topic">Debate Topic</Label>
-                <Input
-                  id="topic"
-                  placeholder="Enter the topic for discussion"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="date">Scheduled Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : "Select a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+      <div className="grid md:grid-cols-2 gap-4 flex-grow overflow-auto pb-20">
+        {/* Left column */}
+        <div className="space-y-4">
+          {/* Schedule form */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Schedule a Debate</CardTitle>
+              <CardDescription className="text-xs">
+                Create a new topic for community discussion
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-3 pb-3">
+                <div className="space-y-1">
+                  <Label htmlFor="topic" className="text-sm">Topic</Label>
+                  <Input
+                    id="topic"
+                    placeholder="Enter the topic for discussion"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor="date" className="text-sm">Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-8 text-sm",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        {date ? format(date, "PPP") : "Select a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <Button 
+                  type="submit" 
+                  disabled={!topic || !date || scheduleMutation.isPending}
+                  size="sm"
+                >
+                  {scheduleMutation.isPending ? "Scheduling..." : "Schedule Debate"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+          
+          {/* How debates work - simplified */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">How Debates Work</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="flex flex-col items-center">
+                  <CalendarIcon className="h-5 w-5 text-primary mb-1" />
+                  <h3 className="font-medium text-xs">Schedule</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Propose topics & vote
+                  </p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <PanelTopClose className="h-5 w-5 text-primary mb-1" />
+                  <h3 className="font-medium text-xs">Participate</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Join live discussions
+                  </p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary mb-1">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                  </svg>
+                  <h3 className="font-medium text-xs">Impact</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Drive community action
+                  </p>
+                </div>
               </div>
             </CardContent>
-            <CardFooter className="pt-0">
-              <Button 
-                type="submit" 
-                disabled={!topic || !date || scheduleMutation.isPending}
-              >
-                {scheduleMutation.isPending ? "Scheduling..." : "Schedule Debate"}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
+          </Card>
+        </div>
         
-        {/* Upcoming debates */}
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <CardTitle>Upcoming Debates</CardTitle>
-            <CardDescription>
-              Join these scheduled community debates
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 max-h-[200px] overflow-auto pr-1">
-              {scheduledDebates.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  No debates currently scheduled.
-                </p>
-              ) : (
-                scheduledDebates.map(debate => (
-                  <div 
-                    key={debate.id}
-                    className="border rounded-lg p-3 space-y-2"
-                  >
-                    <h3 className="font-medium">{debate.topic}</h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(new Date(debate.scheduledFor), "PPP 'at' p")}
+        {/* Right column */}
+        <div>
+          {/* Upcoming debates */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Upcoming Debates</CardTitle>
+              <CardDescription className="text-xs">
+                Join these scheduled community debates
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[300px] overflow-auto pr-1">
+                {scheduledDebates.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    No debates currently scheduled.
+                  </p>
+                ) : (
+                  scheduledDebates.map(debate => (
+                    <div 
+                      key={debate.id}
+                      className="border rounded-lg p-2 space-y-1"
+                    >
+                      <h3 className="font-medium text-sm">{debate.topic}</h3>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        {format(new Date(debate.scheduledFor), "PPP 'at' p")}
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full text-xs h-7 mt-1">
+                        Set Reminder
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm" className="w-full mt-1">
-                      Set Reminder
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      
-      <Card className="h-fit">
-        <CardHeader className="pb-3">
-          <CardTitle>How Debates Work</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg p-3 text-center">
-              <div className="flex justify-center mb-2">
-                <CalendarIcon className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-medium mb-1">Schedule</h3>
-              <p className="text-sm text-muted-foreground">
-                Community members propose topics and vote on debate schedules
-              </p>
-            </div>
-            <div className="border rounded-lg p-3 text-center">
-              <div className="flex justify-center mb-2">
-                <PanelTopClose className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-medium mb-1">Participate</h3>
-              <p className="text-sm text-muted-foreground">
-                Join live moderated discussions with structured speaking time
-              </p>
-            </div>
-            <div className="border rounded-lg p-3 text-center">
-              <div className="flex justify-center mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-primary">
-                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                </svg>
-              </div>
-              <h3 className="font-medium mb-1">Impact</h3>
-              <p className="text-sm text-muted-foreground">
-                Create consensus and drive meaningful community action
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -310,7 +313,7 @@ export default function ChatPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="h-[calc(100vh-300px)] lg:h-[600px]">
+            <div className="h-[500px]">
               <Tabs 
                 defaultValue="chat" 
                 value={activeTab} 
@@ -326,6 +329,7 @@ export default function ChatPage() {
                     });
                   }
                 }}
+                className="h-full"
               >
                 <TabsList>
                   <TabsTrigger value="chat">General Chat</TabsTrigger>
@@ -333,7 +337,7 @@ export default function ChatPage() {
                   <TabsTrigger value="debates">Debates</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="chat" forceMount className="relative">
+                <TabsContent value="chat" forceMount className="relative h-[calc(100%-40px)]">
                   <ChatTabWrapper isActive={activeTab === "chat"}>
                     <ChatPanel 
                       username={savedUsername || "Anonymous"} 
@@ -342,7 +346,7 @@ export default function ChatPage() {
                   </ChatTabWrapper>
                 </TabsContent>
                 
-                <TabsContent value="local" forceMount className="relative">
+                <TabsContent value="local" forceMount className="relative h-[calc(100%-40px)]">
                   <ChatTabWrapper isActive={activeTab === "local"}>
                     <ChatPanel 
                       username={savedUsername || "Anonymous"}
@@ -353,16 +357,10 @@ export default function ChatPage() {
                   </ChatTabWrapper>
                 </TabsContent>
                 
-                <TabsContent value="debates" forceMount className="relative">
+                <TabsContent value="debates" forceMount className="relative h-[calc(100%-40px)]">
                   <ChatTabWrapper isActive={activeTab === "debates"}>
-                    <div className="flex flex-col h-full max-h-full overflow-auto">
-                      {/* Only show the debate scheduler in this tab */}
-                      {activeTab === "debates" && (
-                        <div className="pb-6">
-                          <DebateScheduler />
-                        </div>
-                      )}
-                    </div>
+                    {/* Only show the debate scheduler in this tab */}
+                    {activeTab === "debates" && <DebateScheduler />}
                   </ChatTabWrapper>
                 </TabsContent>
               </Tabs>
