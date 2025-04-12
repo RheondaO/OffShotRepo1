@@ -23,7 +23,8 @@ export function useChat(username: string = 'Anonymous', room?: string) {
   // Create WebSocket URL based on current window location
   const getWebSocketUrl = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws`;
+    const host = window.location.host;
+    return `${protocol}//${host}/ws`;
   }, []);
 
   // Cleanup function to handle disconnection and timeout clearing

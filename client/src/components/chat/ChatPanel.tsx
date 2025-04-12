@@ -39,8 +39,10 @@ const ChatPanel = ({
 
   // Auto-connect when component mounts
   useEffect(() => {
-    connect();
-  }, [connect]);
+    if (!isConnected && !isConnecting) {
+      connect();
+    }
+  }, [connect, isConnected, isConnecting]);
 
   // Simple flag to track first render
   const [firstRender, setFirstRender] = useState(true);
