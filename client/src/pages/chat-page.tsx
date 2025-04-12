@@ -66,7 +66,7 @@ function DebateScheduler() {
   };
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold mb-2">Community Debates</h1>
         <p className="text-muted-foreground">
@@ -76,15 +76,15 @@ function DebateScheduler() {
       
       <div className="grid md:grid-cols-2 gap-6">
         {/* Schedule form */}
-        <Card>
-          <CardHeader>
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
             <CardTitle>Schedule a Debate</CardTitle>
             <CardDescription>
               Create a new topic for community discussion
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pb-4">
               <div className="space-y-1">
                 <Label htmlFor="topic">Debate Topic</Label>
                 <Input
@@ -121,7 +121,7 @@ function DebateScheduler() {
                 </Popover>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="pt-0">
               <Button 
                 type="submit" 
                 disabled={!topic || !date || scheduleMutation.isPending}
@@ -133,15 +133,15 @@ function DebateScheduler() {
         </Card>
         
         {/* Upcoming debates */}
-        <Card>
-          <CardHeader>
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
             <CardTitle>Upcoming Debates</CardTitle>
             <CardDescription>
               Join these scheduled community debates
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 max-h-[200px] overflow-auto pr-1">
               {scheduledDebates.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
                   No debates currently scheduled.
@@ -150,14 +150,14 @@ function DebateScheduler() {
                 scheduledDebates.map(debate => (
                   <div 
                     key={debate.id}
-                    className="border rounded-lg p-4 space-y-2"
+                    className="border rounded-lg p-3 space-y-2"
                   >
                     <h3 className="font-medium">{debate.topic}</h3>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {format(new Date(debate.scheduledFor), "PPP 'at' p")}
                     </div>
-                    <Button variant="outline" size="sm" className="w-full mt-2">
+                    <Button variant="outline" size="sm" className="w-full mt-1">
                       Set Reminder
                     </Button>
                   </div>
@@ -168,13 +168,13 @@ function DebateScheduler() {
         </Card>
       </div>
       
-      <Card>
-        <CardHeader>
+      <Card className="h-fit">
+        <CardHeader className="pb-3">
           <CardTitle>How Debates Work</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg p-4 text-center">
+            <div className="border rounded-lg p-3 text-center">
               <div className="flex justify-center mb-2">
                 <CalendarIcon className="h-8 w-8 text-primary" />
               </div>
@@ -183,7 +183,7 @@ function DebateScheduler() {
                 Community members propose topics and vote on debate schedules
               </p>
             </div>
-            <div className="border rounded-lg p-4 text-center">
+            <div className="border rounded-lg p-3 text-center">
               <div className="flex justify-center mb-2">
                 <PanelTopClose className="h-8 w-8 text-primary" />
               </div>
@@ -192,7 +192,7 @@ function DebateScheduler() {
                 Join live moderated discussions with structured speaking time
               </p>
             </div>
-            <div className="border rounded-lg p-4 text-center">
+            <div className="border rounded-lg p-3 text-center">
               <div className="flex justify-center mb-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-primary">
                   <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
@@ -253,10 +253,12 @@ function ChatTabWrapper({ children, isActive }: {
   return (
     <div 
       ref={wrapperRef}
-      className={`h-full overflow-hidden ${isActive ? 'block' : 'hidden'}`}
+      className={`h-full ${isActive ? 'block' : 'hidden'}`}
       style={{ 
         position: 'relative',
         height: '100%',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         // Important: prevent scroll events from propagating to parent
         isolation: 'isolate'
       }}
@@ -353,10 +355,10 @@ export default function ChatPage() {
                 
                 <TabsContent value="debates" forceMount className="relative">
                   <ChatTabWrapper isActive={activeTab === "debates"}>
-                    <div className="flex flex-col h-full max-h-full overflow-hidden">
+                    <div className="flex flex-col h-full max-h-full overflow-auto">
                       {/* Only show the debate scheduler in this tab */}
                       {activeTab === "debates" && (
-                        <div className="h-full">
+                        <div className="pb-6">
                           <DebateScheduler />
                         </div>
                       )}
