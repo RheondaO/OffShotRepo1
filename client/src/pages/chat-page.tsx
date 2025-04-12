@@ -358,10 +358,10 @@ export default function ChatPage() {
                 </TabsContent>
                 
                 <TabsContent value="debates" forceMount className="relative h-[calc(100%-40px)]">
-                  <ChatTabWrapper isActive={activeTab === "debates"}>
+                  <div className="h-full overflow-auto">
                     {/* Only show the debate scheduler in this tab */}
                     {activeTab === "debates" && <DebateScheduler />}
-                  </ChatTabWrapper>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>

@@ -132,10 +132,15 @@ const ChatPanel = ({
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (sendMessage(message)) {
+    // Only send if the message isn't empty
+    if (message.trim() && sendMessage(message.trim())) {
       setMessage("");
-      // Scroll to bottom when sending a message
-      setTimeout(scrollToBottom, 100);
+      // Scroll to bottom when sending a message, but don't cause jumps
+      requestAnimationFrame(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      });
     }
   };
 

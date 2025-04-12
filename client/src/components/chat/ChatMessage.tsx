@@ -20,6 +20,11 @@ const ChatMessage = ({ message, isCurrentUser }: ChatMessageProps) => {
     );
   }
   
+  // Don't render empty messages
+  if (!message.content || message.content.trim() === '') {
+    return null;
+  }
+  
   return (
     <div className={`flex flex-col mb-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}>
       <div className="flex items-center mb-0.5">

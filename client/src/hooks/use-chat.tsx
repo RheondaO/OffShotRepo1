@@ -15,6 +15,9 @@ export function useChat(username: string = 'Anonymous', room?: string) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   
+  // Store the current room for message filtering
+  const currentRoomRef = useRef<string | undefined>(room);
+  
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   
@@ -64,11 +67,29 @@ export function useChat(username: string = 'Anonymous', room?: string) {
         }));
       });
       
-      // Listen for messages
+      // Listen for messages and filter by room
       socket.addEventListener('message', (event) => {
         try {
           const message = JSON.parse(event.data);
-          setMessages((prevMessages) => [...prevMessages, message]);
+          
+          // Update the currentRoomRef with the latest room value
+          currentRoomRef.current = room;
+          
+          // Only add the message if:
+          // 1. It's a system message (which should be shown in all tabs)
+          // 2. It has no room specified (global message)
+          // 3. Its room matches the current room
+          // 4. Current room is undefined but message room is null/undefined (for general chat)
+          if (
+            message.type === 'system' || 
+            !message.room || 
+            message.room === currentRoomRef.current ||
+            (currentRoomRef.current === undefined && !message.room)
+          ) {
+            setMessages((prevMessages) => [...prevMessages, message]);
+          } else {
+            console.log(`Filtered out message for room ${message.room}, current room is ${currentRoomRef.current}`);
+          }
         } catch (err) {
           console.error('Error parsing message:', err);
         }
