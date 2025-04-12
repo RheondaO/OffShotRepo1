@@ -119,23 +119,49 @@ function ChatTabWrapper({ children, isActive }: {
   isActive: boolean;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isInitialRender, setIsInitialRender] = useState(true);
   
-  // Reset scroll position when inactive to prevent auto-scrolling
+  // On first render, mark initial render as complete
   useEffect(() => {
-    if (!isActive && wrapperRef.current) {
-      // Reset scroll position when tab becomes inactive
-      wrapperRef.current.scrollTop = 0;
+    if (isInitialRender) {
+      setIsInitialRender(false);
     }
-  }, [isActive]);
+  }, [isInitialRender]);
+  
+  // Handle tab activation/deactivation
+  useEffect(() => {
+    // Don't do anything on initial render
+    if (isInitialRender) return;
+    
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    
+    if (!isActive) {
+      // When tab becomes inactive, store its current scroll position
+      wrapper.dataset.scrollPosition = wrapper.scrollTop.toString();
+      // Reset scroll to prevent affecting other tabs
+      wrapper.scrollTop = 0;
+    } else if (wrapper.dataset.scrollPosition) {
+      // When tab becomes active again, restore its previous scroll position
+      const scrollPos = parseInt(wrapper.dataset.scrollPosition, 10);
+      // Use timeout to ensure DOM is ready
+      setTimeout(() => {
+        if (isActive && wrapper) {
+          wrapper.scrollTop = scrollPos;
+        }
+      }, 50);
+    }
+  }, [isActive, isInitialRender]);
   
   return (
     <div 
       ref={wrapperRef}
-      className={`h-full ${isActive ? '' : 'hidden'}`}
+      className={`h-full overflow-hidden ${isActive ? 'block' : 'hidden'}`}
       style={{ 
         position: 'relative',
-        overflowY: isActive ? 'visible' : 'hidden',
-        height: '100%' 
+        height: '100%',
+        // Important: prevent scroll events from propagating to parent
+        isolation: 'isolate'
       }}
     >
       {children}
@@ -230,12 +256,14 @@ export default function ChatPage() {
                 
                 <TabsContent value="debates" forceMount className="relative">
                   <ChatTabWrapper isActive={activeTab === "debates"}>
-                    {activeTab === "debates" && <DebateScheduler />}
-                    <ChatPanel 
-                      username={savedUsername || "Anonymous"}
-                      room="debates"
-                      isActive={activeTab === "debates"}
-                    />
+                    <div className="space-y-4">
+                      {activeTab === "debates" && <DebateScheduler />}
+                      <ChatPanel 
+                        username={savedUsername || "Anonymous"}
+                        room="debates"
+                        isActive={activeTab === "debates"}
+                      />
+                    </div>
                   </ChatTabWrapper>
                 </TabsContent>
               </Tabs>

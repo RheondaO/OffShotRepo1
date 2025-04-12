@@ -42,46 +42,64 @@ const ChatPanel = ({
     connect();
   }, [connect]);
 
-  // PREVENT auto-scrolling EXCEPT when this is the ACTIVE tab
-  // Auto-scroll only when the tab becomes active
-  const wasActiveRef = useRef(isActive);
+  // Simple flag to track first render
+  const [firstRender, setFirstRender] = useState(true);
   
+  // Simple auto-scroll - only happens in the currently active tab
   useEffect(() => {
-    // Only scroll if we're becoming active (changed from inactive to active)
-    if (isActive && !wasActiveRef.current) {
-      console.log(`[${room || 'general'}] Tab just became active, scrolling to bottom`);
-      setTimeout(() => {
-        if (messagesEndRef.current && isActive) { // double-check isActive
-          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 150); // longer delay to ensure DOM is fully updated
+    if (firstRender) {
+      setFirstRender(false);
+      return;
     }
     
-    // Update ref for next check
-    wasActiveRef.current = isActive;
-  }, [isActive, room]);
+    // BASIC RULE: Only scroll when both the following are true:
+    // 1. This component is in the active tab
+    // 2. We're either coming from inactive state or getting new messages
+    if (isActive && messagesEndRef.current) {
+      // Use RAF + timeout for reliable DOM updates
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // One final check that we're still active
+          if (isActive && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ 
+              behavior: "smooth",
+              block: "end" 
+            });
+          }
+        }, 100);
+      });
+    }
+  }, [isActive]); // Only trigger when active state changes
   
-  // Only handle new messages when they arrive
+  // Only scroll on new messages in active chat
   const prevMessagesLengthRef = useRef(messages.length);
   useEffect(() => {
+    // Skip on first render
+    if (firstRender) return;
+    
     const prevLength = prevMessagesLengthRef.current;
     const newLength = messages.length;
     
-    // Only scroll if BOTH:
-    // 1. We have new messages (not just initial loading)
-    // 2. This tab is CURRENTLY active
-    if (newLength > prevLength && prevLength > 0 && isActive) {
-      console.log(`[${room || 'general'}] New message in active tab, scrolling to bottom`);
-      setTimeout(() => {
-        if (messagesEndRef.current && isActive) { // double-check isActive
-          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 150);
+    // Only auto-scroll when ALL are true:
+    // 1. This tab is active
+    // 2. We have new messages (not just initial load)
+    // 3. We had messages before (prevLength > 0)
+    if (isActive && newLength > prevLength && prevLength > 0) {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (isActive && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ 
+              behavior: "smooth",
+              block: "end"
+            });
+          }
+        }, 100);
+      });
     }
     
-    // Update the previous length
+    // Update the previous length reference
     prevMessagesLengthRef.current = newLength;
-  }, [messages.length, isActive, room]);
+  }, [messages.length, isActive, firstRender]);
 
   // Function to scroll to the bottom of the chat
   const scrollToBottom = () => {
