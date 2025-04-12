@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -113,6 +113,36 @@ function DebateScheduler() {
   );
 }
 
+// Create a wrapper component that prevents scroll propagation
+function ChatTabWrapper({ children, isActive }: { 
+  children: React.ReactNode;
+  isActive: boolean;
+}) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  
+  // Reset scroll position when inactive to prevent auto-scrolling
+  useEffect(() => {
+    if (!isActive && wrapperRef.current) {
+      // Reset scroll position when tab becomes inactive
+      wrapperRef.current.scrollTop = 0;
+    }
+  }, [isActive]);
+  
+  return (
+    <div 
+      ref={wrapperRef}
+      className={`h-full ${isActive ? '' : 'hidden'}`}
+      style={{ 
+        position: 'relative',
+        overflowY: isActive ? 'visible' : 'hidden',
+        height: '100%' 
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function ChatPage() {
   const [username, setUsername] = useState("Anonymous");
   const [savedUsername, setSavedUsername] = useState<string | null>(null);
@@ -178,35 +208,35 @@ export default function ChatPage() {
                   <TabsTrigger value="debates">Debates</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="chat" className="overflow-hidden">
-                  <div className="h-full overflow-hidden">
+                <TabsContent value="chat" forceMount className="relative">
+                  <ChatTabWrapper isActive={activeTab === "chat"}>
                     <ChatPanel 
                       username={savedUsername || "Anonymous"} 
                       isActive={activeTab === "chat"}
                     />
-                  </div>
+                  </ChatTabWrapper>
                 </TabsContent>
                 
-                <TabsContent value="local" className="overflow-hidden">
-                  <div className="h-full overflow-hidden">
+                <TabsContent value="local" forceMount className="relative">
+                  <ChatTabWrapper isActive={activeTab === "local"}>
                     <ChatPanel 
                       username={savedUsername || "Anonymous"}
                       room="local"
                       location={localStorage.getItem("user-location") || undefined}
                       isActive={activeTab === "local"}
                     />
-                  </div>
+                  </ChatTabWrapper>
                 </TabsContent>
                 
-                <TabsContent value="debates" className="overflow-hidden">
-                  <div className="h-full overflow-hidden">
-                    <DebateScheduler />
+                <TabsContent value="debates" forceMount className="relative">
+                  <ChatTabWrapper isActive={activeTab === "debates"}>
+                    {activeTab === "debates" && <DebateScheduler />}
                     <ChatPanel 
                       username={savedUsername || "Anonymous"}
                       room="debates"
                       isActive={activeTab === "debates"}
                     />
-                  </div>
+                  </ChatTabWrapper>
                 </TabsContent>
               </Tabs>
             </div>
