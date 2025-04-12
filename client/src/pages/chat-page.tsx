@@ -159,7 +159,18 @@ export default function ChatPage() {
               <Tabs 
                 defaultValue="chat" 
                 value={activeTab} 
-                onValueChange={setActiveTab}
+                onValueChange={(value) => {
+                  // Only change the tab if it's different
+                  if (value !== activeTab) {
+                    setActiveTab(value);
+                    
+                    // Important: Delay any DOM updates until after the tab change
+                    requestAnimationFrame(() => {
+                      // This will run after the tab change has been processed
+                      console.log("Tab changed to:", value);
+                    });
+                  }
+                }}
               >
                 <TabsList>
                   <TabsTrigger value="chat">General Chat</TabsTrigger>
@@ -167,24 +178,28 @@ export default function ChatPage() {
                   <TabsTrigger value="debates">Debates</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="chat">
-                  <ChatPanel 
-                    username={savedUsername || "Anonymous"} 
-                    isActive={activeTab === "chat"}
-                  />
+                <TabsContent value="chat" className="overflow-hidden">
+                  <div className="h-full overflow-hidden">
+                    <ChatPanel 
+                      username={savedUsername || "Anonymous"} 
+                      isActive={activeTab === "chat"}
+                    />
+                  </div>
                 </TabsContent>
                 
-                <TabsContent value="local">
-                  <ChatPanel 
-                    username={savedUsername || "Anonymous"}
-                    room="local"
-                    location={localStorage.getItem("user-location") || undefined}
-                    isActive={activeTab === "local"}
-                  />
+                <TabsContent value="local" className="overflow-hidden">
+                  <div className="h-full overflow-hidden">
+                    <ChatPanel 
+                      username={savedUsername || "Anonymous"}
+                      room="local"
+                      location={localStorage.getItem("user-location") || undefined}
+                      isActive={activeTab === "local"}
+                    />
+                  </div>
                 </TabsContent>
                 
-                <TabsContent value="debates">
-                  <div className="space-y-4">
+                <TabsContent value="debates" className="overflow-hidden">
+                  <div className="h-full overflow-hidden">
                     <DebateScheduler />
                     <ChatPanel 
                       username={savedUsername || "Anonymous"}
