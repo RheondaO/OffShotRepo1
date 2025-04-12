@@ -226,7 +226,7 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
   };
   
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden" style={{ maxHeight: '460px' }}>
+    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
       <div className="p-3 border-b bg-[hsl(var(--card))]">
         <h3 className="text-base font-medium">Chat Rooms</h3>
         <p className="text-xs text-muted-foreground">

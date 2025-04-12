@@ -75,7 +75,7 @@ function DebateScheduler() {
         </p>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-3 overflow-auto pb-2 flex-1" style={{ maxHeight: "380px" }}>
+      <div className="grid md:grid-cols-2 gap-3 overflow-auto pb-2 flex-1" style={{ maxHeight: "360px" }}>
         {/* Left column */}
         <div className="space-y-3">
           {/* Schedule form */}
@@ -368,10 +368,10 @@ export default function ChatPage() {
                 </TabsContent>
                 
                 <TabsContent value="debates" forceMount className="relative h-[calc(100%-40px)]">
-                  <div className="h-full overflow-auto">
+                  <ChatTabWrapper isActive={activeTab === "debates"}>
                     {/* Only show the debate scheduler in this tab */}
                     {activeTab === "debates" && <DebateScheduler />}
-                  </div>
+                  </ChatTabWrapper>
                 </TabsContent>
               </Tabs>
             </div>
