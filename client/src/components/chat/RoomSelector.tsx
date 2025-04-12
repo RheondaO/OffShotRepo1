@@ -226,7 +226,7 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
   };
   
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="p-3 border-b bg-[hsl(var(--card))]">
         <h3 className="text-base font-medium">Chat Rooms</h3>
         <p className="text-xs text-muted-foreground">
@@ -235,15 +235,15 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
       </div>
       
       <Tabs defaultValue="browse" value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        <div className="px-3 pt-3">
+        <div className="px-3 pt-2">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="browse">Browse Rooms</TabsTrigger>
             <TabsTrigger value="create">Create Room</TabsTrigger>
           </TabsList>
         </div>
         
-        <TabsContent value="browse" className="flex-grow px-3 pt-2 pb-3 overflow-hidden flex flex-col">
-          <div className="mb-3 flex items-center">
+        <TabsContent value="browse" className="flex-grow px-3 pt-2 flex flex-col">
+          <div className="mb-2 flex items-center">
             <div className="relative flex-grow">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -267,7 +267,8 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
             </div>
           </div>
           
-          <div className="flex-grow overflow-auto pr-1">
+          {/* Use flex to take up available space, but only add overflow if there are enough rooms */}
+          <div className={`flex-grow ${filteredRooms.length > 5 ? 'overflow-auto' : ''}`}>
             {filteredRooms.length === 0 ? (
               <div className="h-full flex items-center justify-center">
                 <p className="text-sm text-muted-foreground">
@@ -275,7 +276,7 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 pb-1">
                 {filteredRooms.map(room => (
                   <Card key={room.id} className="p-2 hover:bg-muted/30 transition-colors">
                     <div className="flex">
@@ -316,7 +317,7 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
           </div>
         </TabsContent>
         
-        <TabsContent value="create" className="flex-grow px-3 pt-2 pb-3 overflow-auto">
+        <TabsContent value="create" className="flex-grow px-3 pt-2">
           <div className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="room-name" className="text-sm">Room Name</Label>
@@ -368,7 +369,7 @@ export default function RoomSelector({ username, onJoinRoom }: RoomSelectorProps
             <Button 
               onClick={handleCreateRoom}
               disabled={!customRoomName.trim()}
-              className="w-full"
+              className="w-full mt-2"
             >
               Create Room
             </Button>

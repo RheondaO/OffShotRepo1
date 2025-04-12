@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -69,7 +69,7 @@ function DebateScheduler() {
   };
   
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col">
       <div className="mb-2">
         <h1 className="text-lg font-bold">Community Debates</h1>
         <p className="text-xs text-muted-foreground">
@@ -77,19 +77,19 @@ function DebateScheduler() {
         </p>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-3 overflow-auto pb-2 flex-1" style={{ maxHeight: "360px" }}>
+      <div className="grid md:grid-cols-2 gap-3 pb-2 flex-1">
         {/* Left column */}
         <div className="space-y-3">
           {/* Schedule form */}
           <Card className="shadow-sm">
-            <CardHeader className="pb-2">
+            <CardHeader className="py-2">
               <CardTitle className="text-base">Schedule a Debate</CardTitle>
               <CardDescription className="text-xs">
                 Create a new topic for community discussion
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-3 pb-3">
+              <CardContent className="space-y-3 py-2">
                 <div className="space-y-1">
                   <Label htmlFor="topic" className="text-sm">Topic</Label>
                   <Input
@@ -127,7 +127,7 @@ function DebateScheduler() {
                   </Popover>
                 </div>
               </CardContent>
-              <CardFooter className="pt-0">
+              <CardFooter className="pt-0 pb-2">
                 <Button 
                   type="submit" 
                   disabled={!topic || !date || scheduleMutation.isPending}
@@ -141,7 +141,7 @@ function DebateScheduler() {
           
           {/* How debates work - simplified */}
           <Card className="shadow-sm">
-            <CardHeader className="pb-2">
+            <CardHeader className="py-2">
               <CardTitle className="text-base">How Debates Work</CardTitle>
             </CardHeader>
             <CardContent>
@@ -150,14 +150,14 @@ function DebateScheduler() {
                   <CalendarIcon className="h-5 w-5 text-primary mb-1" />
                   <h3 className="font-medium text-xs">Schedule</h3>
                   <p className="text-xs text-muted-foreground">
-                    Propose topics & vote
+                    Propose topics
                   </p>
                 </div>
                 <div className="flex flex-col items-center">
                   <PanelTopClose className="h-5 w-5 text-primary mb-1" />
                   <h3 className="font-medium text-xs">Participate</h3>
                   <p className="text-xs text-muted-foreground">
-                    Join live discussions
+                    Join discussions
                   </p>
                 </div>
                 <div className="flex flex-col items-center">
@@ -166,7 +166,7 @@ function DebateScheduler() {
                   </svg>
                   <h3 className="font-medium text-xs">Impact</h3>
                   <p className="text-xs text-muted-foreground">
-                    Drive community action
+                    Drive action
                   </p>
                 </div>
               </div>
@@ -177,15 +177,15 @@ function DebateScheduler() {
         {/* Right column */}
         <div>
           {/* Upcoming debates */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
+          <Card className="shadow-sm h-full">
+            <CardHeader className="py-2">
               <CardTitle className="text-base">Upcoming Debates</CardTitle>
               <CardDescription className="text-xs">
                 Join these scheduled community debates
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-[300px] overflow-auto pr-1">
+            <CardContent className="pb-2">
+              <div className="space-y-2">
                 {scheduledDebates.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">
                     No debates currently scheduled.
@@ -216,7 +216,7 @@ function DebateScheduler() {
   );
 }
 
-// Create a wrapper component that prevents scroll propagation
+// Create a wrapper component that handles tab content visibility and scroll behavior
 function ChatTabWrapper({ children, isActive }: { 
   children: React.ReactNode;
   isActive: boolean;
@@ -256,6 +256,15 @@ function ChatTabWrapper({ children, isActive }: {
     }
   }, [isActive, isInitialRender]);
   
+  // Determine if this tab should have scrolling 
+  // For the Debates tab, we don't want scrolling for cleaner UI
+  const isDebatesTab = children && 
+    React.Children.toArray(children).some(child => 
+      React.isValidElement(child) && 
+      child.type && 
+      (child.type as any).name === 'DebateScheduler'
+    );
+  
   return (
     <div 
       ref={wrapperRef}
@@ -263,7 +272,7 @@ function ChatTabWrapper({ children, isActive }: {
       style={{ 
         position: 'relative',
         height: '100%',
-        overflowY: 'auto',
+        overflowY: isDebatesTab ? 'visible' : 'auto',
         overflowX: 'hidden',
         // Important: prevent scroll events from propagating to parent
         isolation: 'isolate'
