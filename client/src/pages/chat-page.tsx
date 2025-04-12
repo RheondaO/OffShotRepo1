@@ -77,11 +77,11 @@ function DebateScheduler() {
         </p>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-3 pb-2 flex-1">
+      <div className="grid md:grid-cols-2 gap-3 pb-2 flex-1" style={{ minHeight: "calc(100% - 60px)" }}>
         {/* Left column */}
-        <div className="space-y-3">
+        <div className="flex flex-col space-y-3">
           {/* Schedule form */}
-          <Card className="shadow-sm">
+          <Card className="shadow-sm flex-grow-0">
             <CardHeader className="py-2">
               <CardTitle className="text-base">Schedule a Debate</CardTitle>
               <CardDescription className="text-xs">
@@ -140,7 +140,7 @@ function DebateScheduler() {
           </Card>
           
           {/* How debates work - simplified */}
-          <Card className="shadow-sm">
+          <Card className="shadow-sm flex-grow">
             <CardHeader className="py-2">
               <CardTitle className="text-base">How Debates Work</CardTitle>
             </CardHeader>
@@ -170,21 +170,32 @@ function DebateScheduler() {
                   </p>
                 </div>
               </div>
+              
+              {/* Extra information to fill space */}
+              <div className="mt-4 text-xs text-muted-foreground">
+                <h4 className="font-medium mb-1">Benefits of Community Debates</h4>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>Surface diverse perspectives on local issues</li>
+                  <li>Develop actionable solutions as a community</li>
+                  <li>Build understanding across different viewpoints</li>
+                  <li>Create accountability for implementing changes</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         </div>
         
         {/* Right column */}
-        <div>
+        <div className="flex flex-col h-full">
           {/* Upcoming debates */}
-          <Card className="shadow-sm h-full">
+          <Card className="shadow-sm flex-grow">
             <CardHeader className="py-2">
               <CardTitle className="text-base">Upcoming Debates</CardTitle>
               <CardDescription className="text-xs">
                 Join these scheduled community debates
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-2">
+            <CardContent className="pb-2 h-full">
               <div className="space-y-2">
                 {scheduledDebates.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">
@@ -207,6 +218,17 @@ function DebateScheduler() {
                     </div>
                   ))
                 )}
+              </div>
+              
+              {/* Additional information to fill space */}
+              <div className="mt-6 border-t pt-4">
+                <h4 className="font-medium text-sm">Get Notifications</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Never miss a debate by subscribing to notifications for your topics of interest.
+                </p>
+                <Button variant="outline" size="sm" className="w-full mt-2 text-xs">
+                  Manage Notifications
+                </Button>
               </div>
             </CardContent>
           </Card>
