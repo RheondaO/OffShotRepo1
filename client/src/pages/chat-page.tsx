@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanel from "@/components/chat/ChatPanel";
 import RoomSelector from "@/components/chat/RoomSelector";
+import ChatPageFooter from "@/components/layout/ChatPageFooter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PanelTopClose, Calendar as CalendarIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -455,6 +457,9 @@ export default function ChatPage() {
             </Tabs>
           </div>
         </div>
+        
+        {/* Custom in-page footer */}
+        <ChatPageFooter />
       </div>
     </div>
   );

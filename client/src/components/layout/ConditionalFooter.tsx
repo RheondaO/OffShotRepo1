@@ -4,9 +4,13 @@ import CompactFooter from "./CompactFooter";
 
 // Pages that should use the compact footer
 const COMPACT_FOOTER_PAGES = [
-  "/chat",  // Chat page with tabs
   "/games", // Games page potentially with interactive content
   "/analytics" // Analytics page with data visualization
+];
+
+// Pages that should have no main footer (using in-page footers instead)
+const NO_FOOTER_PAGES = [
+  "/chat"  // Chat page has its own in-page footer
 ];
 
 /**
@@ -24,6 +28,11 @@ const ConditionalFooter = ({
 }: ConditionalFooterProps) => {
   const [location] = useLocation();
   
+  // Check if we should hide the footer entirely
+  const shouldHideFooter = () => {
+    return NO_FOOTER_PAGES.includes(location);
+  };
+  
   // Determine if we should use the compact footer
   const shouldUseCompact = () => {
     // Props take precedence
@@ -34,7 +43,12 @@ const ConditionalFooter = ({
     return COMPACT_FOOTER_PAGES.includes(location);
   };
   
-  // Render the appropriate footer
+  // First check if we should hide the footer
+  if (shouldHideFooter()) {
+    return null;
+  }
+  
+  // Otherwise render the appropriate footer
   return shouldUseCompact() ? <CompactFooter /> : <Footer />;
 };
 
