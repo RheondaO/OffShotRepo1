@@ -12,8 +12,8 @@ const ChatMessage = ({ message, isCurrentUser }: ChatMessageProps) => {
   
   if (isSystem) {
     return (
-      <div className="flex justify-center my-2">
-        <div className="bg-[hsl(var(--muted))] dark:bg-[hsl(var(--muted)/40)] rounded-full px-3 py-1 text-xs text-[hsl(var(--muted-foreground))]">
+      <div className="flex justify-center my-1.5">
+        <div className="bg-[hsl(var(--muted))] dark:bg-[hsl(var(--muted)/40)] rounded-full px-2 py-0.5 text-[10px] text-[hsl(var(--muted-foreground))]">
           {message.content}
         </div>
       </div>
@@ -21,12 +21,12 @@ const ChatMessage = ({ message, isCurrentUser }: ChatMessageProps) => {
   }
   
   return (
-    <div className={`flex flex-col mb-4 ${isCurrentUser ? 'items-end' : 'items-start'}`}>
-      <div className="flex items-center mb-1">
-        <span className="text-sm text-[hsl(var(--foreground)/70)] mr-2">
+    <div className={`flex flex-col mb-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}>
+      <div className="flex items-center mb-0.5">
+        <span className="text-xs font-medium text-[hsl(var(--foreground)/70)] mr-1.5">
           {isCurrentUser ? 'You' : message.username}
         </span>
-        <span className="text-xs text-[hsl(var(--foreground)/50)]">
+        <span className="text-[10px] text-[hsl(var(--foreground)/50)]">
           {new Date(message.timestamp).toLocaleString(undefined, {
             timeZone: message.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             hour: '2-digit',
@@ -35,7 +35,7 @@ const ChatMessage = ({ message, isCurrentUser }: ChatMessageProps) => {
         </span>
       </div>
       <div 
-        className={`max-w-[80%] px-4 py-2 rounded-lg ${
+        className={`max-w-[80%] px-3 py-1.5 text-sm rounded-lg ${
           isCurrentUser 
             ? 'bg-[hsl(var(--primary))] text-white rounded-tr-none' 
             : 'bg-[hsl(var(--muted))] dark:bg-[hsl(var(--muted)/70)] rounded-tl-none'

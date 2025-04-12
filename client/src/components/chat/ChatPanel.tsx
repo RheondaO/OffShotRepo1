@@ -140,14 +140,14 @@ const ChatPanel = ({
   };
 
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden">
-      <div className="p-4 border-b bg-[hsl(var(--card))]">
-        <h3 className="text-lg font-medium">
+    <div className="flex flex-col h-full border rounded-lg overflow-hidden" style={{ maxHeight: '460px' }}>
+      <div className="p-3 border-b bg-[hsl(var(--card))]">
+        <h3 className="text-base font-medium">
           {room === 'debates' ? 'Debate Discussion' : 
            room === 'local' ? 'Local Community Chat' : 
            'General Discussion'}
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {isConnected ? 
             `Connected as ${username}${location ? ` • Location: ${location}` : ''}` : 
             isConnecting ? 'Connecting...' : 'Disconnected'
@@ -163,7 +163,7 @@ const ChatPanel = ({
 
       <div 
         ref={chatContainerRef}
-        className="flex-grow overflow-auto p-4 space-y-4 relative"
+        className="h-[350px] overflow-auto p-3 space-y-3 relative"
       >
         {messages.length === 0 && !isConnecting && (
           <div className="flex items-center justify-center h-full">
@@ -204,21 +204,22 @@ const ChatPanel = ({
 
       <form 
         onSubmit={handleSendMessage} 
-        className="p-4 border-t flex gap-2"
+        className="p-3 border-t flex gap-2"
       >
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message..."
           disabled={!isConnected}
-          className="flex-grow"
+          className="flex-grow h-8"
         />
         <Button 
           type="submit" 
           size="icon" 
+          className="h-8 w-8"
           disabled={!isConnected || !message.trim()}
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-3 w-3" />
         </Button>
       </form>
     </div>
