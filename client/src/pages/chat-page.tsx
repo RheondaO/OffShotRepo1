@@ -256,13 +256,21 @@ export default function ChatPage() {
                 
                 <TabsContent value="debates" forceMount className="relative">
                   <ChatTabWrapper isActive={activeTab === "debates"}>
-                    <div className="space-y-4">
-                      {activeTab === "debates" && <DebateScheduler />}
-                      <ChatPanel 
-                        username={savedUsername || "Anonymous"}
-                        room="debates"
-                        isActive={activeTab === "debates"}
-                      />
+                    <div className="space-y-4 flex flex-col h-full max-h-full overflow-hidden">
+                      {/* Only render scheduler if this tab is active */}
+                      {activeTab === "debates" && (
+                        <div className="flex-shrink-0">
+                          <DebateScheduler />
+                        </div>
+                      )}
+                      {/* Fixed height chat container */}
+                      <div className="flex-grow overflow-hidden">
+                        <ChatPanel 
+                          username={savedUsername || "Anonymous"}
+                          room="debates"
+                          isActive={activeTab === "debates"}
+                        />
+                      </div>
                     </div>
                   </ChatTabWrapper>
                 </TabsContent>

@@ -52,6 +52,12 @@ const ChatPanel = ({
       return;
     }
     
+    // SPECIAL CASE: Don't auto-scroll the debates room when it becomes active
+    // This prevents the debates tab from scrolling to bottom when switching to it
+    if (room === 'debates') {
+      return;
+    }
+    
     // BASIC RULE: Only scroll when both the following are true:
     // 1. This component is in the active tab
     // 2. We're either coming from inactive state or getting new messages
@@ -69,7 +75,7 @@ const ChatPanel = ({
         }, 100);
       });
     }
-  }, [isActive]); // Only trigger when active state changes
+  }, [isActive, room]); // Track room changes too
   
   // Only scroll on new messages in active chat
   const prevMessagesLengthRef = useRef(messages.length);
@@ -80,11 +86,14 @@ const ChatPanel = ({
     const prevLength = prevMessagesLengthRef.current;
     const newLength = messages.length;
     
-    // Only auto-scroll when ALL are true:
-    // 1. This tab is active
-    // 2. We have new messages (not just initial load)
-    // 3. We had messages before (prevLength > 0)
-    if (isActive && newLength > prevLength && prevLength > 0) {
+    // IMPORTANT: Special case for debates room - we still want to auto-scroll
+    // on new messages (just not on initial activation)
+    const shouldAutoScroll = 
+      isActive && // Only scroll active tab
+      newLength > prevLength && // Only when we have new messages
+      prevLength > 0; // Only after the initial load
+    
+    if (shouldAutoScroll) {
       requestAnimationFrame(() => {
         setTimeout(() => {
           if (isActive && messagesEndRef.current) {
@@ -99,7 +108,7 @@ const ChatPanel = ({
     
     // Update the previous length reference
     prevMessagesLengthRef.current = newLength;
-  }, [messages.length, isActive, firstRender]);
+  }, [messages.length, isActive, firstRender, room]);
 
   // Function to scroll to the bottom of the chat
   const scrollToBottom = () => {
