@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanel from "@/components/chat/ChatPanel";
+import RoomSelector from "@/components/chat/RoomSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PanelTopClose, Calendar as CalendarIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -66,17 +67,17 @@ function DebateScheduler() {
   };
   
   return (
-    <div className="h-full flex flex-col">
-      <div className="mb-4">
-        <h1 className="text-xl font-bold">Community Debates</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="mb-2">
+        <h1 className="text-lg font-bold">Community Debates</h1>
+        <p className="text-xs text-muted-foreground">
           Schedule and participate in structured discussions about community issues.
         </p>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-4 flex-grow overflow-auto pb-20">
+      <div className="grid md:grid-cols-2 gap-3 overflow-auto pb-2 flex-1" style={{ maxHeight: "380px" }}>
         {/* Left column */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Schedule form */}
           <Card className="shadow-sm">
             <CardHeader className="pb-2">
@@ -333,7 +334,7 @@ export default function ChatPage() {
               >
                 <TabsList>
                   <TabsTrigger value="chat">General Chat</TabsTrigger>
-                  <TabsTrigger value="local">Local Chat</TabsTrigger>
+                  <TabsTrigger value="local">Rooms</TabsTrigger>
                   <TabsTrigger value="debates">Debates</TabsTrigger>
                 </TabsList>
                 
@@ -348,12 +349,21 @@ export default function ChatPage() {
                 
                 <TabsContent value="local" forceMount className="relative h-[calc(100%-40px)]">
                   <ChatTabWrapper isActive={activeTab === "local"}>
-                    <ChatPanel 
-                      username={savedUsername || "Anonymous"}
-                      room="local"
-                      location={localStorage.getItem("user-location") || undefined}
-                      isActive={activeTab === "local"}
-                    />
+                    {activeTab === "local" && (
+                      <RoomSelector
+                        username={savedUsername || "Anonymous"}
+                        onJoinRoom={(roomId) => {
+                          toast({
+                            title: "Joined Room",
+                            description: `You've joined the ${roomId} room.`,
+                          });
+                          
+                          // In a production app, we would transition to the room chat here
+                          // For now, we'll just show a toast and log the join
+                          console.log(`User ${savedUsername || "Anonymous"} joined room: ${roomId}`);
+                        }}
+                      />
+                    )}
                   </ChatTabWrapper>
                 </TabsContent>
                 
