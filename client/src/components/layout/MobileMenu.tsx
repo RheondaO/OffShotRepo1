@@ -36,9 +36,10 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   
   return (
     <div 
-      className="fixed inset-0 bg-[hsl(var(--space-blue))] z-50 animate-in slide-in-from-right duration-300"
+      className="fixed inset-0 z-50 animate-in slide-in-from-right duration-300"
     >
-      <div className="h-full flex flex-col p-6">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[400px] bg-[hsl(var(--space-blue))] border-l border-[hsl(var(--space-purple)/30)] h-full flex flex-col p-6 shadow-xl">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-[hsl(var(--space-purple))] rounded-full flex items-center justify-center">
@@ -46,7 +47,10 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             </div>
             <h2 className="text-xl font-bold">Really Obvious Media Lab</h2>
           </div>
-          <button className="text-[hsl(var(--foreground)/90)]" onClick={onClose}>
+          <button 
+            className="text-[hsl(var(--foreground)/90)] hover:text-[hsl(var(--space-pink))] p-2 rounded-full bg-[hsl(var(--space-purple)/30)] hover:bg-[hsl(var(--space-purple)/50)] transition-all" 
+            onClick={onClose}
+          >
             <i className="ri-close-line text-2xl"></i>
           </button>
         </div>

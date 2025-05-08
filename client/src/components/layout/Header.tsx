@@ -69,7 +69,11 @@ const Header = () => {
           aria-label="Menu"
           onClick={() => setIsMobileMenuOpen(true)}
         >
-          <i className="ri-menu-line text-2xl"></i>
+          <div className="flex flex-col space-y-1.5">
+            <div className="w-5 h-0.5 bg-current rounded-full"></div>
+            <div className="w-5 h-0.5 bg-current rounded-full"></div>
+            <div className="w-5 h-0.5 bg-current rounded-full"></div>
+          </div>
         </button>
         
         <div className="hidden md:flex items-center space-x-4">
