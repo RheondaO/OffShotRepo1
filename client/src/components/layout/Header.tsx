@@ -65,7 +65,7 @@ const Header = () => {
         </nav>
         
         <button 
-          className="md:hidden text-[hsl(var(--foreground)/90)] hover:text-[hsl(var(--space-pink))]" 
+          className="md:hidden text-[hsl(var(--foreground)/90)] hover:text-[hsl(var(--space-pink))] p-2 rounded-full bg-[hsl(var(--space-purple)/30)] hover:bg-[hsl(var(--space-purple)/50)] transition-all" 
           aria-label="Menu"
           onClick={() => setIsMobileMenuOpen(true)}
         >
