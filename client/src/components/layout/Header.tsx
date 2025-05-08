@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,22 +9,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, AuthContext } from "@/hooks/use-auth";
 import MobileMenu from "./MobileMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { UserIcon, LogOut, Settings, BadgeHelp } from "lucide-react";
+import { UserIcon, LogOut, Settings } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const isActivePath = (path: string) => {
     return location === path;
   };
 
   return (
-    <header className="bg-[hsl(var(--space-blue)/80)] backdrop-blur-md sticky top-0 z-50 border-b border-[hsl(var(--space-purple)/20)]">
+    <header className="bg-[#121242] sticky top-0 z-50 border-b border-[hsl(var(--space-purple)/20)]" style={{ backgroundColor: "#121242" }}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center space-x-1 cursor-pointer">
@@ -129,7 +132,15 @@ const Header = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="cursor-pointer text-[hsl(var(--destructive))]" 
-                  onClick={() => logoutMutation.mutate()}
+                  onClick={() => {
+                    // Simple logout - just clear the user data and redirect to home
+                    queryClient.setQueryData(["/api/user"], null);
+                    toast({
+                      title: "Logged out",
+                      description: "You have been successfully logged out",
+                    });
+                    setLocation('/');
+                  }}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   <span>Log Out</span>
