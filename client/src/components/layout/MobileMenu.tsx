@@ -126,26 +126,6 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             </li>
             <li>
               <Link 
-                href="/demo" 
-                className="text-[hsl(var(--space-pink))] font-medium hover:text-[hsl(var(--space-pink)/80)] transition-colors block py-2"
-                onClick={onClose}
-              >
-                Demo User
-              </Link>
-            </li>
-            {isAdmin && (
-              <li>
-                <Link 
-                  href="/admin" 
-                  className="text-[hsl(var(--space-purple))] hover:text-[hsl(var(--space-pink))] border border-[hsl(var(--space-purple)/50)] bg-[hsl(var(--space-purple)/20)] transition-colors block py-2 px-3 rounded-md font-bold mt-2"
-                  onClick={onClose}
-                >
-                  Admin Console
-                </Link>
-              </li>
-            )}
-            <li>
-              <Link 
                 href="/browse"
                 className="text-[hsl(var(--foreground)/70)] hover:text-[hsl(var(--space-pink))] transition-colors block py-2"
                 onClick={onClose}
@@ -153,6 +133,17 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                 Categories
               </Link>
             </li>
+            {isAdmin && (
+              <li>
+                <Link 
+                  href="/admin" 
+                  className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-pink)/80)] border border-[hsl(var(--space-purple)/50)] bg-[hsl(var(--space-purple)/20)] transition-colors block py-2 px-3 rounded-md font-bold mt-2"
+                  onClick={onClose}
+                >
+                  Admin Console
+                </Link>
+              </li>
+            )}
             {user && (
               <li>
                 <Link 
