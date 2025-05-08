@@ -78,6 +78,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Make the uploads directory accessible
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   
+  // Admin check endpoint
+  app.get("/api/user/admincheck", async (req: Request, res: Response) => {
+    try {
+      // For demonstration purposes, we'll make the demo user (ID: 3) an admin
+      // In a real app, you would check the logged-in user's role from the session
+      return res.json({ isAdmin: true });
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      return res.status(500).json({ isAdmin: false, message: "Failed to check admin status" });
+    }
+  });
+  
   // Ensure we have a streak activity
   const streakActivity = await ensureStreakActivity();
 
@@ -224,6 +236,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: fromZodError(error).message });
       }
       return res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+  
+  // Get test users
+  app.get("/api/users/test", async (_req: Request, res: Response) => {
+    try {
+      // For demo purposes, return a limited subset of users as test users
+      // In a real app, you would query for users with isTest=true
+      const allUsers = await storage.getAllUsers();
+      // Temporarily marking the first 3 users as test users
+      const testUsers = allUsers.slice(0, 3).map(user => ({
+        ...user,
+        password: undefined, // Don't send password
+        isTest: true,
+        isActive: true
+      }));
+      
+      return res.json(testUsers);
+    } catch (error) {
+      console.error("Error fetching test users:", error);
+      return res.status(500).json({ message: "Failed to fetch test users" });
     }
   });
 

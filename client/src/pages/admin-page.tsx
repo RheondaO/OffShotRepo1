@@ -51,6 +51,9 @@ export default function AdminPage() {
     const checkAdminStatus = async () => {
       try {
         const response = await fetch('/api/user/admincheck');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
         const data = await response.json();
         setIsAdmin(data.isAdmin);
         
