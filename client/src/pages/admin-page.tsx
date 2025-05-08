@@ -14,14 +14,36 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, CheckCircle, XCircle, Info, RefreshCw, UserPlus, Users } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { 
+  AlertCircle, 
+  CheckCircle, 
+  XCircle, 
+  Info, 
+  RefreshCw, 
+  UserPlus, 
+  Users, 
+  BarChart3, 
+  Activity, 
+  Award,
+  TrendingUp,
+  Filter,
+  User,
+  Eye,
+  Mail,
+  Shield,
+  Settings,
+  Download,
+  FileBarChart,
+  BellRing
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useNavigate } from "wouter";
+import { useLocation, Link } from "wouter";
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   
   // Check if user has admin access
@@ -41,7 +63,7 @@ export default function AdminPage() {
           
           // Redirect after a short delay
           setTimeout(() => {
-            navigate('/');
+            setLocation('/');
           }, 2000);
         }
       } catch (error) {
@@ -56,16 +78,16 @@ export default function AdminPage() {
     };
     
     checkAdminStatus();
-  }, [navigate, toast]);
+  }, [setLocation, toast]);
   
   // Fetch all users
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery<any[]>({
     queryKey: ['/api/users'],
     enabled: !!isAdmin
   });
   
   // Fetch test users (users marked as test accounts)
-  const { data: testUsers, isLoading: testUsersLoading } = useQuery({
+  const { data: testUsers = [], isLoading: testUsersLoading } = useQuery<any[]>({
     queryKey: ['/api/users/test'],
     enabled: !!isAdmin
   });
@@ -180,12 +202,327 @@ export default function AdminPage() {
           </p>
         </div>
         
-        <Tabs defaultValue="test-users">
-          <TabsList>
+        <Tabs defaultValue="dashboard">
+          <TabsList className="grid grid-cols-4 md:w-[600px]">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="test-users">Test Users</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="dashboard" className="space-y-4 mt-4">
+            {/* Overview stats */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <Users className="h-10 w-10 text-primary/80" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                      <h3 className="text-2xl font-bold">{usersLoading ? <Skeleton className="h-8 w-16" /> : (users?.length || 0)}</h3>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Progress value={65} className="h-2" />
+                    <p className="mt-2 text-xs text-muted-foreground">+12% from last month</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="h-10 w-10 text-primary/80" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Active Issues</p>
+                      <h3 className="text-2xl font-bold">248</h3>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Progress value={78} className="h-2" />
+                    <p className="mt-2 text-xs text-muted-foreground">+23% from last month</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <Award className="h-10 w-10 text-primary/80" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total XP Awarded</p>
+                      <h3 className="text-2xl font-bold">12,543</h3>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Progress value={92} className="h-2" />
+                    <p className="mt-2 text-xs text-muted-foreground">+38% from last month</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-2">
+                    <BarChart3 className="h-10 w-10 text-primary/80" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Engagement Rate</p>
+                      <h3 className="text-2xl font-bold">86%</h3>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Progress value={86} className="h-2" />
+                    <p className="mt-2 text-xs text-muted-foreground">+7% from last month</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Recent activity and quick actions */}
+            <div className="grid gap-4 md:grid-cols-7">
+              <Card className="md:col-span-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Activity className="mr-2 h-5 w-5" />
+                    Recent Platform Activity
+                  </CardTitle>
+                  <CardDescription>
+                    Latest user interactions and system events
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[320px]">
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-4 rounded-lg border p-4">
+                        <User className="mt-1 h-5 w-5 text-primary" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">New User Registration</span>
+                            <Badge variant="outline" className="ml-2">User</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Sarah Johnson created a new account
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            10 minutes ago
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4 rounded-lg border p-4">
+                        <TrendingUp className="mt-1 h-5 w-5 text-green-500" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Issue Trending</span>
+                            <Badge variant="outline" className="ml-2">Issue</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            "Downtown Bike Lane Safety" issue is trending with 24 new votes
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            32 minutes ago
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4 rounded-lg border p-4">
+                        <Award className="mt-1 h-5 w-5 text-yellow-500" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Achievement Unlocked</span>
+                            <Badge variant="outline" className="ml-2">XP</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Miguel Sanchez reached Level 5 and earned "Community Voice" badge
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            1 hour ago
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4 rounded-lg border p-4">
+                        <BellRing className="mt-1 h-5 w-5 text-blue-500" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">New Debate Scheduled</span>
+                            <Badge variant="outline" className="ml-2">Debate</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            New community debate "Urban Transit Solutions" scheduled for tomorrow
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            2 hours ago
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4 rounded-lg border p-4">
+                        <Shield className="mt-1 h-5 w-5 text-red-500" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Content Moderation</span>
+                            <Badge variant="outline" className="ml-2">Admin</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Admin removed 3 comments for violating community guidelines
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            4 hours ago
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+              
+              <Card className="md:col-span-3">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="mr-2 h-5 w-5" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>
+                    Common administrative tasks
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button className="w-full justify-start" variant="outline">
+                    <User className="mr-2 h-4 w-4" />
+                    View User Management
+                  </Button>
+                  
+                  <Button className="w-full justify-start" variant="outline">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Review Reported Content
+                    <Badge className="ml-auto" variant="secondary">3</Badge>
+                  </Button>
+                  
+                  <Button className="w-full justify-start" variant="outline">
+                    <FileBarChart className="mr-2 h-4 w-4" />
+                    Generate Analytics Report
+                  </Button>
+                  
+                  <Button className="w-full justify-start" variant="outline">
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send Newsletter
+                  </Button>
+                  
+                  <Button className="w-full justify-start" variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Platform Data
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* User metrics and active users */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="mr-2 h-5 w-5" />
+                    User Growth Metrics
+                  </CardTitle>
+                  <CardDescription>
+                    User registration and activity trends
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px] flex items-center justify-center border-2 border-dashed rounded-lg">
+                    <div className="text-center">
+                      <BarChart3 className="mx-auto h-8 w-8 text-muted-foreground" />
+                      <p className="mt-2 text-sm font-medium">Analytics Charts</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Charts will display here with real data integration
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Users className="mr-2 h-5 w-5" />
+                    Most Active Users
+                  </CardTitle>
+                  <CardDescription>
+                    Users with highest engagement this month
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Elena Rodriguez</p>
+                          <p className="text-xs text-muted-foreground">Level 8 • Eco Warrior</p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">2,345 XP</div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Jamal Washington</p>
+                          <p className="text-xs text-muted-foreground">Level 7 • Problem Solver</p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">1,982 XP</div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Mia Chen</p>
+                          <p className="text-xs text-muted-foreground">Level 6 • Debate Champion</p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">1,756 XP</div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">David Park</p>
+                          <p className="text-xs text-muted-foreground">Level 5 • Issue Hunter</p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">1,430 XP</div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Olivia Smith</p>
+                          <p className="text-xs text-muted-foreground">Level 5 • Civic Leader</p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">1,289 XP</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
           
           <TabsContent value="test-users" className="space-y-4 mt-4">
             <div className="grid gap-4 md:grid-cols-2">
