@@ -45,28 +45,22 @@ const AdminConsole = () => {
   // Fetch users data
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['/api/users'],
-    queryFn: async () => {
-      const response = await apiRequest('/api/users');
-      return response;
-    },
+    // Rely on the default queryFn which is already configured in queryClient
     enabled: isAdmin !== false
   });
   
   // Fetch issues data
   const { data: issues, isLoading: issuesLoading } = useQuery({
     queryKey: ['/api/issues'],
-    queryFn: async () => {
-      const response = await apiRequest('/api/issues');
-      return response;
-    },
+    // Rely on the default queryFn which is already configured in queryClient
     enabled: isAdmin !== false
   });
   
   // Impersonate user mutation
   const impersonateMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return apiRequest(`/api/admin/impersonate/${userId}`, {
-        method: 'POST'
+      return apiRequest('POST', `/api/admin/impersonate/${userId}`, {
+        userId: userId
       });
     },
     onSuccess: () => {
@@ -174,7 +168,7 @@ const AdminConsole = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users?.map((user: any) => (
+                      {Array.isArray(users) && users.map((user: any) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center space-x-3">
@@ -276,7 +270,7 @@ const AdminConsole = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {issues?.map((issue: any) => (
+                      {Array.isArray(issues) && issues.map((issue: any) => (
                         <TableRow key={issue.id}>
                           <TableCell className="font-medium">
                             <div>
@@ -437,7 +431,7 @@ const AdminConsole = () => {
                     <CardTitle className="text-base">Total Users</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
-                    <div className="text-3xl font-bold">{users?.length || 0}</div>
+                    <div className="text-3xl font-bold">{Array.isArray(users) ? users.length : 0}</div>
                     <p className="text-xs text-muted-foreground">+12% from last month</p>
                   </CardContent>
                 </Card>
@@ -448,7 +442,7 @@ const AdminConsole = () => {
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
                     <div className="text-3xl font-bold">
-                      {issues?.filter((issue: any) => issue.status === 'open').length || 0}
+                      {Array.isArray(issues) ? issues.filter(issue => issue.status === 'open').length : 0}
                     </div>
                     <p className="text-xs text-muted-foreground">+5% from last month</p>
                   </CardContent>
@@ -460,7 +454,7 @@ const AdminConsole = () => {
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
                     <div className="text-3xl font-bold">
-                      {issues?.reduce((acc: number, issue: any) => acc + (issue.votes || 0), 0) || 0}
+                      {Array.isArray(issues) ? issues.reduce((acc, issue) => acc + (issue.votes || 0), 0) : 0}
                     </div>
                     <p className="text-xs text-muted-foreground">+26% from last month</p>
                   </CardContent>
