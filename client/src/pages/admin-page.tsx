@@ -90,7 +90,7 @@ export default function AdminPage() {
   });
   
   // Fetch test users (users marked as test accounts)
-  const { data: testUsers = [], isLoading: testUsersLoading } = useQuery<any[]>({
+  const { data: testUsers = [], isLoading: testUsersLoading, error: testUsersError } = useQuery<any[]>({
     queryKey: ['/api/users/test'],
     enabled: !!isAdmin
   });
@@ -691,6 +691,23 @@ export default function AdminPage() {
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                   </div>
+                ) : testUsersError ? (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error loading test users</AlertTitle>
+                    <AlertDescription>
+                      Failed to load test users. Please try again.
+                    </AlertDescription>
+                    <Button 
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/users/test'] })}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Retry
+                    </Button>
+                  </Alert>
                 ) : (
                   <ScrollArea className="h-[300px]">
                     <Table>
@@ -717,8 +734,16 @@ export default function AdminPage() {
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
-                                  <Button variant="outline" size="sm">Edit</Button>
-                                  <Button variant="destructive" size="sm">Delete</Button>
+                                  <Button asChild variant="outline" size="sm">
+                                    <Link to={`/users/${user.id}`}>
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      View
+                                    </Link>
+                                  </Button>
+                                  <Button variant="destructive" size="sm">
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -735,6 +760,22 @@ export default function AdminPage() {
                   </ScrollArea>
                 )}
               </CardContent>
+              <CardFooter>
+                <div className="flex w-full items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {testUsers.length} test users available
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/users/test'] })}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Refresh
+                  </Button>
+                </div>
+              </CardFooter>
             </Card>
           </TabsContent>
           
