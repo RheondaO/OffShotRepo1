@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 import {
   useQuery,
   useMutation,
@@ -138,8 +138,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+  const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false); // Add isAdmin state
+
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context;
+
+  // Get effective user (impersonated or real)
+  const effectiveUser = impersonatedUser || context.user;
+
+  // Impersonation functions
+  const impersonateUser = async (userId: number) => {
+    if (!isAdmin) { // Check if admin before impersonating
+      console.error('Only admins can impersonate users');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user with ID ${userId}`);
+      }
+      const userData = await response.json();
+      setImpersonatedUser(userData);
+    } catch (error) {
+      console.error('Failed to impersonate user:', error);
+    }
+  };
+
+  const stopImpersonating = () => {
+    setImpersonatedUser(null);
+  };
+
+  //  We need a way to determine isAdmin.  This is placeholder code.
+  // In a real application, you would fetch this information from the server
+  // based on the authenticated user's role.
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/user/admincheck'); // Replace with your admin check endpoint
+      if (!response.ok) {
+        throw new Error('Failed to check admin status');
+      }
+      setIsAdmin(await response.json());
+    } catch (error) {
+      console.error('Failed to check admin status:', error);
+    }
+  }
+  checkAdminStatus();
+
+
+  return {
+    user: effectiveUser,
+    isAdmin,
+    isImpersonating: !!impersonatedUser,
+    impersonateUser,
+    stopImpersonating,
+  };
 }
