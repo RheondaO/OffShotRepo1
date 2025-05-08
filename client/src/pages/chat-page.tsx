@@ -294,7 +294,7 @@ function ChatTabWrapper({ children, isActive }: {
       style={{ 
         position: 'relative',
         height: '100%',
-        overflowY: isDebatesTab ? 'visible' : 'auto',
+        overflowY: isDebatesTab ? 'hidden' : 'auto', // Changed from 'visible' to 'hidden' to completely remove scrollbar
         overflowX: 'hidden',
         // Important: prevent scroll events from propagating to parent
         isolation: 'isolate'
