@@ -195,6 +195,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users routes
+  // Get test users - IMPORTANT: This must be placed before the /:userId route
+  app.get("/api/users/test", async (_req: Request, res: Response) => {
+    try {
+      // For demo purposes, return a limited subset of users as test users
+      // In a real app, you would query for users with isTest=true
+      const allUsers = await storage.getAllUsers();
+      // Temporarily marking the first 3 users as test users
+      const testUsers = allUsers.slice(0, 3).map((user: any) => ({
+        ...user,
+        password: undefined, // Don't send password
+        isTest: true,
+        isActive: true
+      }));
+      
+      return res.json(testUsers);
+    } catch (error) {
+      console.error("Error fetching test users:", error);
+      return res.status(500).json({ message: "Failed to fetch test users" });
+    }
+  });
+  
   // Get user by ID 
   app.get("/api/users/:userId", async (req: Request, res: Response) => {
     try {
@@ -236,27 +257,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: fromZodError(error).message });
       }
       return res.status(500).json({ message: "Failed to create user" });
-    }
-  });
-  
-  // Get test users
-  app.get("/api/users/test", async (_req: Request, res: Response) => {
-    try {
-      // For demo purposes, return a limited subset of users as test users
-      // In a real app, you would query for users with isTest=true
-      const allUsers = await storage.getAllUsers();
-      // Temporarily marking the first 3 users as test users
-      const testUsers = allUsers.slice(0, 3).map(user => ({
-        ...user,
-        password: undefined, // Don't send password
-        isTest: true,
-        isActive: true
-      }));
-      
-      return res.json(testUsers);
-    } catch (error) {
-      console.error("Error fetching test users:", error);
-      return res.status(500).json({ message: "Failed to fetch test users" });
     }
   });
 

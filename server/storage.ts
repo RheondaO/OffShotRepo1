@@ -23,6 +23,7 @@ import { calculateIssuePriority } from "./utils";
 
 export interface IStorage {
   // Users
+  getAllUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -259,6 +260,10 @@ export class MemStorage implements IStorage {
   }
 
   // User methods
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
@@ -1020,6 +1025,10 @@ export class MemStorage implements IStorage {
 
 export class DatabaseStorage implements IStorage {
   // User methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+  
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
