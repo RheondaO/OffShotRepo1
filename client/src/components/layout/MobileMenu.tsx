@@ -15,7 +15,7 @@ interface MobileMenuProps {
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const [mounted, setMounted] = useState(false);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   
@@ -133,6 +133,17 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                 Demo User
               </Link>
             </li>
+            {isAdmin && (
+              <li>
+                <Link 
+                  href="/admin" 
+                  className="text-[hsl(var(--space-purple))] hover:text-[hsl(var(--space-pink))] border border-[hsl(var(--space-purple)/50)] bg-[hsl(var(--space-purple)/20)] transition-colors block py-2 px-3 rounded-md font-bold mt-2"
+                  onClick={onClose}
+                >
+                  Admin Console
+                </Link>
+              </li>
+            )}
             <li>
               <Link 
                 href="/browse"

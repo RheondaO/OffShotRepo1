@@ -22,6 +22,7 @@ import MissionPage from "@/pages/mission-page";
 import GamesPage from "@/pages/games-page";
 import AnalyticsPage from "@/pages/analytics-page";
 import DemoUserPage from "@/pages/demo-user-page";
+import AdminConsole from "@/pages/admin-console";
 import Header from "@/components/layout/Header";
 import ConditionalFooter from "@/components/layout/ConditionalFooter";
 
@@ -55,6 +56,7 @@ function Router() {
           <Route path="/games" component={GamesPage} />
           <Route path="/analytics" component={AnalyticsPage} />
           <Route path="/demo" component={DemoUserPage} />
+          <Route path="/admin" component={AdminConsole} />
           <Route component={NotFound} />
         </Switch>
       </main>

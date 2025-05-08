@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
 
   const isActivePath = (path: string) => {
@@ -65,6 +65,11 @@ const Header = () => {
           <Link href="/demo" className={`${isActivePath("/demo") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)] font-medium"} hover:text-[hsl(var(--space-pink))] transition-colors text-[hsl(var(--space-pink))]`}>
             Demo User
           </Link>
+          {isAdmin && (
+            <Link href="/admin" className={`${isActivePath("/admin") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors font-bold border border-[hsl(var(--space-purple)/50)] px-2 py-0.5 rounded-md bg-[hsl(var(--space-purple)/30)]`}>
+              Admin Console
+            </Link>
+          )}
         </nav>
         
         <button 
