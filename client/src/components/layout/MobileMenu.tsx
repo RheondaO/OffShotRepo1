@@ -39,7 +39,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       className="fixed inset-0 z-50 animate-in slide-in-from-right duration-300"
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[400px] bg-[hsl(var(--space-blue))] border-l border-[hsl(var(--space-purple)/30)] h-full flex flex-col p-6 shadow-xl">
+      <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[400px] bg-gradient-to-b from-[hsl(var(--space-blue)/98)] to-[hsl(var(--space-blue)/95)] border-l border-[hsl(var(--space-purple)/30)] h-full flex flex-col p-6 shadow-xl">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-[hsl(var(--space-purple))] rounded-full flex items-center justify-center">
