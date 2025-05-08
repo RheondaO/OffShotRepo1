@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserIcon, LogOut } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -13,7 +15,9 @@ interface MobileMenuProps {
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const [mounted, setMounted] = useState(false);
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   
   useEffect(() => {
     setMounted(true);
@@ -39,7 +43,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       className="fixed inset-0 z-50 animate-in slide-in-from-right duration-300"
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[400px] bg-gradient-to-b from-[hsl(var(--space-blue)/98)] to-[hsl(var(--space-blue)/95)] border-l border-[hsl(var(--space-purple)/30)] h-full flex flex-col p-6 shadow-xl">
+      <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[400px] bg-[#121242] border-l border-[hsl(var(--space-purple)/30)] h-full flex flex-col p-6 shadow-xl">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-[hsl(var(--space-purple))] rounded-full flex items-center justify-center">
@@ -161,7 +165,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           
           {user ? (
             <>
-              <div className="flex items-center space-x-4 mb-6 bg-[hsl(var(--space-blue)/40)] p-4 rounded-lg">
+              <div className="flex items-center space-x-4 mb-6 bg-[#1a1a5e] p-4 rounded-lg">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-[hsl(var(--space-blue)/20)] text-sm">
                     {user.name.slice(0, 2).toUpperCase()}
@@ -187,8 +191,14 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                 className="w-full flex items-center justify-center gap-2 text-[hsl(var(--destructive))]" 
                 variant="outline"
                 onClick={() => {
-                  logoutMutation.mutate();
+                  // Simple logout - just clear the user data and redirect to home
+                  queryClient.setQueryData(["/api/user"], null);
+                  toast({
+                    title: "Logged out",
+                    description: "You have been successfully logged out",
+                  });
                   onClose();
+                  setLocation('/');
                 }}
               >
                 <LogOut className="w-4 h-4" />
