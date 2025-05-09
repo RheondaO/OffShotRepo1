@@ -56,6 +56,9 @@ const Header = () => {
           <Link href="/mission" className={`${isActivePath("/mission") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
             Our Mission
           </Link>
+          <Link href="/success-stories" className={`${isActivePath("/success-stories") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Success Stories
+          </Link>
           <Link href="/games" className={`${isActivePath("/games") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
             Games
           </Link>
