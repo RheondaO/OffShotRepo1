@@ -306,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/issues", async (req: Request, res: Response) => {
     try {
       const { categoryId, search, includeCategoryData } = req.query;
-      let issues: Issue[];
+      let issues: any[] = [];
       
       // Fetch issues based on filters
       if (categoryId) {
@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If includeCategoryData is present, fetch and attach category data
       if (includeCategoryData === 'true' && issues.length > 0) {
         // Extract unique category IDs from issues
-        const categoryIds = [...new Set(issues.map(issue => issue.categoryId))];
+        const categoryIds = Array.from(new Set(issues.map(issue => issue.categoryId)));
         
         // Fetch all needed categories in one query
         const categories = await Promise.all(

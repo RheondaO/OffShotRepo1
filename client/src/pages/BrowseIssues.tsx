@@ -7,6 +7,10 @@ import { IssueCardSkeleton } from "@/components/issues/IssueCardSkeleton";
 import SearchBar from "@/components/ui/search";
 import { type Category, type Issue } from "@shared/schema";
 
+interface IssueWithCategory extends Issue {
+  category?: Category | null;
+}
+
 const BrowseIssues = () => {
   const [location] = useLocation();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -32,14 +36,27 @@ const BrowseIssues = () => {
     queryKey: ['/api/categories'],
   });
   
-  // Fetch issues based on filters
-  const issuesQueryKey = selectedCategoryId 
-    ? [`/api/issues?categoryId=${selectedCategoryId}`]
-    : searchQuery
-    ? [`/api/issues?search=${encodeURIComponent(searchQuery)}`]
-    : ['/api/issues'];
+  // Build query string with includeCategoryData parameter
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    
+    if (selectedCategoryId) {
+      params.append('categoryId', selectedCategoryId.toString());
+    } else if (searchQuery) {
+      params.append('search', searchQuery);
+    }
+    
+    // Always include category data for better performance
+    params.append('includeCategoryData', 'true');
+    
+    return params.toString();
+  };
   
-  const { data: issues, isLoading: isIssuesLoading } = useQuery<Issue[]>({
+  // Fetch issues based on filters with included category data
+  const queryString = buildQueryString();
+  const issuesQueryKey = [`/api/issues?${queryString}`];
+  
+  const { data: issues, isLoading: isIssuesLoading } = useQuery<IssueWithCategory[]>({
     queryKey: issuesQueryKey,
   });
   

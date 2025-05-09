@@ -8,8 +8,12 @@ import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { type Category, type Issue } from "@shared/schema";
 
+interface IssueWithCategory extends Issue {
+  category?: Category | null;
+}
+
 interface IssueCardProps {
-  issue: Issue;
+  issue: Issue | IssueWithCategory;
   onClick?: (issueId: number) => void;
 }
 
@@ -17,10 +21,17 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
   const { toast } = useToast();
   const [isVoting, setIsVoting] = useState(false);
   
-  // Fetch the category for this issue
+  // Check if issue has included category data
+  const hasCategory = 'category' in issue && issue.category;
+  
+  // Only fetch the category if it's not already included in the issue
   const { data: category } = useQuery<Category>({
     queryKey: [`/api/categories/${issue.categoryId}`],
+    enabled: !hasCategory // Only run query if we don't already have the category
   });
+
+  // Use the included category or the fetched one
+  const categoryData = hasCategory ? (issue as IssueWithCategory).category : category;
 
   const handleVote = async () => {
     if (isVoting) return;
@@ -72,7 +83,7 @@ const IssueCard = ({ issue, onClick }: IssueCardProps) => {
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <span className="px-3 py-1 text-xs font-mono rounded-full bg-[hsl(var(--space-purple)/20)] text-[hsl(var(--space-pink))] border border-[hsl(var(--space-purple)/30)]">
-            {category?.name || 'Loading...'}
+            {categoryData?.name || 'Loading...'}
           </span>
           <div className="flex items-center gap-1 text-[hsl(var(--foreground)/60)] text-sm">
             <i className="ri-time-line"></i>

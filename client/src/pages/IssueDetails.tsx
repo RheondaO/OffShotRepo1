@@ -16,6 +16,12 @@ import { type Issue, type Category, type Tag } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import useXp from "@/hooks/use-xp";
 
+// Extended issue type with included related data
+interface IssueWithDetails extends Issue {
+  category?: Category | null;
+  tags?: Tag[];
+}
+
 const IssueDetails = () => {
   const [match, params] = useRoute("/issues/:id");
   const [_, navigate] = useLocation();
@@ -26,29 +32,36 @@ const IssueDetails = () => {
   
   const issueId = match ? parseInt(params.id) : null;
   
-  const { data: issue, isLoading: isIssueLoading, error } = useQuery<Issue>({
-    queryKey: [`/api/issues/${issueId}`],
+  // Fetch issue with included category and tags
+  const { data: issueData, isLoading: isIssueLoading, error } = useQuery<IssueWithDetails>({
+    queryKey: [`/api/issues/${issueId}?includeDetails=true`],
     enabled: !!issueId,
   });
   
-  const { data: category } = useQuery<Category>({
-    queryKey: [`/api/categories/${issue?.categoryId}`],
-    enabled: !!issue?.categoryId,
-  });
+  // Extract issue, category, and tags from the response
+  const issue = issueData;
+  const category = issueData?.category;
   
-  // Fetch tags for this issue
-  const { data: tags = [], isLoading: isTagsLoading } = useQuery<Tag[]>({
+  // Set tags from the response or fetch them separately if not included
+  useEffect(() => {
+    if (issueData?.tags) {
+      setIssueTags(issueData.tags);
+    }
+  }, [issueData]);
+  
+  // Fallback to fetch tags separately if not included in the response
+  const { data: fallbackTags = [], isLoading: isTagsLoading } = useQuery<Tag[]>({
     queryKey: [`/api/issues/${issueId}/tags`],
     queryFn: () => apiRequest('GET', `/api/issues/${issueId}/tags`).then(r => r.json()),
-    enabled: !!issueId
+    enabled: !!issueId && !issueData?.tags  // Only run if we don't have tags in the response
   });
   
-  // Update local state when tags data changes
+  // Update local state when fallback tags data changes
   useEffect(() => {
-    if (tags) {
-      setIssueTags(tags);
+    if (fallbackTags.length > 0 && !issueData?.tags) {
+      setIssueTags(fallbackTags);
     }
-  }, [tags]);
+  }, [fallbackTags, issueData]);
   
   const handleVote = async () => {
     if (!issue || isVoting) return;
