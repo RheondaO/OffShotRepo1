@@ -15,7 +15,8 @@ import {
   roleVotes, type RoleVote, type InsertRoleVote, type UserRole,
   debates, type Debate, type InsertDebate,
   debateParticipants, type DebateParticipant, type InsertDebateParticipant,
-  ISSUE_STATUS, USER_ROLES
+  kudos, type Kudos, type InsertKudos, type KudosType,
+  ISSUE_STATUS, USER_ROLES, KUDOS_TYPES
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, or, sql } from "drizzle-orm";

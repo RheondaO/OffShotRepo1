@@ -164,6 +164,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   // Role voting relations
   votesGiven: many(roleVotes, { relationName: "votesGiven" }),
   votesReceived: many(roleVotes, { relationName: "votesReceived" }),
+  // Kudos relations
+  sentKudos: many(kudos, { relationName: "sentKudos" }),
+  receivedKudos: many(kudos, { relationName: "receivedKudos" }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -188,6 +191,7 @@ export const issuesRelations = relations(issues, ({ one, many }) => ({
   issueTags: many(issueTags),
   assignmentHistory: many(issueAssignmentHistory),
   comments: many(comments),
+  kudos: many(kudos, { relationName: "issueKudos" }),
 }));
 
 export const votesRelations = relations(votes, ({ one }) => ({
@@ -539,7 +543,8 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
     fields: [comments.parentId],
     references: [comments.id]
   }),
-  replies: many(comments, { relationName: "replies" })
+  replies: many(comments, { relationName: "replies" }),
+  kudos: many(kudos, { relationName: "commentKudos" })
 }));
 
 // Update issue relations to include comments
@@ -590,3 +595,75 @@ export type InsertDebate = z.infer<typeof insertDebateSchema>;
 export type Debate = typeof debates.$inferSelect;
 export type InsertDebateParticipant = z.infer<typeof insertDebateParticipantSchema>;
 export type DebateParticipant = typeof debateParticipants.$inferSelect;
+
+// Community Kudos and Appreciation System
+export const KUDOS_TYPES = ['helpful', 'creative', 'inspiring', 'supportive', 'problem_solver'] as const;
+export type KudosType = typeof KUDOS_TYPES[number];
+
+export const kudos = pgTable("kudos", {
+  id: serial("id").primaryKey(),
+  fromUserId: integer("from_user_id").notNull(), // User giving the kudos
+  toUserId: integer("to_user_id").notNull(), // User receiving the kudos
+  message: text("message"), // Optional appreciation message
+  type: text("type").notNull(), // Type of kudos (helpful, creative, inspiring, etc.)
+  issueId: integer("issue_id"), // Optional reference to an issue
+  commentId: integer("comment_id"), // Optional reference to a comment
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  public: boolean("public").notNull().default(true), // Whether this is shown publicly or just to the recipient
+});
+
+export const kudosRelations = relations(kudos, ({ one }) => ({
+  fromUser: one(users, {
+    fields: [kudos.fromUserId],
+    references: [users.id],
+    relationName: "sentKudos"
+  }),
+  toUser: one(users, {
+    fields: [kudos.toUserId],
+    references: [users.id],
+    relationName: "receivedKudos"
+  }),
+  issue: one(issues, {
+    fields: [kudos.issueId],
+    references: [issues.id],
+    relationName: "issueKudos"
+  }),
+  comment: one(comments, {
+    fields: [kudos.commentId],
+    references: [comments.id],
+    relationName: "commentKudos"
+  }),
+}));
+
+// Update user relations to include kudos
+export const usersRelationsWithKudos = relations(users, ({ many }) => ({
+  sentKudos: many(kudos, { relationName: "sentKudos" }),
+  receivedKudos: many(kudos, { relationName: "receivedKudos" }),
+}));
+
+export const issuesRelationsWithKudos = relations(issues, ({ many }) => ({
+  kudos: many(kudos, { relationName: "issueKudos" }),
+}));
+
+export const commentsRelationsWithKudos = relations(comments, ({ many }) => ({
+  kudos: many(kudos, { relationName: "commentKudos" }),
+}));
+
+// Schema for creating kudos
+export const insertKudosSchema = createInsertSchema(kudos)
+  .pick({
+    fromUserId: true,
+    toUserId: true,
+    message: true,
+    type: true,
+    issueId: true,
+    commentId: true,
+    public: true,
+  })
+  .extend({
+    type: z.enum(KUDOS_TYPES),
+    message: z.string().max(500).optional(),
+  });
+
+export type InsertKudos = z.infer<typeof insertKudosSchema>;
+export type Kudos = typeof kudos.$inferSelect;
