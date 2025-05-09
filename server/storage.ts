@@ -118,9 +118,103 @@ export interface IStorage {
   addDebateParticipant(participant: InsertDebateParticipant): Promise<DebateParticipant>;
   getDebateParticipants(debateId: number): Promise<DebateParticipant[]>;
   updateDebateStatus(id: number, status: string): Promise<Debate | undefined>;
+  
+  // Kudos methods
+  createKudos(kudos: InsertKudos): Promise<Kudos>;
+  getKudosById(id: number): Promise<Kudos | undefined>;
+  getKudosByUser(userId: number): Promise<Kudos[]>;
+  getKudosForUser(userId: number): Promise<Kudos[]>;
+  getKudosByIssue(issueId: number): Promise<Kudos[]>;
+  getKudosByComment(commentId: number): Promise<Kudos[]>;
+  getUserKudosSummary(userId: number): Promise<{type: KudosType, count: number}[]>;
+  getKudosByType(type: KudosType): Promise<Kudos[]>;
 }
 
 export class MemStorage implements IStorage {
+  // Kudos methods
+  async createKudos(insertKudos: InsertKudos): Promise<Kudos> {
+    const id = this.kudosId++;
+    const now = new Date();
+    
+    // Create kudos object
+    const kudos: Kudos = {
+      ...insertKudos,
+      id,
+      createdAt: now,
+      message: insertKudos.message || null,
+      issueId: insertKudos.issueId || null,
+      commentId: insertKudos.commentId || null,
+      public: insertKudos.public !== undefined ? insertKudos.public : true,
+    };
+    
+    this.kudos.set(id, kudos);
+    
+    // Add XP when a user receives kudos
+    const recipient = this.users.get(kudos.toUserId);
+    if (recipient) {
+      // Different kudos types can give different amounts of XP
+      const xpAmount = 10; // Base XP for any kudos
+      this.updateUserXp(recipient.id, xpAmount);
+    }
+    
+    return kudos;
+  }
+  
+  async getKudosById(id: number): Promise<Kudos | undefined> {
+    return this.kudos.get(id);
+  }
+  
+  async getKudosByUser(userId: number): Promise<Kudos[]> {
+    // Get kudos sent by this user
+    return Array.from(this.kudos.values())
+      .filter(kudos => kudos.fromUserId === userId);
+  }
+  
+  async getKudosForUser(userId: number): Promise<Kudos[]> {
+    // Get kudos received by this user (only public ones unless they are for the user)
+    return Array.from(this.kudos.values())
+      .filter(kudos => kudos.toUserId === userId);
+  }
+  
+  async getKudosByIssue(issueId: number): Promise<Kudos[]> {
+    // Get kudos for a specific issue
+    return Array.from(this.kudos.values())
+      .filter(kudos => kudos.issueId === issueId && (kudos.public === true));
+  }
+  
+  async getKudosByComment(commentId: number): Promise<Kudos[]> {
+    // Get kudos for a specific comment
+    return Array.from(this.kudos.values())
+      .filter(kudos => kudos.commentId === commentId && (kudos.public === true));
+  }
+  
+  async getUserKudosSummary(userId: number): Promise<{type: KudosType, count: number}[]> {
+    // Get kudos summary by type for a user
+    const userKudos = await this.getKudosForUser(userId);
+    
+    // Initialize the summary with all kudos types set to zero
+    const summary: {type: KudosType, count: number}[] = KUDOS_TYPES.map(type => ({
+      type: type as KudosType,
+      count: 0
+    }));
+    
+    // Count kudos by type
+    userKudos.forEach(kudos => {
+      const kudosType = kudos.type as KudosType;
+      const existingEntry = summary.find(item => item.type === kudosType);
+      if (existingEntry) {
+        existingEntry.count += 1;
+      }
+    });
+    
+    return summary;
+  }
+  
+  async getKudosByType(type: KudosType): Promise<Kudos[]> {
+    // Get all kudos of a specific type
+    return Array.from(this.kudos.values())
+      .filter(kudos => kudos.type === type && (kudos.public === true));
+  }
   // Debate methods
   async createDebate(insertDebate: InsertDebate): Promise<Debate> {
     const id = this.debateId++;
@@ -202,6 +296,9 @@ export class MemStorage implements IStorage {
   private debateId: number;
   private debateParticipantId: number;
 
+  private kudos: Map<number, Kudos>;
+  private kudosId: number;
+  
   constructor() {
     this.users = new Map();
     this.categories = new Map();
@@ -218,6 +315,7 @@ export class MemStorage implements IStorage {
     this.debates = new Map();
     this.debateParticipants = new Map();
     this.comments = new Map();
+    this.kudos = new Map();
     
     this.userId = 1;
     this.categoryId = 1;
@@ -234,6 +332,7 @@ export class MemStorage implements IStorage {
     this.debateId = 1;
     this.debateParticipantId = 1;
     this.commentId = 1;
+    this.kudosId = 1;
     
     // Add some initial categories
     this.initializeData();
@@ -1025,6 +1124,66 @@ export class MemStorage implements IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Kudos methods
+  async createKudos(kudosData: InsertKudos): Promise<Kudos> {
+    const result = await db.insert(kudos).values(kudosData).returning();
+    
+    // Add XP when a user receives kudos
+    const xpAmount = 10; // Base XP for any kudos
+    this.updateUserXp(kudosData.toUserId, xpAmount);
+    
+    return result[0];
+  }
+  
+  async getKudosById(id: number): Promise<Kudos | undefined> {
+    const result = await db.select().from(kudos).where(eq(kudos.id, id));
+    return result[0];
+  }
+  
+  async getKudosByUser(userId: number): Promise<Kudos[]> {
+    return db.select().from(kudos).where(eq(kudos.fromUserId, userId));
+  }
+  
+  async getKudosForUser(userId: number): Promise<Kudos[]> {
+    return db.select().from(kudos).where(eq(kudos.toUserId, userId));
+  }
+  
+  async getKudosByIssue(issueId: number): Promise<Kudos[]> {
+    return db.select().from(kudos)
+      .where(and(eq(kudos.issueId, issueId), eq(kudos.public, true)));
+  }
+  
+  async getKudosByComment(commentId: number): Promise<Kudos[]> {
+    return db.select().from(kudos)
+      .where(and(eq(kudos.commentId, commentId), eq(kudos.public, true)));
+  }
+  
+  async getUserKudosSummary(userId: number): Promise<{type: KudosType, count: number}[]> {
+    // Get all kudos for this user
+    const userKudos = await this.getKudosForUser(userId);
+    
+    // Initialize the summary with all kudos types set to zero
+    const summary: {type: KudosType, count: number}[] = KUDOS_TYPES.map(type => ({
+      type: type as KudosType,
+      count: 0
+    }));
+    
+    // Count kudos by type
+    userKudos.forEach(kudos => {
+      const kudosType = kudos.type as KudosType;
+      const existingEntry = summary.find(item => item.type === kudosType);
+      if (existingEntry) {
+        existingEntry.count += 1;
+      }
+    });
+    
+    return summary;
+  }
+  
+  async getKudosByType(type: KudosType): Promise<Kudos[]> {
+    return db.select().from(kudos)
+      .where(and(eq(kudos.type, type), eq(kudos.public, true)));
+  }
   // User methods
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
