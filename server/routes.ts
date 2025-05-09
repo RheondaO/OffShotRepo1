@@ -19,9 +19,13 @@ import {
   insertIssueAssignmentHistorySchema,
   insertCommentSchema,
   insertRoleVoteSchema,
+  insertKudosSchema,
   USER_ROLES,
   ISSUE_STATUS,
-  issues
+  KUDOS_TYPES,
+  KudosType,
+  issues,
+  kudos
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
