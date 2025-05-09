@@ -305,21 +305,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Issues routes
   app.get("/api/issues", async (req: Request, res: Response) => {
     try {
-      const { categoryId, search } = req.query;
+      const { categoryId, search, includeCategoryData } = req.query;
+      let issues: Issue[];
       
+      // Fetch issues based on filters
       if (categoryId) {
-        const issues = await storage.getIssuesByCategory(Number(categoryId));
-        return res.json(issues);
+        issues = await storage.getIssuesByCategory(Number(categoryId));
+      } else if (search && typeof search === 'string') {
+        issues = await storage.searchIssues(search);
+      } else {
+        issues = await storage.getAllIssues();
       }
       
-      if (search && typeof search === 'string') {
-        const issues = await storage.searchIssues(search);
-        return res.json(issues);
+      // If includeCategoryData is present, fetch and attach category data
+      if (includeCategoryData === 'true' && issues.length > 0) {
+        // Extract unique category IDs from issues
+        const categoryIds = [...new Set(issues.map(issue => issue.categoryId))];
+        
+        // Fetch all needed categories in one query
+        const categories = await Promise.all(
+          categoryIds.map(id => storage.getCategoryById(id))
+        );
+        
+        // Create a lookup map for quick category access
+        const categoryMap = new Map();
+        categories.forEach(category => {
+          if (category) {
+            categoryMap.set(category.id, category);
+          }
+        });
+        
+        // Add category data to each issue
+        const issuesWithCategories = issues.map(issue => ({
+          ...issue,
+          category: categoryMap.get(issue.categoryId) || null
+        }));
+        
+        return res.json(issuesWithCategories);
       }
       
-      const issues = await storage.getAllIssues();
       return res.json(issues);
     } catch (error) {
+      console.error("Error fetching issues:", error);
       return res.status(500).json({ message: "Failed to fetch issues" });
     }
   });
@@ -345,14 +372,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/issues/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+      const { includeDetails } = req.query;
       const issue = await storage.getIssueById(id);
       
       if (!issue) {
         return res.status(404).json({ message: "Issue not found" });
       }
       
+      // If includeDetails is present, fetch additional data
+      if (includeDetails === 'true') {
+        // Fetch category
+        const category = await storage.getCategoryById(issue.categoryId);
+        
+        // Fetch tags
+        const tags = await storage.getTagsByIssue(id);
+        
+        // Return issue with related data
+        return res.json({
+          ...issue,
+          category,
+          tags
+        });
+      }
+      
       return res.json(issue);
     } catch (error) {
+      console.error("Error fetching issue:", error);
       return res.status(500).json({ message: "Failed to fetch issue" });
     }
   });
