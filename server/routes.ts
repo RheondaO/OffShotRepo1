@@ -1538,6 +1538,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Kudos system routes
+  app.post("/api/kudos", async (req: Request, res: Response) => {
+    try {
+      const kudosData = req.body;
+      
+      // Validate using the schema
+      const validatedData = insertKudosSchema.parse(kudosData);
+      
+      // Create kudos
+      const kudos = await storage.createKudos(validatedData);
+      
+      return res.status(201).json(kudos);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      console.error("Error creating kudos:", error);
+      return res.status(500).json({ message: "Failed to create kudos" });
+    }
+  });
+  
+  app.get("/api/kudos/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid kudos ID" });
+      }
+      
+      const kudos = await storage.getKudosById(id);
+      
+      if (!kudos) {
+        return res.status(404).json({ message: "Kudos not found" });
+      }
+      
+      return res.json(kudos);
+    } catch (error) {
+      console.error("Error getting kudos:", error);
+      return res.status(500).json({ message: "Failed to get kudos" });
+    }
+  });
+  
+  app.get("/api/users/:userId/kudos/sent", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const kudosList = await storage.getKudosByUser(userId);
+      return res.json(kudosList);
+    } catch (error) {
+      console.error("Error getting kudos sent by user:", error);
+      return res.status(500).json({ message: "Failed to get kudos sent by user" });
+    }
+  });
+  
+  app.get("/api/users/:userId/kudos/received", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const kudosList = await storage.getKudosForUser(userId);
+      return res.json(kudosList);
+    } catch (error) {
+      console.error("Error getting kudos received by user:", error);
+      return res.status(500).json({ message: "Failed to get kudos received by user" });
+    }
+  });
+  
+  app.get("/api/users/:userId/kudos/summary", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const summary = await storage.getUserKudosSummary(userId);
+      return res.json(summary);
+    } catch (error) {
+      console.error("Error getting user kudos summary:", error);
+      return res.status(500).json({ message: "Failed to get user kudos summary" });
+    }
+  });
+  
+  app.get("/api/issues/:issueId/kudos", async (req: Request, res: Response) => {
+    try {
+      const issueId = parseInt(req.params.issueId);
+      
+      if (isNaN(issueId)) {
+        return res.status(400).json({ message: "Invalid issue ID" });
+      }
+      
+      const kudosList = await storage.getKudosByIssue(issueId);
+      return res.json(kudosList);
+    } catch (error) {
+      console.error("Error getting kudos for issue:", error);
+      return res.status(500).json({ message: "Failed to get kudos for issue" });
+    }
+  });
+  
+  app.get("/api/comments/:commentId/kudos", async (req: Request, res: Response) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      
+      if (isNaN(commentId)) {
+        return res.status(400).json({ message: "Invalid comment ID" });
+      }
+      
+      const kudosList = await storage.getKudosByComment(commentId);
+      return res.json(kudosList);
+    } catch (error) {
+      console.error("Error getting kudos for comment:", error);
+      return res.status(500).json({ message: "Failed to get kudos for comment" });
+    }
+  });
+  
+  app.get("/api/kudos/types/:type", async (req: Request, res: Response) => {
+    try {
+      const type = req.params.type as KudosType;
+      
+      // Validate that the type is valid
+      if (!KUDOS_TYPES.includes(type)) {
+        return res.status(400).json({ message: "Invalid kudos type" });
+      }
+      
+      const kudosList = await storage.getKudosByType(type);
+      return res.json(kudosList);
+    } catch (error) {
+      console.error("Error getting kudos by type:", error);
+      return res.status(500).json({ message: "Failed to get kudos by type" });
+    }
+  });
+  
   app.patch("/api/users/:userId/bio", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
