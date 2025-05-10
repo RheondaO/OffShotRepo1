@@ -33,35 +33,37 @@ const IssueDetails = () => {
   const issueId = match ? parseInt(params.id) : null;
   
   // Fetch issue with included category and tags
-  const { data: issueData, isLoading: isIssueLoading, error } = useQuery<IssueWithDetails>({
+  const { data: issue, isLoading: isIssueLoading, error } = useQuery<IssueWithDetails>({
     queryKey: [`/api/issues/${issueId}?includeDetails=true`],
     enabled: !!issueId,
+    refetchOnWindowFocus: false,
+    retry: 2,
+    staleTime: 30000
   });
   
-  // Extract issue, category, and tags from the response
-  const issue = issueData;
-  const category = issueData?.category;
+  // Extract category from the response
+  const category = issue?.category;
   
-  // Set tags from the response or fetch them separately if not included
+  // Set tags from the response
   useEffect(() => {
-    if (issueData?.tags) {
-      setIssueTags(issueData.tags);
+    if (issue?.tags) {
+      setIssueTags(issue.tags);
     }
-  }, [issueData]);
+  }, [issue]);
   
   // Fallback to fetch tags separately if not included in the response
-  const { data: fallbackTags = [], isLoading: isTagsLoading } = useQuery<Tag[]>({
+  const { data: fallbackTags = [] } = useQuery({
     queryKey: [`/api/issues/${issueId}/tags`],
     queryFn: () => apiRequest('GET', `/api/issues/${issueId}/tags`).then(r => r.json()),
-    enabled: !!issueId && !issueData?.tags  // Only run if we don't have tags in the response
+    enabled: !!issueId && !issue?.tags  // Only run if we don't have tags in the response
   });
   
   // Update local state when fallback tags data changes
   useEffect(() => {
-    if (fallbackTags.length > 0 && !issueData?.tags) {
+    if (fallbackTags.length > 0 && !issue?.tags) {
       setIssueTags(fallbackTags);
     }
-  }, [fallbackTags, issueData]);
+  }, [fallbackTags, issue]);
   
   const handleVote = async () => {
     if (!issue || isVoting) return;

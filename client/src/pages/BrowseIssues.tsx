@@ -56,8 +56,11 @@ const BrowseIssues = () => {
   const queryString = buildQueryString();
   const issuesQueryKey = [`/api/issues?${queryString}`];
   
-  const { data: issues, isLoading: isIssuesLoading } = useQuery<IssueWithCategory[]>({
+  const { data: issues, isLoading: isIssuesLoading, error: issuesError } = useQuery<IssueWithCategory[]>({
     queryKey: issuesQueryKey,
+    refetchOnWindowFocus: false,
+    retry: 2,
+    staleTime: 30000
   });
   
   // Get selected category name
