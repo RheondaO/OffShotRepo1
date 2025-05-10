@@ -47,6 +47,7 @@ const IssueDetails = () => {
   // Set tags from the response
   useEffect(() => {
     if (issue?.tags) {
+      console.log("Setting tags from issue:", issue.tags);
       setIssueTags(issue.tags);
     }
   }, [issue]);
@@ -55,12 +56,14 @@ const IssueDetails = () => {
   const { data: fallbackTags = [] } = useQuery({
     queryKey: [`/api/issues/${issueId}/tags`],
     queryFn: () => apiRequest('GET', `/api/issues/${issueId}/tags`).then(r => r.json()),
-    enabled: !!issueId && !issue?.tags  // Only run if we don't have tags in the response
+    enabled: !!issueId && !issue?.tags,  // Only run if we don't have tags in the response
+    onSuccess: (data) => console.log("Fallback tags loaded:", data)
   });
   
   // Update local state when fallback tags data changes
   useEffect(() => {
     if (fallbackTags.length > 0 && !issue?.tags) {
+      console.log("Setting tags from fallback:", fallbackTags);
       setIssueTags(fallbackTags);
     }
   }, [fallbackTags, issue]);
@@ -97,6 +100,13 @@ const IssueDetails = () => {
     }
   };
   
+  // Log issue data for debugging
+  useEffect(() => {
+    if (issue) {
+      console.log("Issue data available:", issue);
+    }
+  }, [issue]);
+  
   // Handle error and loading states
   if (!issueId) {
     navigate("/not-found");
@@ -104,6 +114,7 @@ const IssueDetails = () => {
   }
   
   if (error) {
+    console.error("Issue details error:", error);
     return (
       <div className="container mx-auto px-4 py-12">
         <Card className="max-w-3xl mx-auto">
@@ -124,7 +135,13 @@ const IssueDetails = () => {
     );
   }
   
-  if (isIssueLoading || !issue) {
+  if (isIssueLoading) {
+    console.log("Issue is still loading...");
+    return <IssueDetailsSkeleton />;
+  }
+  
+  if (!issue) {
+    console.error("Issue data is undefined after loading completed");
     return <IssueDetailsSkeleton />;
   }
   
