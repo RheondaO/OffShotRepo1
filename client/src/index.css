@@ -353,19 +353,39 @@
   }
   
   /* Monochrome header styling */
-  .theme-monochrome .header {
-    background-color: hsl(0, 0%, 5%);
-    border-bottom: 1px solid hsl(0, 0%, 15%);
+  .theme-monochrome header {
+    background-color: hsl(0, 0%, 0%) !important; /* Pure black */
+    border-bottom: 1px solid hsl(0, 0%, 15%) !important;
   }
   
   /* Monochrome navigation styling */
-  .theme-monochrome .nav-item {
-    color: hsl(0, 0%, 80%);
+  .theme-monochrome nav a {
+    color: hsl(0, 0%, 100%) !important; /* White text */
+    transition: opacity 0.2s ease !important;
   }
   
-  .theme-monochrome .nav-item:hover,
-  .theme-monochrome .nav-item.active {
-    color: hsl(0, 0%, 100%);
+  .theme-monochrome nav a:hover {
+    opacity: 0.8 !important;
+    color: hsl(0, 0%, 100%) !important;
+  }
+  
+  /* Active nav item for monochrome */
+  .theme-monochrome nav a[data-active="true"],
+  .theme-monochrome nav a.active {
+    border-bottom: 2px solid white !important;
+    opacity: 1 !important;
+  }
+  
+  /* Mobile menu for monochrome theme */
+  .theme-monochrome .mobile-menu,
+  .theme-monochrome div[style*="background-color: #121242"] {
+    background-color: black !important;
+  }
+  
+  /* User profile section in mobile menu for monochrome */
+  .theme-monochrome div[style*="background-color: #1a1a5e"] {
+    background-color: hsl(0, 0%, 10%) !important;
+    border: 1px solid hsl(0, 0%, 20%) !important;
   }
   
   /* Animation classes */
