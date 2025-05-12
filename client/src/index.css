@@ -388,6 +388,31 @@
     border: 1px solid hsl(0, 0%, 20%) !important;
   }
   
+  /* Fix gradient text in monochrome theme to be solid white for better readability */
+  .theme-monochrome .bg-gradient-to-r.bg-clip-text.text-transparent,
+  .theme-monochrome [class*="bg-gradient-to-"].bg-clip-text.text-transparent {
+    background-image: none !important;
+    color: white !important;
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5) !important;
+    -webkit-text-fill-color: white !important;
+  }
+  
+  /* Enhance heading text with stronger styling for better readability in monochrome theme */
+  .theme-monochrome h1,
+  .theme-monochrome h2,
+  .theme-monochrome h3 {
+    letter-spacing: 0.5px !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Specific enhancement for "Discover, Shape & Level Up" heading */
+  .theme-monochrome h2 span.bg-gradient-to-r.bg-clip-text.text-transparent {
+    font-size: 105% !important;
+    letter-spacing: 0.8px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-bottom: 4px !important;
+  }
+  
   /* Animation classes */
   .animate-float {
     animation: float 6s ease-in-out infinite;
