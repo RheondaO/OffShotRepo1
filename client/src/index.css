@@ -232,15 +232,85 @@
     --sidebar-ring: 20 80% 55%;
   }
   
+  /* Monochrome theme - inspired by Uber and X */
+  .theme-monochrome {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 0 0% 25%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 50% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 80%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors */
+    --space-blue: 0 0% 70%;
+    --space-purple: 0 0% 50%;
+    --space-pink: 0 0% 90%;
+    --space-gold: 0 0% 80%;
+    --space-burgundy: 0 0% 40%;
+    
+    /* Chart colors */
+    --chart-1: 0 0% 80%;
+    --chart-2: 0 0% 60%;
+    --chart-3: 0 0% 40%;
+    --chart-4: 0 0% 20%;
+    --chart-5: 0 0% 10%;
+    
+    /* Sidebar theme */
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 0 0% 80%;
+  }
+  
   * {
     @apply border-border;
   }
   
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    min-height: 100vh;
+  }
+  
+  /* Default gradient for cosmic and other colorful themes */
+  :root:not(.theme-monochrome) body, 
+  .theme-cosmic body, 
+  .theme-cyberpunk body, 
+  .theme-midnight body, 
+  .theme-retro body {
     background-image: radial-gradient(circle at 20% 30%, hsl(var(--space-purple) / 0.15) 0%, transparent 40%),
                       radial-gradient(circle at 80% 70%, hsl(var(--space-pink) / 0.1) 0%, transparent 40%);
-    min-height: 100vh;
+  }
+  
+  /* Clean solid background for monochrome theme */
+  .theme-monochrome body {
+    background-image: none;
   }
   
   /* Animation classes */

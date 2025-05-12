@@ -54,6 +54,8 @@ function getThemeColor(theme: string) {
       return "bg-blue-700";
     case "retro":
       return "bg-amber-500";
+    case "monochrome":
+      return "bg-white";
     default:
       return "bg-purple-500";
   }

@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
-type ThemeVariant = "cosmic" | "cyberpunk" | "midnight" | "retro";
+type ThemeVariant = "cosmic" | "cyberpunk" | "midnight" | "retro" | "monochrome";
 
 interface ThemeContextType {
   currentTheme: ThemeVariant;
@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setIsMounted(true);
     // Get saved theme from localStorage
     const savedTheme = localStorage.getItem("theme") as ThemeVariant;
-    if (savedTheme && (savedTheme === "cosmic" || savedTheme === "cyberpunk" || savedTheme === "midnight" || savedTheme === "retro")) {
+    if (savedTheme && (savedTheme === "cosmic" || savedTheme === "cyberpunk" || savedTheme === "midnight" || savedTheme === "retro" || savedTheme === "monochrome")) {
       setCurrentTheme(savedTheme);
     }
   }, []);
@@ -33,7 +33,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("theme", currentTheme);
       
       // Apply theme class to document body
-      document.body.classList.remove("theme-cosmic", "theme-cyberpunk", "theme-midnight", "theme-retro");
+      document.body.classList.remove("theme-cosmic", "theme-cyberpunk", "theme-midnight", "theme-retro", "theme-monochrome");
       document.body.classList.add(`theme-${currentTheme}`);
     }
   }, [currentTheme, isMounted]);
