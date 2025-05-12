@@ -7,7 +7,7 @@ interface ThemeContextType {
   changeTheme: (theme: ThemeVariant) => void;
 }
 
-const defaultTheme: ThemeVariant = "cosmic";
+const defaultTheme: ThemeVariant = "monochrome";
 
 const ThemeContext = createContext<ThemeContextType>({
   currentTheme: defaultTheme,

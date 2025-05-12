@@ -39,6 +39,10 @@ export function ThemeToggle() {
           <span className="h-4 w-4 rounded-full bg-amber-500"></span>
           Retro
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeTheme("monochrome")} className="flex items-center gap-2">
+          <span className="h-4 w-4 rounded-full bg-white border border-gray-500"></span>
+          Monochrome
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
