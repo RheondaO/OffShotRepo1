@@ -7,7 +7,7 @@ interface ThemeContextType {
   changeTheme: (theme: ThemeVariant) => void;
 }
 
-const defaultTheme: ThemeVariant = "monochrome";
+const defaultTheme: ThemeVariant = "cosmic";
 
 const ThemeContext = createContext<ThemeContextType>({
   currentTheme: defaultTheme,
@@ -22,8 +22,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setIsMounted(true);
     // Get saved theme from localStorage
     const savedTheme = localStorage.getItem("theme") as ThemeVariant;
-    if (savedTheme && (savedTheme === "cosmic" || savedTheme === "cyberpunk" || savedTheme === "midnight" || savedTheme === "retro" || savedTheme === "monochrome")) {
+    // Temporarily hide monochrome theme while it's being perfected
+    if (savedTheme && (savedTheme === "cosmic" || savedTheme === "cyberpunk" || savedTheme === "midnight" || savedTheme === "retro")) {
       setCurrentTheme(savedTheme);
+    } else if (savedTheme === "monochrome") {
+      // If the user previously had monochrome theme, switch them to cosmic
+      setCurrentTheme("cosmic");
+      localStorage.setItem("theme", "cosmic");
     }
   }, []);
 
