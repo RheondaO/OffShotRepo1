@@ -234,20 +234,20 @@
   
   /* Monochrome theme - inspired by Uber and X */
   .theme-monochrome {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 100%;  /* White background */
+    --foreground: 0 0% 0%;    /* Black text */
 
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 95%;         /* Light gray cards */
+    --card-foreground: 0 0% 0%; /* Black text */
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 95%;      /* Light gray popover */
+    --popover-foreground: 0 0% 0%; /* Black text */
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;       /* Black primary */
+    --primary-foreground: 0 0% 100%; /* White text */
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 85%;    /* Light gray secondary */
+    --secondary-foreground: 0 0% 0%; /* Black text */
 
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 70%;
@@ -352,47 +352,70 @@
     border-color: hsl(0, 0%, 30%);
   }
   
-  /* Monochrome header styling */
+  /* Monochrome header styling - now white with black text */
   .theme-monochrome header {
-    background-color: hsl(0, 0%, 0%) !important; /* Pure black */
-    border-bottom: 1px solid hsl(0, 0%, 15%) !important;
+    background-color: hsl(0, 0%, 100%) !important; /* White background */
+    border-bottom: 1px solid hsl(0, 0%, 85%) !important; /* Light gray border */
   }
   
   /* Monochrome navigation styling */
   .theme-monochrome nav a {
-    color: hsl(0, 0%, 100%) !important; /* White text */
+    color: hsl(0, 0%, 0%) !important; /* Black text */
     transition: opacity 0.2s ease !important;
   }
   
   .theme-monochrome nav a:hover {
-    opacity: 0.8 !important;
-    color: hsl(0, 0%, 100%) !important;
+    opacity: 0.7 !important;
+    color: hsl(0, 0%, 0%) !important;
   }
   
   /* Active nav item for monochrome */
   .theme-monochrome nav a[data-active="true"],
   .theme-monochrome nav a.active {
-    border-bottom: 2px solid white !important;
+    border-bottom: 2px solid black !important;
     opacity: 1 !important;
   }
   
   /* Mobile menu for monochrome theme */
   .theme-monochrome .mobile-menu,
   .theme-monochrome div[style*="background-color: #121242"] {
-    background-color: black !important;
+    background-color: white !important;
+    color: black !important;
   }
   
   /* User profile section in mobile menu for monochrome */
   .theme-monochrome div[style*="background-color: #1a1a5e"] {
-    background-color: hsl(0, 0%, 10%) !important;
-    border: 1px solid hsl(0, 0%, 20%) !important;
+    background-color: hsl(0, 0%, 95%) !important;
+    border: 1px solid hsl(0, 0%, 85%) !important;
+    color: black !important;
+  }
+  
+  /* Additional fixes for monochrome theme */
+  .theme-monochrome i.ri-planet-line,
+  .theme-monochrome .icon-wrapper i {
+    color: black !important;
+  }
+  
+  /* Card styling for monochrome */
+  .theme-monochrome .card {
+    background-color: white !important;
+    border: 1px solid hsl(0, 0%, 85%) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  /* Button styling for monochrome */
+  .theme-monochrome .btn-primary,
+  .theme-monochrome button[variant="primary"] {
+    background-color: black !important;
+    color: white !important;
+    border: none !important;
   }
   
   /* Fix gradient text in monochrome theme to create a grayscale gradient for better readability */
   .theme-monochrome .bg-gradient-to-r.bg-clip-text.text-transparent,
   .theme-monochrome [class*="bg-gradient-to-"].bg-clip-text.text-transparent {
-    background-image: linear-gradient(to right, hsl(0, 0%, 100%), hsl(0, 0%, 80%), hsl(0, 0%, 100%)) !important;
-    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3) !important;
+    background-image: linear-gradient(to right, hsl(0, 0%, 0%), hsl(0, 0%, 40%), hsl(0, 0%, 0%)) !important;
+    text-shadow: none !important; 
   }
   
   /* Enhance heading text with stronger styling for better readability in monochrome theme */
@@ -401,15 +424,16 @@
   .theme-monochrome h3 {
     letter-spacing: 0.5px !important;
     font-weight: 700 !important;
+    color: black !important;
   }
   
   /* Specific enhancement for "Discover, Shape & Level Up" heading */
   .theme-monochrome h2 span.bg-gradient-to-r.bg-clip-text.text-transparent {
     font-size: 105% !important;
     letter-spacing: 0.8px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2) !important;
     padding-bottom: 4px !important;
-    background-image: linear-gradient(to right, hsl(0, 0%, 100%), hsl(0, 0%, 70%), hsl(0, 0%, 100%)) !important;
+    background-image: linear-gradient(to right, hsl(0, 0%, 0%), hsl(0, 0%, 40%), hsl(0, 0%, 0%)) !important;
   }
   
   /* Animation classes */
