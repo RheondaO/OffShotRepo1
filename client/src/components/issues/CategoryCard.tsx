@@ -17,8 +17,7 @@ const CategoryCard = ({
   return (
     <Link href={`/browse?categoryId=${category.id}`} className="block">
       <Card 
-        className="card bg-[hsl(var(--space-gray)/40)] hover:bg-[hsl(var(--space-gray)/60)] rounded-xl p-6 text-center border border-[hsl(var(--space-purple)/20)] animate-float cursor-pointer transition-all duration-200"
-        style={{ animationDelay }}
+        className="card bg-[hsl(var(--space-gray)/40)] hover:bg-[hsl(var(--space-gray)/60)] rounded-xl p-6 text-center border border-[hsl(var(--space-purple)/20)] cursor-pointer transition-all duration-200 hover:translate-y-[-5px]"
       >
         <div className="w-12 h-12 rounded-full bg-[hsl(var(--space-purple)/20)] flex items-center justify-center mx-auto mb-4">
           <i className={getCategoryIconElement(category.icon)}></i>
