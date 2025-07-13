@@ -24,6 +24,7 @@ import AnalyticsPage from "@/pages/analytics-page";
 import DemoUserPage from "@/pages/demo-user-page";
 import AdminConsole from "@/pages/admin-console";
 import SuccessStoriesPage from "@/pages/success-stories-page";
+import ComingSoon from "@/pages/ComingSoon";
 import Header from "@/components/layout/Header";
 import ConditionalFooter from "@/components/layout/ConditionalFooter";
 
@@ -59,6 +60,7 @@ function Router() {
           <Route path="/demo" component={DemoUserPage} />
           <Route path="/admin" component={AdminConsole} />
           <Route path="/success-stories" component={SuccessStoriesPage} />
+          <Route path="/comingsoon" component={ComingSoon} />
           <Route component={NotFound} />
         </Switch>
       </main>
