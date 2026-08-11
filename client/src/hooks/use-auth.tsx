@@ -1,11 +1,11 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
 import { User, InsertUser } from "@shared/schema";
-import { apiRequest, queryClient } from "../lib/queryClient";
+import { queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const SUPABASE_URL = "https://itdrjobpqkaoahxcsetl.supabase.co";
@@ -29,16 +29,12 @@ type AuthContextType = {
   registerMutation: UseMutationResult<User, Error, InsertUser>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
-
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-// In a fully implemented app, we would use proper authentication
-// For now, we'll fetch our demo user directly
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
- // 1. Fetch current logged in user (or fallback)
+  // 1. Fetch current logged in user (or fallback to Maya)
   const {
     data: user,
     error,
@@ -46,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-try {
+      try {
         const savedUsername = localStorage.getItem("offshot_username") || "maya.organizer";
         const res = await fetch(
           `${SUPABASE_URL}/rest/v1/users?username=eq.${savedUsername}&select=*`,
@@ -62,7 +58,7 @@ try {
     },
   });
 
- // 2. Login Mutation (fetches or creates user in Supabase)
+  // 2. Login Mutation (fetches or creates user in Supabase)
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await fetch(
@@ -147,7 +143,7 @@ try {
     },
   });
 
-// 4. Logout Mutation
+  // 4. Logout Mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
       localStorage.removeItem("offshot_username");
@@ -190,56 +186,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-  // Get effective user (impersonated or real)
-  const effectiveUser = impersonatedUser || context.user;
-
-  // Impersonation functions
-  const impersonateUser = async (userId: number) => {
-    if (!isAdmin) { // Check if admin before impersonating
-      console.error('Only admins can impersonate users');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/users/${userId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user with ID ${userId}`);
-      }
-      const userData = await response.json();
-      setImpersonatedUser(userData);
-    } catch (error) {
-      console.error('Failed to impersonate user:', error);
-    }
-  };
-
-  const stopImpersonating = () => {
-    setImpersonatedUser(null);
-  };
-
-  //  We need a way to determine isAdmin.  This is placeholder code.
-  // In a real application, you would fetch this information from the server
-  // based on the authenticated user's role.
-  const checkAdminStatus = async () => {
-    try {
-      const response = await fetch('/api/user/admincheck'); // Replace with your admin check endpoint
-      if (!response.ok) {
-        throw new Error('Failed to check admin status');
-      }
-      setIsAdmin(await response.json());
-    } catch (error) {
-      console.error('Failed to check admin status:', error);
-    }
-  }
-  checkAdminStatus();
-
-
-  return {
-    user: effectiveUser,
-    isAdmin,
-    isImpersonating: !!impersonatedUser,
-    impersonateUser,
-    stopImpersonating,
-  };
 }
