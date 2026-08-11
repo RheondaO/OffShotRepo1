@@ -286,7 +286,7 @@ const AuthPage = () => {
             <i className="ri-planet-line text-3xl"></i>
           </div>
           <h2 className="text-3xl font-bold mb-4">
-            Join the Really Obvious Media Lab community
+            Join the OFFSHOT community
           </h2>
           <p className="text-[hsl(var(--foreground)/70)] mb-6">
             Help identify and solve issues in your community. Together, we can make a difference.

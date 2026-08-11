@@ -1,6 +1,6 @@
 
 export default {
-  name: 'Really Obvious Media Lab',
+  name: 'OFFSHOT',
   slug: 'roml-app',
   version: '1.0.0',
   orientation: 'portrait',

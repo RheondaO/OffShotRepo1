@@ -13,7 +13,7 @@ const CompactFooter = () => {
               <i className="ri-planet-line text-sm"></i>
             </div>
             <p className="text-sm text-[hsl(var(--foreground)/60)]">
-              &copy; {new Date().getFullYear()} Really Obvious Media Lab
+              &copy; {new Date().getFullYear()} OFFSHOT
             </p>
           </div>
           

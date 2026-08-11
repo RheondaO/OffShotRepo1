@@ -25,7 +25,7 @@ export default function MissionPage() {
           <h2 className="text-2xl md:text-3xl font-bold mb-4 text-center">Our Vision</h2>
           <div className="prose prose-lg prose-invert max-w-none">
             <p>
-              Really Obvious Media Lab envisions a world where communities are empowered to shape their own futures. 
+              OFFSHOT envisions a world where communities are empowered to shape their own futures. 
               We believe that everyone deserves a voice in the decisions that affect their lives, 
               and that transparent, collaborative problem-solving leads to stronger, more resilient communities.
             </p>

@@ -14,7 +14,7 @@ const TermsPage = () => {
         
         <div className="prose dark:prose-invert max-w-none">
           <p>
-            These Terms of Service ("Terms") govern your access to and use of the Really Obvious Media Lab platform
+            These Terms of Service ("Terms") govern your access to and use of the OFFSHOT platform
             ("we," "us," or "our"). By accessing or using our platform, you agree to be bound by these Terms.
           </p>
           

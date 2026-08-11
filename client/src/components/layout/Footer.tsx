@@ -10,7 +10,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-[hsl(var(--space-purple))] rounded-full flex items-center justify-center">
                 <i className="ri-planet-line text-lg"></i>
               </div>
-              <h2 className="text-xl font-bold">Really Obvious Media Lab</h2>
+              <h2 className="text-xl font-bold">OFFSHOT</h2>
             </div>
             <p className="text-[hsl(var(--foreground)/70)] mb-6">
               Connecting communities to solve local issues together.
@@ -107,7 +107,7 @@ const Footer = () => {
         
         <div className="border-t border-[hsl(var(--space-purple)/20)] mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-[hsl(var(--foreground)/60)] text-sm">
-            &copy; {new Date().getFullYear()} Really Obvious Media Lab. All rights reserved.
+            &copy; {new Date().getFullYear()} OFFSHOT. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/privacy" className="text-[hsl(var(--foreground)/60)] text-sm hover:text-[hsl(var(--space-pink))] transition-colors">

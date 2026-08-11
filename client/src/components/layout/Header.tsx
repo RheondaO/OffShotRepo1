@@ -35,7 +35,7 @@ const Header = () => {
               <i className="ri-planet-line text-lg"></i>
             </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-[hsl(var(--space-pink))] to-[hsl(var(--space-gold))] bg-clip-text text-transparent">
-              Really Obvious Media Lab
+              OFFSHOT
             </h1>
           </div>
         </Link>

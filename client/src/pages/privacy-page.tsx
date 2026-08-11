@@ -14,7 +14,7 @@ const PrivacyPage = () => {
         
         <div className="prose dark:prose-invert max-w-none">
           <p>
-            At Really Obvious Media Lab, we respect your privacy and are committed to protecting your personal information.
+            At OFFSHOT, we respect your privacy and are committed to protecting your personal information.
             This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
           </p>
           

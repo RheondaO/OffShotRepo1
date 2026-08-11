@@ -49,7 +49,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             <div className="w-8 h-8 bg-[hsl(var(--space-purple))] rounded-full flex items-center justify-center">
               <i className="ri-planet-line text-lg"></i>
             </div>
-            <h2 className="text-xl font-bold">Really Obvious Media Lab</h2>
+            <h2 className="text-xl font-bold">OFFSHOT</h2>
           </div>
           <button 
             className="text-[hsl(var(--foreground)/90)] hover:text-[hsl(var(--space-pink))] p-2 rounded-full bg-[hsl(var(--space-purple)/30)] hover:bg-[hsl(var(--space-purple)/50)] transition-all" 
