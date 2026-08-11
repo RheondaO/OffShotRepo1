@@ -8,6 +8,18 @@ import { User, InsertUser } from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+const SUPABASE_URL = "https://itdrjobpqkaoahxcsetl.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0ZHJqb2JwcWthb2FoeGNzZXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODAzMDYsImV4cCI6MjEwMjA1NjMwNn0.Te_gl-kO6cOFT0fj5KJWM5z3xUYutN5o_eH4wtZZ_jI";
+
+const headers = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  "Content-Type": "application/json",
+};
+
+type LoginData = Pick<InsertUser, "username" | "password">;
+
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
@@ -26,7 +38,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  // Fetch the demo user from the database (ID: 3)
+ // 1. Fetch current logged in user (or fallback)
   const {
     data: user,
     error,
@@ -34,34 +46,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      try {
-        const response = await apiRequest('GET', '/api/users/3');
-        if (!response.ok) {
-          throw new Error('Failed to fetch user');
-        }
-        const userData = await response.json();
-        return userData;
-      } catch (error) {
-        console.error('Error fetching user:', error);
+try {
+        const savedUsername = localStorage.getItem("offshot_username") || "maya.organizer";
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/users?username=eq.${savedUsername}&select=*`,
+          { headers }
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data && data.length > 0 ? (data[0] as User) : null;
+      } catch (err) {
+        console.error("Error fetching Supabase user:", err);
         return null;
       }
     },
   });
 
+ // 2. Login Mutation (fetches or creates user in Supabase)
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      // For now, directly fetch the demo user instead of implementing real login
-      const response = await apiRequest('GET', '/api/users/3');
-      if (!response.ok) {
-        throw new Error('Failed to login');
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/users?username=eq.${credentials.username}&select=*`,
+        { headers }
+      );
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        localStorage.setItem("offshot_username", data[0].username);
+        return data[0] as User;
       }
-      return await response.json();
+
+      // If user doesn't exist yet, insert them
+      const createRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+        method: "POST",
+        headers: { ...headers, Prefer: "return=representation" },
+        body: JSON.stringify({
+          username: credentials.username,
+          name: credentials.username,
+          role: "resident",
+          xp: 50,
+          level: 1,
+          badge: "New Explorer",
+        }),
+      });
+
+      if (!createRes.ok) {
+        throw new Error("Failed to authenticate user");
+      }
+
+      const created = await createRes.json();
+      localStorage.setItem("offshot_username", created[0].username);
+      return created[0] as User;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.name}!`,
+        description: `Welcome back, ${user.name || user.username}!`,
       });
     },
     onError: (error: Error) => {
@@ -73,21 +114,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // 3. Register Mutation
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
-      // In a real app, we would create a new user
-      // For now, just return the demo user
-      const response = await apiRequest('GET', '/api/users/3');
-      if (!response.ok) {
-        throw new Error('Failed to register');
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+        method: "POST",
+        headers: { ...headers, Prefer: "return=representation" },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to register user");
       }
-      return await response.json();
+
+      const created = await res.json();
+      localStorage.setItem("offshot_username", created[0].username);
+      return created[0] as User;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
-        description: `Welcome, ${user.name}!`,
+        description: `Account created for ${user.username}!`,
       });
     },
     onError: (error: Error) => {
@@ -99,16 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+// 4. Logout Mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // In a real app, we would call a logout endpoint
-      return;
+      localStorage.removeItem("offshot_username");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       toast({
         title: "Logged out",
-        description: "You have been successfully logged out",
+        description: "You have been successfully logged out.",
       });
     },
     onError: (error: Error) => {
@@ -125,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user: user ?? null,
         isLoading,
-        error,
+        error: error as Error | null,
         loginMutation,
         logoutMutation,
         registerMutation,
@@ -138,12 +186,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false); // Add isAdmin state
-
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
+  return context;
+}
 
   // Get effective user (impersonated or real)
   const effectiveUser = impersonatedUser || context.user;
