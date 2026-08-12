@@ -16,69 +16,72 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined
 ): Promise<Response> {
-  let targetUrl = url;
-  if (url.startsWith("/api/")) {
-    const endpoint = url.replace("/api/", "");
-    targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-  }
-
-  console.log(`🔍 API Request: ${method} ${targetUrl}`, data || "");
+  console.log(`🔍 API Request: ${method} ${url}`, data || "");
   try {
-    const res = await fetch(targetUrl, {
+    const res = await fetch(url, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        ...(method !== "GET" ? { Prefer: "return=representation" } : {}),
-      },
+      headers: data ? { "Content-Type": "application/json" } : {},
       body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
     });
-    console.log(`📊 API Response status: ${res.status} for ${method} ${targetUrl}`);
+    console.log(`📊 API Response status: ${res.status} for ${method} ${url}`);
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
-    console.error(`❌ API Error for ${method} ${targetUrl}:`, error);
+    console.error(`❌ API Error for ${method} ${url}:`, error);
     throw error;
   }
 }
 
+type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
-  on401: string;
+  on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
-  () =>
+  ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
     console.log(`🔍 Fetching: ${url}`);
 
-    if (typeof url === "string" && url.startsWith("/api/")) {
-      const endpoint = url.replace("/api/", "");
-      const separator = endpoint.includes("?") ? "&" : "?";
-      const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}${separator}select=*`;
-
+    // Direct live query to Supabase REST API for issues
+    if (typeof url === "string" && url.includes("/api/issues")) {
       try {
-        const res = await fetch(targetUrl, {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-        });
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/issues?select=*&order=id.asc`,
+          {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+          }
+        );
 
         if (!res.ok) {
-          console.error(`❌ Supabase REST Error for ${endpoint}:`, await res.text());
+          console.error("❌ Supabase REST Error:", await res.text());
           return [] as unknown as T;
         }
 
         const data = await res.json();
-        console.log(`✅ Live Supabase Data received for ${endpoint}:`, data);
+        console.log("✅ Live Supabase Data received:", data);
         return data as unknown as T;
       } catch (error) {
-        console.error(`❌ Error querying Supabase for ${endpoint}:`, error);
+        console.error("❌ Error querying Supabase directly:", error);
         return [] as unknown as T;
       }
     }
 
-    throw new Error(`Unsupported query key: ${url}`);
+    // Default fallback fetch for any other routes
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      console.error(`❌ Error fetching ${url}:`, error);
+      throw error;
+    }
   };
 
 export const queryClient = new QueryClient({
