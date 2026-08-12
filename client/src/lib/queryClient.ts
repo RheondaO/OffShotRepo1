@@ -56,10 +56,7 @@ async function defaultQueryFn({ queryKey }: { queryKey: readonly unknown[] }) {
   
   if (typeof url === "string" && url.startsWith("/api/")) {
     const endpoint = url.replace("/api/", "");
-    
-    // Request with user relation embedding if fetching issues
-    const selectQuery = endpoint.startsWith("issues") ? "select=*,users(*)" : "select=*";
-    const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}?${selectQuery}`;
+    const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}?select=*`;
 
     const res = await fetch(targetUrl, {
       headers: {
