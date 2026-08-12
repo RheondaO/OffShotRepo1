@@ -112,26 +112,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 3. Register Mutation
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
+    mutationFn: async (credentials: any) => {
+      // Exclude confirmPassword before sending to Supabase
+      const { confirmPassword, ...data } = credentials;
+
+      const newUserPayload = {
+        username: data.username,
+        name: data.name || data.username,
+        email: data.email || null,
+        password: data.password || null,
+        role: "resident",
+        xp: 50,
+        level: 1,
+        badge: "New Explorer",
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
+      };
+
       const res = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
         method: "POST",
         headers: { ...headers, Prefer: "return=representation" },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(newUserPayload),
       });
 
       if (!res.ok) {
-        throw new Error("Failed to register user");
+        const errorText = await res.text();
+        console.error("❌ Registration error from Supabase:", errorText);
+        throw new Error("Username already taken or registration failed");
       }
 
       const created = await res.json();
-      localStorage.setItem("offshot_username", created[0].username);
-      return created[0] as User;
+      const newUser = created[0] as User;
+      localStorage.setItem("offshot_username", newUser.username);
+      return newUser;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
-        description: `Account created for ${user.username}!`,
+        description: `Welcome to OFFSHOT, ${user.name || user.username}!`,
       });
     },
     onError: (error: Error) => {
