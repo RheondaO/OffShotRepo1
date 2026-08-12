@@ -4,6 +4,24 @@ const SUPABASE_URL = "https://itdrjobpqkaoahxcsetl.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0ZHJqb2JwcWthb2FoeGNzZXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODAzMDYsImV4cCI6MjEwMjA1NjMwNn0.Te_gl-kO6cOFT0fj5KJWM5z3xUYutN5o_eH4wtZZ_jI";
 
+// Helper to convert snake_case database columns to camelCase for React components
+function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+function convertKeysToCamel(data: any): any {
+  if (Array.isArray(data)) {
+    return data.map(item => convertKeysToCamel(item));
+  } else if (data !== null && typeof data === "object") {
+    return Object.keys(data).reduce((acc, key) => {
+      const camelKey = toCamelCase(key);
+      acc[camelKey] = convertKeysToCamel(data[key]);
+      return acc;
+    }, {} as Record<string, any>);
+  }
+  return data;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -50,7 +68,8 @@ async function defaultQueryFn({ queryKey }: { queryKey: readonly unknown[] }) {
       throw new Error(`Network response was not ok for ${url}`);
     }
 
-    return res.json();
+    const json = await res.json();
+    return convertKeysToCamel(json);
   }
 
   throw new Error(`Unsupported query key: ${url}`);
