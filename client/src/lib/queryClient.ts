@@ -46,6 +46,7 @@ export const getQueryFn: <T>(options: {
     console.log(`🔍 Fetching: ${url}`);
 
     // Direct live query to Supabase REST API for issues
+   // Direct live query to Supabase REST API for issues with normalization
     if (typeof url === "string" && url.includes("/api/issues")) {
       try {
         const res = await fetch(
@@ -64,27 +65,21 @@ export const getQueryFn: <T>(options: {
         }
 
         const data = await res.json();
-        console.log("✅ Live Supabase Data received:", data);
-        return data as unknown as T;
+        
+        // Normalize fields so camelCase and snake_case match component expectations
+        const normalizedData = data.map((item: any) => ({
+          ...item,
+          createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+          author: item.author || item.authorName || "Anonymous",
+        }));
+
+        console.log("✅ Live Normalized Issues received:", normalizedData);
+        return normalizedData as unknown as T;
       } catch (error) {
         console.error("❌ Error querying Supabase directly:", error);
         return [] as unknown as T;
       }
     }
-
-    // Default fallback fetch for any other routes
-    try {
-      const res = await fetch(url, { credentials: "include" });
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
-      }
-      await throwIfResNotOk(res);
-      return await res.json();
-    } catch (error) {
-      console.error(`❌ Error fetching ${url}:`, error);
-      throw error;
-    }
-  };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
