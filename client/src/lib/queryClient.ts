@@ -4,7 +4,6 @@ const SUPABASE_URL = "https://itdrjobpqkaoahxcsetl.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0ZHJqb2JwcWthb2FoeGNzZXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODAzMDYsImV4cCI6MjEwMjA1NjMwNn0.Te_gl-kO6cOFT0fj5KJWM5z3xUYutN5o_eH4wtZZ_jI";
 
-// Helper to convert snake_case database columns to camelCase for React components
 function toCamelCase(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
@@ -57,7 +56,12 @@ async function defaultQueryFn({ queryKey }: { queryKey: readonly unknown[] }) {
   
   if (typeof url === "string" && url.startsWith("/api/")) {
     const endpoint = url.replace("/api/", "");
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}?select=*`, {
+    
+    // Request with user relation embedding if fetching issues
+    const selectQuery = endpoint.startsWith("issues") ? "select=*,users(*)" : "select=*";
+    const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}?${selectQuery}`;
+
+    const res = await fetch(targetUrl, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
