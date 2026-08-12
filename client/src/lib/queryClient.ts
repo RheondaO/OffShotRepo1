@@ -56,7 +56,8 @@ async function defaultQueryFn({ queryKey }: { queryKey: readonly unknown[] }) {
   
   if (typeof url === "string" && url.startsWith("/api/")) {
     const endpoint = url.replace("/api/", "");
-    const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}?select=*`;
+    const separator = endpoint.includes("?") ? "&" : "?";
+    const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}${separator}select=*`;
 
     const res = await fetch(targetUrl, {
       headers: {
@@ -66,7 +67,9 @@ async function defaultQueryFn({ queryKey }: { queryKey: readonly unknown[] }) {
     });
 
     if (!res.ok) {
-      throw new Error(`Network response was not ok for ${url}`);
+      const errText = await res.text();
+      console.error(`Supabase fetch failed for ${url}:`, errText);
+      throw new Error(`Network response was not ok for ${url}: ${errText}`);
     }
 
     const json = await res.json();
