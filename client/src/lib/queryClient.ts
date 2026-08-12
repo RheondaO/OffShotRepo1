@@ -4,27 +4,17 @@ const SUPABASE_URL = "https://itdrjobpqkaoahxcsetl.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0ZHJqb2JwcWthb2FoeGNzZXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODAzMDYsImV4cCI6MjEwMjA1NjMwNn0.Te_gl-kO6cOFT0fj5KJWM5z3xUYutN5o_eH4wtZZ_jI";
 
-function toCamelCase(str: string): string {
-  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-}
-
-function convertKeysToCamel(data: any): any {
-  if (Array.isArray(data)) {
-    return data.map(item => convertKeysToCamel(item));
-  } else if (data !== null && typeof data === "object") {
-    return Object.keys(data).reduce((acc, key) => {
-      const camelKey = toCamelCase(key);
-      acc[camelKey] = convertKeysToCamel(data[key]);
-      return acc;
-    }, {} as Record<string, any>);
+async function throwIfResNotOk(res: Response) {
+  if (!res.ok) {
+    const text = (await res.text()) || res.statusText;
+    throw new Error(`${res.status}: ${text}`);
   }
-  return data;
 }
 
 export async function apiRequest(
   method: string,
   url: string,
-  data?: unknown | undefined,
+  data?: unknown | undefined
 ): Promise<Response> {
   let targetUrl = url;
   if (url.startsWith("/api/")) {
@@ -43,46 +33,50 @@ export async function apiRequest(
     body: data ? JSON.stringify(data) : undefined,
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status}: ${text || res.statusText}`);
-  }
-
+  await throwIfResNotOk(res);
   return res;
 }
 
-async function defaultQueryFn({ queryKey }: { queryKey: readonly unknown[] }) {
-  const url = queryKey[0];
-  
-  if (typeof url === "string" && url.startsWith("/api/")) {
-    const endpoint = url.replace("/api/", "");
-    const separator = endpoint.includes("?") ? "&" : "?";
-    const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}${separator}select=*`;
+export const getQueryFn: <T>(options: {
+  on401: UnauthorizedBehavior;
+}) => QueryFunction<T> =
+  () =>
+  async ({ queryKey }) => {
+    const url = queryKey[0] as string;
 
-    const res = await fetch(targetUrl, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
+    if (typeof url === "string" && url.startsWith("/api/")) {
+      const endpoint = url.replace("/api/", "");
+      const separator = endpoint.includes("?") ? "&" : "?";
+      const targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}${separator}select=*`;
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`Supabase fetch failed for ${url}:`, errText);
-      throw new Error(`Network response was not ok for ${url}: ${errText}`);
+      try {
+        const res = await fetch(targetUrl, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.error(`❌ Supabase REST Error for ${endpoint}:`, await res.text());
+          return [] as unknown as T;
+        }
+
+        const data = await res.json();
+        return data as unknown as T;
+      } catch (error) {
+        console.error(`❌ Error querying Supabase for ${endpoint}:`, error);
+        return [] as unknown as T;
+      }
     }
 
-    const json = await res.json();
-    return convertKeysToCamel(json);
-  }
-
-  throw new Error(`Unsupported query key: ${url}`);
-}
+    throw new Error(`Unsupported query key: ${url}`);
+  };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: defaultQueryFn as QueryFunction<unknown, readonly unknown[]>,
+      queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
