@@ -22,27 +22,34 @@ export async function apiRequest(
     targetUrl = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   }
 
-  const res = await fetch(targetUrl, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      ...(method !== "GET" ? { Prefer: "return=representation" } : {}),
-    },
-    body: data ? JSON.stringify(data) : undefined,
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  console.log(`🔍 API Request: ${method} ${targetUrl}`, data || "");
+  try {
+    const res = await fetch(targetUrl, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        ...(method !== "GET" ? { Prefer: "return=representation" } : {}),
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    console.log(`📊 API Response status: ${res.status} for ${method} ${targetUrl}`);
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error(`❌ API Error for ${method} ${targetUrl}:`, error);
+    throw error;
+  }
 }
 
 export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
+  on401: string;
 }) => QueryFunction<T> =
   () =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
+    console.log(`🔍 Fetching: ${url}`);
 
     if (typeof url === "string" && url.startsWith("/api/")) {
       const endpoint = url.replace("/api/", "");
@@ -63,6 +70,7 @@ export const getQueryFn: <T>(options: {
         }
 
         const data = await res.json();
+        console.log(`✅ Live Supabase Data received for ${endpoint}:`, data);
         return data as unknown as T;
       } catch (error) {
         console.error(`❌ Error querying Supabase for ${endpoint}:`, error);
