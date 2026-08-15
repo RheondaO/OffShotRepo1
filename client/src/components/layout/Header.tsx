@@ -45,28 +45,22 @@ const Header = () => {
             Home
           </Link>
           <Link href="/browse" className={`${isActivePath("/browse") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Browse Issues
-          </Link>
-          <Link href="/submit" className={`${isActivePath("/submit") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Submit Issue
+            Issues
           </Link>
           <Link href="/chat" className={`${isActivePath("/chat") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Community Chat
+            Chat
           </Link>
-          <Link href="/mission" className={`${isActivePath("/mission") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Our Mission
+          <Link href="/polls" className={`${isActivePath("/polls") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Polls
           </Link>
-          <Link href="/success-stories" className={`${isActivePath("/success-stories") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Success Stories
+          <Link href="/boards" className={`${isActivePath("/boards") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Boards
+          </Link>
+          <Link href="/analytics" className={`${isActivePath("/analytics") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            World Stats
           </Link>
           <Link href="/games" className={`${isActivePath("/games") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
             Games
-          </Link>
-          <Link href="/analytics" className={`${isActivePath("/analytics") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Analytics
-          </Link>
-          <Link href="/browse" className={`${isActivePath("/browse") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
-            Categories
           </Link>
           {isAdmin && (
             <Link href="/admin" className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-pink)/80)] transition-colors font-bold border border-[hsl(var(--space-purple)/50)] px-2 py-0.5 rounded-md bg-[hsl(var(--space-purple)/30)]">
@@ -181,3 +175,5 @@ const Header = () => {
 };
 
 export default Header;
+
+//  <Link href="/submit" className={`${isActivePath("/submit") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}> Submit Issue </Link>
