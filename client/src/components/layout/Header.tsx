@@ -62,6 +62,9 @@ const Header = () => {
           <Link href="/games" className={`${isActivePath("/games") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
             Mini Games
           </Link>
+          <Link href="/Marketplace" className={`${isActivePath("/Marketplace") ? "text-[hsl(var(--foreground)/90)]" : "text-[hsl(var(--foreground)/70)]"} hover:text-[hsl(var(--space-pink))] transition-colors`}>
+            Marketplace
+          </Link>
           {isAdmin && (
             <Link href="/admin" className="text-[hsl(var(--space-pink))] hover:text-[hsl(var(--space-pink)/80)] transition-colors font-bold border border-[hsl(var(--space-purple)/50)] px-2 py-0.5 rounded-md bg-[hsl(var(--space-purple)/30)]">
               Admin Console
